@@ -70,6 +70,19 @@ export interface SermonItem {
   audio_url: string | null;
   livestream_url: string | null;
   duration_seconds: number | null;
+  series_id: string | null;
+  published_at: string | null;
+}
+
+export interface SermonSeries {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  hero_image: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  sort_order: number;
   published_at: string | null;
 }
 
