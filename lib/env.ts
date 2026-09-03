@@ -14,6 +14,7 @@ const serverSchema = z.object({
   M_PESA_SHORTCODE: z.string().optional(),
   M_PESA_PASSKEY: z.string().optional(),
   M_PESA_CALLBACK_URL: z.string().url().optional(),
+  M_PESA_CALLBACK_SECRET: z.string().optional(),
 });
 
 export const publicEnv = clientSchema.parse({
