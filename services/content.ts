@@ -167,6 +167,41 @@ export async function getLatestSermon(): Promise<SermonItem | null> {
   }
 }
 
+export async function getAllPublishedSermons(): Promise<SermonItem[]> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("sermons")
+      .select(
+        "id,slug,title,description,speaker,preached_on,scripture,category,thumbnail_url,video_url,audio_url,livestream_url,duration_seconds,published_at",
+      )
+      .eq("status", "PUBLISHED")
+      .order("preached_on", { ascending: false });
+    if (error) return [];
+    return (data ?? []) as SermonItem[];
+  } catch {
+    return [];
+  }
+}
+
+export async function getSermonBySlug(slug: string): Promise<SermonItem | null> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("sermons")
+      .select(
+        "id,slug,title,description,speaker,preached_on,scripture,category,thumbnail_url,video_url,audio_url,livestream_url,duration_seconds,published_at",
+      )
+      .eq("slug", slug)
+      .eq("status", "PUBLISHED")
+      .maybeSingle();
+    if (error) return null;
+    return (data ?? null) as SermonItem | null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getFeaturedMinistries(limit = 6): Promise<MinistryItem[]> {
   try {
     const supabase = createClient();
