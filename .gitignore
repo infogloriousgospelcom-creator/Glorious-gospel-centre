@@ -7,6 +7,13 @@ coverage
 # CI workflow excluded from push until GitHub OAuth scope is granted
 .github/workflows/
 
+# Local Supabase CLI credentials (do not commit)
+.env.supabase
+.env.supabase.template
+
+# Supabase CLI scratch files
+supabase/.temp/
+
 .env
 .env.local
 .env.*.local
