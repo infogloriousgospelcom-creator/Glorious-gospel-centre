@@ -12,6 +12,8 @@ import { OutreachSection } from "@/components/home/OutreachSection";
 import { GivingCtaSection } from "@/components/home/GivingCtaSection";
 import { getSiteSettings } from "@/services/content";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();
   return {
