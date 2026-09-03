@@ -7,8 +7,9 @@ import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState, SectionEyebrow } from "@/components/ui/Section";
 import Link from "next/link";
-import { getSermonBySlug } from "@/services/content";
+import { getSermonBySlug, getSeriesForSermon } from "@/services/sermons";
 import { toEmbedUrl, formatDuration } from "@/lib/media";
+import { SermonAudioPlayer } from "../_components/SermonAudioPlayer";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +42,7 @@ export default async function SermonDetailPage({
 }) {
   const sermon = await getSermonBySlug(params.slug);
   if (!sermon) notFound();
+  const series = await getSeriesForSermon(sermon.id);
 
   const embed = toEmbedUrl(sermon.video_url);
   const duration = formatDuration(sermon.duration_seconds);
@@ -60,7 +62,7 @@ export default async function SermonDetailPage({
               </Link>
               <SectionEyebrow>Sermon</SectionEyebrow>
               <h1 className="heading-1 mb-4 text-balance">{sermon.title}</h1>
-              <div className="flex flex-wrap items-center gap-2 text-sm text-ink-muted">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-muted">
                 {sermon.speaker ? <span className="font-medium text-ink">{sermon.speaker}</span> : null}
                 <span>·</span>
                 <span>{formatDate(sermon.preached_on)}</span>
@@ -78,8 +80,13 @@ export default async function SermonDetailPage({
                 ) : null}
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
-                {sermon.category ? <Badge tone="brand">{sermon.category}</Badge> : null}
-                {embed ? <Badge tone="accent">Video</Badge> : null}
+                {series ? (
+                  <Link href={`/sermons/series/${series.slug}`}>
+                    <Badge tone="brand">Series: {series.title}</Badge>
+                  </Link>
+                ) : null}
+                {sermon.category ? <Badge tone="accent">{sermon.category}</Badge> : null}
+                {embed ? <Badge tone="success">Video</Badge> : null}
                 {sermon.audio_url ? <Badge tone="info">Audio</Badge> : null}
                 {sermon.livestream_url ? <Badge tone="warning">Livestream</Badge> : null}
               </div>
@@ -116,10 +123,10 @@ export default async function SermonDetailPage({
 
             {sermon.audio_url ? (
               <div className="mt-6">
-                <audio controls className="w-full" preload="none">
-                  <source src={sermon.audio_url} />
-                  Your browser does not support the audio element.
-                </audio>
+                <SermonAudioPlayer
+                  src={sermon.audio_url}
+                  title={`${sermon.title} — audio`}
+                />
               </div>
             ) : null}
 
@@ -145,11 +152,11 @@ export default async function SermonDetailPage({
                 <h2 className="heading-2 mb-4">Sermon notes</h2>
                 {sermon.description ? (
                   <div className="prose max-w-none text-ink">
-                    {sermon.description.split(/\n{2,}/).map((p, i) => (
-                      <p key={i} className="mb-4 leading-relaxed">
-                        {p}
-                      </p>
-                    ))}
+                    {sermon.description.split(/\n{2,}/).map((p: string, i: number) => (
+                  <p key={i} className="mb-4 leading-relaxed">
+                    {p}
+                  </p>
+                ))}
                   </div>
                 ) : (
                   <EmptyState
@@ -160,6 +167,21 @@ export default async function SermonDetailPage({
               </div>
 
               <aside className="space-y-4">
+                {series ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Part of a series</CardTitle>
+                    </CardHeader>
+                    <CardBody>
+                      <Link
+                        href={`/sermons/series/${series.slug}`}
+                        className="text-sm font-medium text-brand-700 hover:text-brand-800"
+                      >
+                        View all sermons in “{series.title}” →
+                      </Link>
+                    </CardBody>
+                  </Card>
+                ) : null}
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base">Details</CardTitle>
