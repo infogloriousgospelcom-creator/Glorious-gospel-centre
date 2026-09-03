@@ -111,6 +111,19 @@ export interface LeaderItem {
   is_featured: boolean;
 }
 
+export interface PageItem {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  body: string | null;
+  hero_image: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  seo_og_image: string | null;
+  published_at: string | null;
+}
+
 export interface GalleryAlbum {
   id: string;
   slug: string;
