@@ -113,6 +113,41 @@ export async function getUpcomingEvents(limit = 3): Promise<EventItem[]> {
   }
 }
 
+export async function getAllPublishedEvents(): Promise<EventItem[]> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("events")
+      .select(
+        "id,slug,title,short_description,description,poster_url,starts_at,ends_at,location,speaker,registration_required,published_at",
+      )
+      .eq("status", "PUBLISHED")
+      .order("starts_at", { ascending: true });
+    if (error) return [];
+    return (data ?? []) as EventItem[];
+  } catch {
+    return [];
+  }
+}
+
+export async function getEventBySlug(slug: string): Promise<EventItem | null> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("events")
+      .select(
+        "id,slug,title,short_description,description,poster_url,starts_at,ends_at,location,speaker,registration_required,published_at",
+      )
+      .eq("slug", slug)
+      .eq("status", "PUBLISHED")
+      .maybeSingle();
+    if (error) return null;
+    return (data ?? null) as EventItem | null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getLatestSermon(): Promise<SermonItem | null> {
   try {
     const supabase = createClient();
