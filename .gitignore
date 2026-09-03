@@ -4,6 +4,9 @@ out
 dist
 coverage
 
+# CI workflow excluded from push until GitHub OAuth scope is granted
+.github/workflows/
+
 .env
 .env.local
 .env.*.local
