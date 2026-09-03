@@ -14,11 +14,15 @@
   }
 
   body {
-    @apply bg-white text-brand-900 antialiased;
+    @apply bg-surface text-ink antialiased;
   }
 
   *:focus-visible {
     @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white;
+  }
+
+  ::selection {
+    @apply bg-brand-200 text-brand-900;
   }
 }
 
@@ -28,18 +32,37 @@
   }
 
   .heading-1 {
-    @apply font-serif text-4xl font-semibold tracking-tight sm:text-5xl;
+    @apply font-serif text-display-1 font-semibold;
   }
-
   .heading-2 {
-    @apply font-serif text-3xl font-semibold tracking-tight sm:text-4xl;
+    @apply font-serif text-display-2 font-semibold;
   }
-
   .heading-3 {
-    @apply font-serif text-2xl font-semibold tracking-tight;
+    @apply font-serif text-display-3 font-semibold;
   }
 
   .lead {
-    @apply text-lg leading-relaxed text-brand-700;
+    @apply text-lg leading-relaxed text-ink-muted;
+  }
+
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-brand-700 focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white focus:shadow-elevated;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }
