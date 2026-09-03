@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/supabase/server";
+import { dayName } from "@/types/content";
 import type {
   Announcement,
   EventItem,
@@ -231,6 +232,24 @@ export async function getPublishedServices(): Promise<ServiceItem[]> {
   } catch {
     return [];
   }
+}
+
+export function groupServicesByDay(
+  services: ServiceItem[],
+): Array<{ day: number; label: string; services: ServiceItem[] }> {
+  const groups = new Map<number, ServiceItem[]>();
+  for (const s of services) {
+    const list = groups.get(s.day_of_week) ?? [];
+    list.push(s);
+    groups.set(s.day_of_week, list);
+  }
+  return Array.from(groups.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([day, services]) => ({
+      day,
+      label: dayName(day),
+      services,
+    }));
 }
 
 export async function getFeaturedLeaders(limit = 4): Promise<LeaderItem[]> {

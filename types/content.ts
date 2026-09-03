@@ -97,6 +97,7 @@ export interface ServiceItem {
   location: string | null;
   ministry_id: string | null;
   sort_order: number;
+  is_recurring: boolean;
 }
 
 export interface LeaderItem {
