@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { TopBar } from "@/components/layout/TopBar";
 import "./globals.css";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -16,13 +17,8 @@ export const metadata: Metadata = {
     siteName: "Glorious Gospel Centre",
     url: SITE_URL,
   },
-  twitter: {
-    card: "summary_large_image",
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
+  twitter: { card: "summary_large_image" },
+  robots: { index: true, follow: true },
 };
 
 export const viewport: Viewport = {
@@ -34,7 +30,11 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-white text-brand-900">
+      <body className="min-h-screen bg-surface text-ink antialiased">
+        <a href="#main" className="skip-link">
+          Skip to main content
+        </a>
+        <TopBar />
         {children}
       </body>
     </html>
