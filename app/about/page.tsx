@@ -10,6 +10,8 @@ import { LeaderGrid, PageHero } from "@/components/about/CmsPageView";
 import { getSiteSettings } from "@/services/content";
 import { getAllPublishedLeaders } from "@/services/pages";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "About",
   description: "Learn about Glorious Gospel Centre — our story, vision, mission, statement of faith, and leadership.",

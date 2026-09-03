@@ -7,6 +7,8 @@ import { SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Secti
 import { LeaderGrid } from "@/components/about/CmsPageView";
 import { getAllPublishedLeaders } from "@/services/pages";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Leadership",
   description: "Meet the pastors and leaders serving Glorious Gospel Centre.",

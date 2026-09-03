@@ -5,6 +5,8 @@ import { AboutSubnav } from "@/components/layout/AboutSubnav";
 import { CmsPageView } from "@/components/about/CmsPageView";
 import { getPublishedPage } from "@/services/pages";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Vision & Mission",
   description: "Our vision and mission as a church family.",

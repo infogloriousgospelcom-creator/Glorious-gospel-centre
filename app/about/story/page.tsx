@@ -5,6 +5,8 @@ import { AboutSubnav } from "@/components/layout/AboutSubnav";
 import { CmsPageView } from "@/components/about/CmsPageView";
 import { getPublishedPage } from "@/services/pages";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Our Story",
   description: "The story of Glorious Gospel Centre — how God brought this church into being.",

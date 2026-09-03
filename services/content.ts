@@ -149,6 +149,72 @@ export async function getFeaturedMinistries(limit = 6): Promise<MinistryItem[]> 
   }
 }
 
+export async function getAllPublishedMinistries(): Promise<MinistryItem[]> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("ministries")
+      .select(
+        "id,slug,name,short_description,description,hero_image,meeting_info,contact_email,contact_phone,sort_order,published_at",
+      )
+      .eq("status", "PUBLISHED")
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
+    if (error) return [];
+    return (data ?? []) as MinistryItem[];
+  } catch {
+    return [];
+  }
+}
+
+export async function getMinistryBySlug(slug: string): Promise<MinistryItem | null> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("ministries")
+      .select(
+        "id,slug,name,short_description,description,hero_image,meeting_info,contact_email,contact_phone,sort_order,published_at",
+      )
+      .eq("slug", slug)
+      .eq("status", "PUBLISHED")
+      .maybeSingle();
+    if (error) return null;
+    return (data ?? null) as MinistryItem | null;
+  } catch {
+    return null;
+  }
+}
+
+export interface MinistryLeaderLink {
+  role: string | null;
+  sort_order: number;
+  leader: LeaderItem;
+}
+
+export async function getMinistryLeaders(ministryId: string): Promise<MinistryLeaderLink[]> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("ministry_leaders")
+      .select(
+        "role,sort_order,leader:leaders(id,full_name,title,bio,image_url,email,phone,sort_order,is_featured)",
+      )
+      .eq("ministry_id", ministryId)
+      .order("sort_order", { ascending: true });
+    if (error) return [];
+    type Row = { role: string | null; sort_order: number; leader: LeaderItem | LeaderItem[] | null };
+    return (data ?? [])
+      .map((row: Row) => {
+        const leader = Array.isArray(row.leader) ? row.leader[0] : row.leader;
+        if (!leader) return null;
+        return { role: row.role, sort_order: row.sort_order, leader };
+      })
+      .filter((m): m is MinistryLeaderLink => m !== null);
+  } catch {
+    return [];
+  }
+}
+
 export async function getPublishedServices(): Promise<ServiceItem[]> {
   try {
     const supabase = createClient();
