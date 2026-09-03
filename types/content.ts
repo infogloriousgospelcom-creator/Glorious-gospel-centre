@@ -125,17 +125,26 @@ export interface LeaderItem {
   is_featured: boolean;
 }
 
-export interface PageItem {
+export interface GivingCategory {
   id: string;
-  slug: string;
-  title: string;
-  excerpt: string | null;
-  body: string | null;
-  hero_image: string | null;
-  seo_title: string | null;
-  seo_description: string | null;
-  seo_og_image: string | null;
-  published_at: string | null;
+  kind: "TITHE" | "OFFERING" | "MISSIONS" | "OTHER";
+  label: string;
+  description: string | null;
+  is_active: boolean;
+  sort_order: number;
+}
+
+export interface GivingTransaction {
+  id: string;
+  category_id: string | null;
+  provider: string;
+  external_reference: string | null;
+  amount_cents: number;
+  currency: string;
+  phone: string | null;
+  status: "PENDING" | "PROCESSING" | "SUCCESS" | "FAILED" | "CANCELLED";
+  raw_callback: unknown;
+  created_at: string;
 }
 
 export interface GalleryAlbum {
@@ -157,6 +166,19 @@ export interface GalleryItem {
   caption: string | null;
   alt_text: string | null;
   sort_order: number;
+}
+
+export interface PageItem {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  body: string | null;
+  hero_image: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  seo_og_image: string | null;
+  published_at: string | null;
 }
 
 export const DAYS_OF_WEEK = [
