@@ -26,7 +26,10 @@ export function toEmbedUrl(url: string | null | undefined): string | null {
       }
     }
     if (host.endsWith("vimeo.com")) {
-      const id = u.pathname.replace(/^\//, "").split("/")[0];
+      // /12345 or /video/12345 (with or without trailing path).
+      const parts = u.pathname.replace(/^\//, "").split("/").filter(Boolean);
+      if (parts.length === 0) return null;
+      const id = parts[0] === "video" ? parts[1] : parts[0];
       return id ? `https://player.vimeo.com/video/${id}` : null;
     }
     if (host === "player.vimeo.com") {
