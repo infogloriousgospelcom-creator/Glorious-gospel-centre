@@ -18,6 +18,7 @@ git checkout -b feature/<scope>
 # work, then:
 npm run lint
 npm run typecheck
+npm test
 npm run build
 
 git status
@@ -47,11 +48,16 @@ chore:    tooling, dependencies, configuration
 
 - [ ] `npm run lint` passes
 - [ ] `npm run typecheck` passes
+- [ ] `npm test` passes
 - [ ] `npm run build` passes
 - [ ] Mobile + desktop verified
 - [ ] No secrets introduced
 - [ ] No `any`, no `eslint-disable`, no `// @ts-ignore` without justification
 - [ ] Documentation updated (README/ARCHITECTURE/SECURITY) if behavior changed
+- [ ] New utility / schema / service has unit tests
+- [ ] No real church data added — use the placeholders documented in
+      [`SECURITY.md`](./SECURITY.md) (§ Placeholder data policy) until
+      the church provides the real values.
 
 ## Secrets
 

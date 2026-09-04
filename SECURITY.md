@@ -61,4 +61,30 @@ Never logged: passwords, access tokens, service-role keys, payment secrets, raw 
 
 ## Reporting vulnerabilities
 
-For now, report issues to the project lead. A formal disclosure process will be added in a later phase.
+For now, report issues to the project lead. A formal disclosure process
+will be added in a later phase.
+
+## Placeholder data policy
+
+Until the church provides real values, the codebase uses clearly
+identifiable placeholders. Never invent:
+
+- phone numbers
+- bank account / PayBill / Till numbers
+- email addresses
+- social media handles
+- leader bios
+- event dates
+- theological statements
+
+Acceptable patterns:
+
+```
+[OFFICIAL EMAIL TO BE PROVIDED]
+[M-PESA DETAILS TO BE PROVIDED]
+[LEADER BIO TO BE PROVIDED]
+```
+
+When the placeholder is shown on the public site, the surrounding text
+makes it clear the field is pending. Replace via the admin or directly
+in `site_settings` once the real value is known.

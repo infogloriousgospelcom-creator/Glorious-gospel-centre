@@ -4,9 +4,6 @@ out
 dist
 coverage
 
-# CI workflow excluded from push until GitHub OAuth scope is granted
-.github/workflows/
-
 # Local Supabase CLI credentials (do not commit)
 .env.supabase
 .env.supabase.template
@@ -31,3 +28,6 @@ npm-debug.log*
 
 next-env.d.ts
 *.tsbuildinfo
+
+# Test artifacts
+.vitest-cache
