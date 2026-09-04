@@ -19,11 +19,11 @@ export default function GlobalError({
   return (
     <>
       <Navbar />
-      <main className="container-page py-24 text-center">
+      <main id="main" className="container-page py-24 text-center">
         <p className="mb-3 text-sm font-medium uppercase tracking-wider text-red-600">
           Something went wrong
         </p>
-        <h1 className="heading-1 mb-4">          We couldn&apos;t load that page</h1>
+        <h1 className="heading-1 mb-4">We couldn&apos;t load that page</h1>
         <p className="lead mx-auto mb-8 max-w-xl">
           Please try again. If the problem persists, contact the church office.
         </p>
@@ -31,13 +31,13 @@ export default function GlobalError({
           <button
             type="button"
             onClick={reset}
-            className="inline-flex items-center justify-center rounded-xl bg-brand-700 px-5 py-3 text-sm font-medium text-white hover:bg-brand-800"
+            className="inline-flex items-center justify-center rounded-xl bg-brand-700 px-5 py-3 text-sm font-medium text-white hover:bg-brand-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
           >
             Try again
           </button>
           <Link
             href="/"
-            className="inline-flex items-center justify-center rounded-xl border border-brand-200 px-5 py-3 text-sm font-medium text-brand-800 hover:bg-brand-50"
+            className="inline-flex items-center justify-center rounded-xl border border-brand-200 px-5 py-3 text-sm font-medium text-brand-800 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
           >
             Home
           </Link>

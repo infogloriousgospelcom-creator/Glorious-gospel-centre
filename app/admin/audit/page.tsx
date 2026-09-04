@@ -15,7 +15,7 @@ export default async function AdminAuditLogPage() {
   const rows = await listRecentAuditLogs(200);
   return (
     <>
-      <AdminSubnav active="/admin/approvals" />
+      <AdminSubnav active="/admin/audit" />
       <Section>
         <Container>
           <div className="mb-6">

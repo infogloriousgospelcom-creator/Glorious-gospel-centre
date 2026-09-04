@@ -6,7 +6,7 @@ export default function NotFound() {
   return (
     <>
       <Navbar />
-      <main className="container-page py-24 text-center">
+      <main id="main" className="container-page py-24 text-center">
         <p className="mb-3 text-sm font-medium uppercase tracking-wider text-brand-600">
           404
         </p>
@@ -16,7 +16,7 @@ export default function NotFound() {
         </p>
         <Link
           href="/"
-          className="inline-flex items-center justify-center rounded-xl bg-brand-700 px-5 py-3 text-sm font-medium text-white hover:bg-brand-800"
+          className="inline-flex items-center justify-center rounded-xl bg-brand-700 px-5 py-3 text-sm font-medium text-white hover:bg-brand-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
         >
           Return home
         </Link>

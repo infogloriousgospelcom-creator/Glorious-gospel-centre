@@ -31,11 +31,12 @@ export function AdminSubnav({ active }: { active?: string }) {
       <Container>
         <ul className="-mb-px flex flex-wrap gap-x-5 gap-y-1 overflow-x-auto py-2 text-sm font-medium text-ink-muted">
           {links.map((l) => {
-            const isActive = active && l.href.startsWith(active);
+            const isActive = active ? l.href === active || l.href.startsWith(`${active}/`) : false;
             return (
               <li key={l.href}>
                 <Link
                   href={l.href}
+                  aria-current={isActive ? "page" : undefined}
                   className={
                     isActive
                       ? "border-b-2 border-brand-700 pb-1.5 text-ink"

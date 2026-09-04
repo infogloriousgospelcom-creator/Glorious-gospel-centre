@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -18,13 +18,22 @@ const links = [
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    }
+    document.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = prev;
+      document.removeEventListener("keydown", onKey);
     };
   }, [open]);
 
@@ -52,6 +61,7 @@ export function Navbar() {
         </nav>
 
         <button
+          ref={triggerRef}
           type="button"
           aria-controls="mobile-menu"
           aria-expanded={open}
@@ -88,10 +98,21 @@ export function Navbar() {
 }
 
 function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const ref = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    // Move focus to the menu container so keyboard users land inside.
+    const t = window.setTimeout(() => ref.current?.focus(), 0);
+    return () => window.clearTimeout(t);
+  }, [open]);
+
   if (!open) return null;
   return (
     <nav
       id="mobile-menu"
+      ref={ref}
+      tabIndex={-1}
       aria-label="Mobile primary"
       className="border-t border-brand-100 bg-surface md:hidden"
     >
