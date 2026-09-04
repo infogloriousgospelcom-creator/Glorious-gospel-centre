@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/supabase/server";
 import type { AdminActionState } from "./sermons";
 import { z } from "zod";
+import { writeAuditLog } from "@/lib/audit";
+import { getClientIpHash } from "@/lib/ip-hash";
 
 const STATUS = ["NEW", "READ", "RESPONDED", "ARCHIVED"] as const;
 const NoteSchema = z.object({ id: z.string().uuid(), internal_notes: z.string().trim().max(2000) });
@@ -25,8 +27,28 @@ export async function updatePrayerStatus(id: string, status: string): Promise<Ad
   const parsed = StatusSchema.safeParse({ id, status });
   if (!parsed.success) return { ok: false, message: "Invalid status." };
   try {
-    const { error } = await auth.supabase.from("prayer_requests").update({ status: parsed.data.status }).eq("id", id);
+    // Fetch the prior status for the audit log.
+    const { data: prior } = await auth.supabase
+      .from("prayer_requests")
+      .select("status")
+      .eq("id", parsed.data.id)
+      .maybeSingle();
+
+    const { error } = await auth.supabase
+      .from("prayer_requests")
+      .update({ status: parsed.data.status })
+      .eq("id", id);
     if (error) return { ok: false, message: "Could not update status." };
+
+    await writeAuditLog({
+      actorId: auth.userId,
+      action: "prayer.status_change",
+      entityType: "prayer_request",
+      entityId: parsed.data.id,
+      metadata: { from: prior?.status ?? null, to: parsed.data.status },
+      ipHash: getClientIpHash(),
+    });
+
     revalidatePath("/admin/prayer-requests");
     return { ok: true, message: "Status updated." };
   } catch { return { ok: false, message: "Could not update status." }; }
@@ -40,6 +62,14 @@ export async function updatePrayerNotes(id: string, internal_notes: string): Pro
   try {
     const { error } = await auth.supabase.from("prayer_requests").update({ internal_notes: parsed.data.internal_notes || null }).eq("id", id);
     if (error) return { ok: false, message: "Could not save notes." };
+    await writeAuditLog({
+      actorId: auth.userId,
+      action: "prayer.notes_update",
+      entityType: "prayer_request",
+      entityId: parsed.data.id,
+      metadata: { length: (parsed.data.internal_notes ?? "").length },
+      ipHash: getClientIpHash(),
+    });
     revalidatePath("/admin/prayer-requests");
     return { ok: true, message: "Notes saved." };
   } catch { return { ok: false, message: "Could not save notes." }; }
@@ -65,6 +95,14 @@ export async function deletePrayerRequest(id: string): Promise<AdminActionState>
   try {
     const { error } = await auth.supabase.from("prayer_requests").delete().eq("id", id);
     if (error) return { ok: false, message: "Could not delete." };
+    await writeAuditLog({
+      actorId: auth.userId,
+      action: "prayer.delete",
+      entityType: "prayer_request",
+      entityId: id,
+      metadata: {},
+      ipHash: getClientIpHash(),
+    });
     revalidatePath("/admin/prayer-requests");
     return { ok: true, message: "Prayer request deleted." };
   } catch { return { ok: false, message: "Could not delete." }; }
