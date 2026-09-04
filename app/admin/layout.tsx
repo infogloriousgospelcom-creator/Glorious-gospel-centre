@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Navbar } from "@/components/layout/Navbar";
+import { AdminSubnav } from "@/components/layout/AdminSubnav";
 import { Footer } from "@/components/layout/Footer";
 import { signOutAction } from "@/services/auth.actions";
 import { getCurrentAdmin } from "@/services/auth";
@@ -49,6 +50,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           </div>
         </div>
       </header>
+      <AdminSubnav />
       <main id="main">{children}</main>
       <Footer />
     </>
