@@ -1,37 +1,5 @@
 import "server-only";
-import { createClient as createSupabaseClient, type SupabaseClient } from "@supabase/supabase-js";
-import { getServerEnv } from "@/lib/env";
-
-/**
- * Service-role Supabase client.
- *
- * ⚠️  BYPASSES ALL ROW-LEVEL SECURITY. Use ONLY inside server-only code
- *     paths for operations that authenticated users cannot perform under
- *     RLS — currently: writing to public.audit_logs.
- *
- * Never import this file from client components. Never log the resulting
- * client's key.
- */
-
-let cached: SupabaseClient | null = null;
-
-function getClient(): SupabaseClient {
-  if (cached) return cached;
-  const env = getServerEnv();
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error(
-      "Service-role client unavailable: NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set.",
-    );
-  }
-  cached = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    env.SUPABASE_SERVICE_ROLE_KEY,
-    {
-      auth: { persistSession: false, autoRefreshToken: false },
-    },
-  );
-  return cached;
-}
+import { getServiceRoleClient } from "@/lib/service-role";
 
 /**
  * Write an audit log row.
@@ -47,7 +15,7 @@ export async function writeAuditLog(input: {
   ipHash?: string | null;
 }): Promise<void> {
   try {
-    const supabase = getClient();
+    const supabase = getServiceRoleClient();
     // Cast to `any` because the JS client infers `never` for tables whose
     // types aren't in the generated schema. This is server-only, the
     // payload shape is enforced by the migration and the database.

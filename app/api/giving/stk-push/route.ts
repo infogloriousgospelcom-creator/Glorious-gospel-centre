@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { initiateGiving } from "@/services/giving";
+import { getCurrentAdmin } from "@/services/auth";
 
 const Body = z.object({
   category_id: z.string().uuid(),
@@ -13,18 +14,21 @@ const Body = z.object({
 /**
  * Programmatic STK Push initiation endpoint.
  *
- * Used by:
- *   - The /give server action (which calls `initiateGiving` directly).
- *   - Future third-party integrations that need a programmatic API.
+ * Reserved for authenticated administrators who hold the
+ * `giving.manage` permission. The endpoint validates the session cookie
+ * (issued by Supabase Auth via @supabase/ssr) before initiating any
+ * payment request, and rejects any caller who lacks the permission.
  *
- * Authentication: callers must be authenticated admin sessions OR
- * provide the same honeypot/rate-limit protections as the public form.
- * For now this endpoint is gated to authenticated admins only.
+ * Public giving is performed via the /give server action which applies
+ * its own rate-limit, honeypot, and CAPTCHA-style protections.
  */
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return NextResponse.json({ error: "Missing authorization." }, { status: 401 });
+  const session = await getCurrentAdmin();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthenticated." }, { status: 401 });
+  }
+  if (!session.permissionKeys.includes("giving.manage")) {
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }
   try {
     const json = (await request.json()) as Record<string, unknown>;

@@ -5,6 +5,9 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/supabase/server";
+import { consume } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/ip-hash";
+import { safeAdminRedirect } from "@/lib/safe-redirect";
 
 const LoginSchema = z.object({
   email: z.string().trim().email("Enter a valid email.").max(254),
@@ -29,6 +32,25 @@ export async function signInAction(
   }
   const { email, password, redirect_to } = parsed.data;
 
+  const ip = getClientIp();
+  const rl = consume(`auth:login:${ip}`, { capacity: 8, windowMs: 10 * 60 * 1000 });
+  if (!rl.ok) {
+    return {
+      ok: false,
+      message: "Too many sign-in attempts. Please wait a few minutes and try again.",
+    };
+  }
+  const emailRl = consume(`auth:login:email:${email.toLowerCase()}`, {
+    capacity: 10,
+    windowMs: 10 * 60 * 1000,
+  });
+  if (!emailRl.ok) {
+    return {
+      ok: false,
+      message: "Too many sign-in attempts for this account. Please wait and try again.",
+    };
+  }
+
   try {
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -41,8 +63,8 @@ export async function signInAction(
       };
     }
     revalidatePath("/", "layout");
-    const safeRedirect = redirect_to && redirect_to.startsWith("/admin") ? redirect_to : "/admin/dashboard";
-    redirect(safeRedirect);
+    const safe = safeAdminRedirect(redirect_to) ?? "/admin/dashboard";
+    redirect(safe);
   } catch (err) {
     // Next.js redirect throws — let it bubble.
     if (err instanceof Error && err.message === "NEXT_REDIRECT") throw err;
@@ -70,6 +92,14 @@ export async function requestPasswordResetAction(
   const parsed = ForgotSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
     return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid email." };
+  }
+  const ip = getClientIp();
+  const rl = consume(`auth:forgot:${ip}`, { capacity: 5, windowMs: 10 * 60 * 1000 });
+  if (!rl.ok) {
+    return {
+      ok: true,
+      message: "If an account exists for that email, a reset link has been sent.",
+    };
   }
   try {
     const supabase = createClient();

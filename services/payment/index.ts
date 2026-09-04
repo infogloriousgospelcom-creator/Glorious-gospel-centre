@@ -18,6 +18,12 @@ let cached: PaymentProvider | null = null;
 export function getPaymentProvider(): PaymentProvider {
   if (cached) return cached;
   const env = getServerEnv();
+  if (!env.M_PESA_CALLBACK_SECRET) {
+    throw new Error(
+      "M_PESA_CALLBACK_SECRET is required to verify inbound Daraja webhooks. " +
+        "It must be a unique secret distinct from M_PESA_PASSKEY.",
+    );
+  }
   cached = new MpesaDarajaProvider({
     mode: env.M_PESA_CONSUMER_KEY ? "live" : "mock",
     consumerKey: env.M_PESA_CONSUMER_KEY,
@@ -25,7 +31,7 @@ export function getPaymentProvider(): PaymentProvider {
     shortcode: env.M_PESA_SHORTCODE,
     passkey: env.M_PESA_PASSKEY,
     environment: env.M_PESA_ENVIRONMENT,
-    callbackSecret: env.M_PESA_CALLBACK_SECRET ?? env.M_PESA_PASSKEY,
+    callbackSecret: env.M_PESA_CALLBACK_SECRET,
   });
   return cached;
 }

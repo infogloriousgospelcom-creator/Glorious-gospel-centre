@@ -1,24 +1,8 @@
 import "server-only";
-import { createClient as createServiceClient, type SupabaseClient } from "@supabase/supabase-js";
-import { getServerEnv } from "@/lib/env";
 import { createClient as createUserClient } from "@/supabase/server";
+import { getServiceRoleClient } from "@/lib/service-role";
 import { writeAuditLog } from "@/lib/audit";
 import { getClientIpHash } from "@/lib/ip-hash";
-
-let cached: SupabaseClient | null = null;
-function getServiceClient(): SupabaseClient {
-  if (cached) return cached;
-  const env = getServerEnv();
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error("Service-role key not configured.");
-  }
-  cached = createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    env.SUPABASE_SERVICE_ROLE_KEY,
-    { auth: { persistSession: false, autoRefreshToken: false } },
-  );
-  return cached;
-}
 
 const TABLES = ["events", "sermons", "announcements", "pages"] as const;
 const STATUS = ["DRAFT", "PENDING_APPROVAL", "APPROVED", "PUBLISHED", "REJECTED", "ARCHIVED"] as const;
@@ -69,7 +53,7 @@ export async function applyTransition(input: TransitionInput): Promise<Transitio
   if (error) return { ok: false, message: "Could not update status.", from, to: input.toStatus };
 
   // History row (service-role insert — RLS denies authenticated inserts).
-  const service = getServiceClient();
+  const service = getServiceRoleClient();
   const tableAlias = service.from("approval_history" as "profiles") as unknown as {
     insert: (rows: unknown) => Promise<{ error: { message: string } | null }>;
   };

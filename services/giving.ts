@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/supabase/server";
+import { getServiceRoleClient } from "@/lib/service-role";
 import { getPaymentProvider } from "@/services/payment";
 import type { GivingCategory } from "@/types/content";
 
@@ -127,7 +128,10 @@ export async function applyCallback(payload: {
   raw: unknown;
 }): Promise<{ updated: boolean; status: string | null }> {
   try {
-    const supabase = createClient();
+    // The webhook is unauthenticated; RLS on giving_transactions only
+    // allows admins to mutate. Bypass RLS via the service-role client —
+    // analogous to how approval_history and audit_logs are written.
+    const supabase = getServiceRoleClient();
     const { data: tx, error: lookupErr } = await supabase
       .from("giving_transactions")
       .select("id,status")

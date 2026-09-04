@@ -20,8 +20,21 @@ const EventSchema = z.object({
   short_description: z.string().trim().max(500).optional().or(z.literal("")),
   description: z.string().trim().max(20000).optional().or(z.literal("")),
   poster_url: z.string().url("Poster must be a URL.").optional().or(z.literal("")),
-  starts_at: z.string().min(1, "Start date is required."),
-  ends_at: z.string().optional().or(z.literal("")),
+  starts_at: z
+    .string()
+    .trim()
+    .min(1, "Start date is required.")
+    .refine((v) => !Number.isNaN(new Date(v).getTime()), {
+      message: "Start date is invalid.",
+    }),
+  ends_at: z
+    .string()
+    .trim()
+    .refine((v) => v === "" || !Number.isNaN(new Date(v).getTime()), {
+      message: "End date is invalid.",
+    })
+    .optional()
+    .or(z.literal("")),
   location: z.string().trim().max(200).optional().or(z.literal("")),
   speaker: z.string().trim().max(120).optional().or(z.literal("")),
   registration_required: z.literal("on").optional().or(z.literal("")),
