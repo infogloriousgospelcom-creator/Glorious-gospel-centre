@@ -19,7 +19,7 @@ port = 54323
 [auth]
 enabled = true
 site_url = "http://localhost:3000"
-additional_redirect_urls = ["http://localhost:3000/admin"]
+additional_redirect_urls = ["http://localhost:3000/admin", "http://localhost:3000/admin/reset-password"]
 jwt_expiry = 3600
 enable_signup = false
 
@@ -27,6 +27,10 @@ enable_signup = false
 enable_signup = false
 double_confirm_changes = true
 enable_confirmations = true
+
+[auth.email.password_recovery]
+# Allow the recovery link to land on our admin reset-password page.
+redirect_to = "/admin/reset-password"
 
 [storage]
 enabled = true
