@@ -11,6 +11,7 @@ import { requireAdmin } from "@/services/auth";
 import { getSermonForAdmin, listAllSeriesOptions } from "@/services/admin/sermons.read";
 import { deleteSermon } from "@/services/admin/sermons";
 import { SermonForm } from "../_components/SermonForm";
+import { ApprovalHistoryPanel } from "@/components/admin/ApprovalHistoryPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -94,6 +95,7 @@ export default async function EditSermonPage({
                     </div>
                   </form>
                 </div>
+                <ApprovalHistoryPanel entityType="sermons" entityId={row.id} />
               </div>
             </Card>
           </div>

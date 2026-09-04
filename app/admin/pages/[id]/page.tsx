@@ -11,6 +11,7 @@ import { requireAdmin } from "@/services/auth";
 import { getPageForAdmin } from "@/services/admin/pages.read";
 import { deletePage } from "@/services/admin/pages";
 import { PageForm } from "../_components/PageForm";
+import { ApprovalHistoryPanel } from "@/components/admin/ApprovalHistoryPanel";
 export const dynamic = "force-dynamic";
 export async function generateMetadata({ params: _ }: { params: { id: string } }): Promise<Metadata> {
   return { title: "Edit page · Admin", robots: { index: false, follow: false } };
@@ -53,6 +54,7 @@ export default async function EditPagePage({ params }: { params: { id: string } 
                     <div className="mt-3 flex justify-end"><Button type="submit" variant="danger">Delete page</Button></div>
                   </form>
                 </div>
+                <ApprovalHistoryPanel entityType="pages" entityId={row.id} />
               </div>
             </Card>
           </div>

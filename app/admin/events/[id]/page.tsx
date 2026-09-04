@@ -11,6 +11,7 @@ import { requireAdmin } from "@/services/auth";
 import { getEventForAdmin, listEventRegistrations } from "@/services/admin/events.read";
 import { deleteEvent } from "@/services/admin/events";
 import { EventForm } from "../_components/EventForm";
+import { ApprovalHistoryPanel } from "@/components/admin/ApprovalHistoryPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -88,6 +89,7 @@ export default async function EditEventPage({
                     </div>
                   </form>
                 </div>
+                <ApprovalHistoryPanel entityType="events" entityId={row.id} />
               </div>
             </Card>
 

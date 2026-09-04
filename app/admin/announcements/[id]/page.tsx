@@ -11,6 +11,7 @@ import { requireAdmin } from "@/services/auth";
 import { getAnnouncementForAdmin } from "@/services/admin/announcements.read";
 import { deleteAnnouncement } from "@/services/admin/announcements";
 import { AnnouncementForm } from "../_components/AnnouncementForm";
+import { ApprovalHistoryPanel } from "@/components/admin/ApprovalHistoryPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -86,6 +87,7 @@ export default async function EditAnnouncementPage({
                     </div>
                   </form>
                 </div>
+                <ApprovalHistoryPanel entityType="announcements" entityId={row.id} />
               </div>
             </Card>
           </div>
