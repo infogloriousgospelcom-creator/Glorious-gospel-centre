@@ -16,6 +16,7 @@ const links = [
   { href: "/admin/messages", label: "Messages" },
   { href: "/admin/giving", label: "Giving" },
   { href: "/admin/approvals", label: "Approvals" },
+  { href: "/admin/audit", label: "Audit" },
   { href: "/admin/users", label: "Users" },
   { href: "/admin/settings", label: "Settings" },
   { href: "/admin/account", label: "Account" },
