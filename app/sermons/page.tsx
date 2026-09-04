@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
@@ -12,6 +13,9 @@ import { listSermonsPaged, SERMONS_PAGE_SIZE } from "@/services/sermons";
 import { listAllSermonSeries, listAllSermonCategories } from "@/services/sermons";
 import { formatDuration } from "@/lib/media";
 
+// searchParams make this page dynamic by definition; we rely on the
+// pagination/filter UI being client-side. Sermon listings themselves
+// are mutated through admin actions, which call revalidatePath().
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
@@ -90,12 +94,15 @@ export default async function SermonsPage({
                     return (
                       <Link key={s.id} href={`/sermons/${s.slug}`} className="group">
                         <Card className="flex h-full flex-col transition-shadow group-hover:shadow-elevated">
-                          <div className="aspect-video overflow-hidden bg-gradient-to-br from-brand-900 via-brand-800 to-accent-700" aria-hidden="true">
+                          <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-brand-900 via-brand-800 to-accent-700" aria-hidden="true">
                             {s.thumbnail_url ? (
-                              <img
+                              <Image
                                 src={s.thumbnail_url}
                                 alt=""
-                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                fill
+                                sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                                loading="lazy"
+                                className="object-cover transition-transform duration-500 group-hover:scale-105"
                               />
                             ) : null}
                           </div>

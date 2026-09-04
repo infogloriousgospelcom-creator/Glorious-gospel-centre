@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect } from "react";
+import Image from "next/image";
 
 export interface LightboxItem {
   src: string;
@@ -81,9 +82,12 @@ export function GalleryLightbox({
         >
           ‹
         </button>
-        <img
+        <Image
           src={current.src}
           alt={current.alt}
+          width={1600}
+          height={1200}
+          sizes="(min-width: 1280px) 1280px, 100vw"
           className="max-h-[75vh] max-w-full rounded object-contain"
         />
         <button
@@ -112,7 +116,14 @@ export function GalleryLightbox({
               i === openIndex ? "border-white" : "border-transparent opacity-70 hover:opacity-100"
             }`}
           >
-            <img src={it.src} alt="" className="h-full w-full object-cover" />
+            <Image
+              src={it.src}
+              alt=""
+              width={96}
+              height={96}
+              loading="lazy"
+              className="h-full w-full object-cover"
+            />
           </button>
         ))}
       </div>

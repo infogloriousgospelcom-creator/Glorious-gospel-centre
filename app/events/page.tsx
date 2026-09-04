@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
@@ -8,7 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState, SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
 import { getAllPublishedEvents } from "@/services/content";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Events",
@@ -66,12 +67,15 @@ export default async function EventsPage() {
                   return (
                     <Link key={e.id} href={`/events/${e.slug}`} className="group">
                       <Card className="flex h-full flex-col transition-shadow group-hover:shadow-elevated">
-                        <div className="aspect-[4/3] bg-gradient-to-br from-brand-100 to-accent-100" aria-hidden="true">
+                        <div className="relative aspect-[4/3] bg-gradient-to-br from-brand-100 to-accent-100" aria-hidden="true">
                           {e.poster_url ? (
-                            <img
+                            <Image
                               src={e.poster_url}
                               alt=""
-                              className="h-full w-full object-cover"
+                              fill
+                              sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                              loading="lazy"
+                              className="object-cover"
                             />
                           ) : null}
                         </div>

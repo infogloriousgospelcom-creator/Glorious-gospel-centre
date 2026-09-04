@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Container, Section } from "@/components/ui/Container";
 import { SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
 import { getLatestSermon } from "@/services/content";
@@ -46,12 +47,15 @@ export async function LatestSermonSection() {
               </SectionLead>
             )}
           </div>
-          <div className="aspect-video overflow-hidden rounded-3xl bg-gradient-to-br from-brand-700 via-brand-800 to-accent-700 shadow-elevated">
+          <div className="relative aspect-video overflow-hidden rounded-3xl bg-gradient-to-br from-brand-700 via-brand-800 to-accent-700 shadow-elevated">
             {sermon?.thumbnail_url ? (
-              <img
+              <Image
                 src={sermon.thumbnail_url}
                 alt=""
-                className="h-full w-full object-cover"
+                fill
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                priority
+                className="object-cover"
               />
             ) : (
               <div className="flex h-full items-center justify-center text-brand-100/60">

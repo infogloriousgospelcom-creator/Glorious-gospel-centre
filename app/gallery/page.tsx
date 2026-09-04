@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
@@ -10,7 +11,11 @@ import { GalleryFilters } from "./_components/GalleryFilters";
 import { GalleryPagination } from "./_components/GalleryPagination";
 import { GALLERY_PAGE_SIZE, listAlbumsPaged, listAllAlbumCategories } from "@/services/gallery";
 
-export const dynamic = "force-dynamic";
+// Album listings change only when an admin publishes a new album; we
+// can rely on `revalidatePath` calls in services/admin/gallery.ts to
+// invalidate this segment after a mutation. 5 minutes is a sensible
+// fallback in case a revalidate call is ever missed.
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Gallery",
@@ -83,10 +88,13 @@ export default async function GalleryPage({
                         <Card className="flex h-full flex-col overflow-hidden transition-shadow group-hover:shadow-elevated">
                           <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-brand-200 to-accent-200" aria-hidden="true">
                             {a.cover_image ? (
-                              <img
+                              <Image
                                 src={a.cover_image}
                                 alt={a.title}
-                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                fill
+                                sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                                loading="lazy"
+                                className="object-cover transition-transform duration-500 group-hover:scale-105"
                               />
                             ) : null}
                             {date ? (

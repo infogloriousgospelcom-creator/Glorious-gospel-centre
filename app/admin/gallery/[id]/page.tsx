@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Container, Section } from "@/components/ui/Container";
 import { Card, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -72,7 +73,16 @@ export default async function EditAlbumPage({ params }: { params: { id: string }
                       return (
                         <li key={it.id} className="rounded-xl border border-brand-100 bg-surface-muted p-2">
                           {url ? (
-                            <img src={url} alt={it.alt_text ?? ""} className="aspect-square w-full rounded-lg object-cover" />
+                            <div className="relative aspect-square w-full overflow-hidden rounded-lg">
+                              <Image
+                                src={url}
+                                alt={it.alt_text ?? ""}
+                                fill
+                                sizes="(min-width: 1024px) 160px, 33vw"
+                                loading="lazy"
+                                className="object-cover"
+                              />
+                            </div>
                           ) : (
                             <div className="flex aspect-square w-full items-center justify-center rounded-lg bg-brand-100 text-xs text-ink-muted">No preview</div>
                           )}

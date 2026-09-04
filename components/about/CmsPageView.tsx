@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Container, Section } from "@/components/ui/Container";
 import { Card, CardBody, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/Section";
@@ -14,11 +15,16 @@ export function CmsPageView({ page, fallbackTitle }: { page: PageItem | null; fa
               <p className="lead mb-8 text-balance">{page.excerpt}</p>
             ) : null}
             {page.hero_image ? (
-              <img
-                src={page.hero_image}
-                alt=""
-                className="mb-8 aspect-[16/9] w-full rounded-2xl object-cover"
-              />
+              <div className="relative mb-8 aspect-[16/9] w-full overflow-hidden rounded-2xl">
+                <Image
+                  src={page.hero_image}
+                  alt=""
+                  fill
+                  sizes="(min-width: 768px) 768px, 100vw"
+                  loading="lazy"
+                  className="object-cover"
+                />
+              </div>
             ) : null}
             <div className="prose prose-lg max-w-none text-ink">
               {page.body
@@ -91,9 +97,16 @@ export function LeaderGrid({
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {leaders.map((l) => (
         <Card key={l.id}>
-          <div className="aspect-[4/5] overflow-hidden bg-gradient-to-br from-brand-100 to-accent-100" aria-hidden="true">
+          <div className="relative aspect-[4/5] overflow-hidden bg-gradient-to-br from-brand-100 to-accent-100" aria-hidden="true">
             {l.image_url ? (
-              <img src={l.image_url} alt="" className="h-full w-full object-cover" />
+              <Image
+                src={l.image_url}
+                alt=""
+                fill
+                sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                loading="lazy"
+                className="object-cover"
+              />
             ) : null}
           </div>
           <CardHeader>

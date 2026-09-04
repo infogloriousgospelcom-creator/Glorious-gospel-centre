@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Container, Section } from "@/components/ui/Container";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { EmptyState, SectionEyebrow, SectionTitle } from "@/components/ui/Section";
@@ -56,10 +57,12 @@ export async function WelcomeSection() {
                           aria-hidden="true"
                         >
                           {l.image_url ? (
-                            <img
+                            <Image
                               src={l.image_url}
                               alt=""
-                              className="h-full w-full object-cover"
+                              fill
+                              sizes="56px"
+                              className="object-cover"
                             />
                           ) : null}
                         </div>

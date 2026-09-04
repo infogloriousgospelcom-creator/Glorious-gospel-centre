@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import typography from "@tailwindcss/typography";
 
 const config: Config = {
   content: [
@@ -93,22 +94,17 @@ const config: Config = {
         "smooth": "cubic-bezier(0.22, 1, 0.36, 1)",
       },
       keyframes: {
-        "fade-in": {
-          "0%": { opacity: "0", transform: "translateY(4px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
-        },
         "scale-in": {
           "0%": { opacity: "0", transform: "scale(0.97)" },
           "100%": { opacity: "1", transform: "scale(1)" },
         },
       },
       animation: {
-        "fade-in": "fade-in 240ms cubic-bezier(0.22, 1, 0.36, 1) both",
         "scale-in": "scale-in 200ms cubic-bezier(0.22, 1, 0.36, 1) both",
       },
     },
   },
-  plugins: [],
+  plugins: [typography],
 };
 
 export default config;

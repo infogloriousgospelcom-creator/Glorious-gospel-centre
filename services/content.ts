@@ -1,4 +1,6 @@
 import "server-only";
+import { cache } from "react";
+import { unstable_cache as nextCache } from "next/cache";
 import { createClient } from "@/supabase/server";
 import { dayName } from "@/types/content";
 import type {
@@ -31,35 +33,50 @@ const DEFAULT_SETTINGS: SiteSettings = {
   seo_default_og_image: null,
 };
 
-export async function getSiteSettings(): Promise<SiteSettings> {
-  try {
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("site_settings")
-      .select("*")
-      .limit(1)
-      .maybeSingle();
-    if (error || !data) return DEFAULT_SETTINGS;
-    return {
-      church_name: data.church_name ?? DEFAULT_SETTINGS.church_name,
-      tagline: data.tagline ?? DEFAULT_SETTINGS.tagline,
-      phone: data.phone,
-      email: data.email,
-      address: data.address,
-      office_hours: data.office_hours,
-      google_maps_url: data.google_maps_url,
-      whatsapp: data.whatsapp,
-      mpesa_paybill: data.mpesa_paybill,
-      mpesa_till: data.mpesa_till,
-      bank_instructions: data.bank_instructions,
-      seo_default_title: data.seo_default_title,
-      seo_default_description: data.seo_default_description,
-      seo_default_og_image: data.seo_default_og_image,
-    };
-  } catch {
-    return DEFAULT_SETTINGS;
-  }
-}
+/**
+ * Site settings are read on every public page (header, footer, hero).
+ * `react.cache` dedupes within a single render; `unstable_cache` memoises
+ * across requests with a 5-minute TTL window. Admin settings saves call
+ * `revalidatePath` to invalidate immediately.
+ */
+export const getSiteSettings = cache(
+  (): Promise<SiteSettings> =>
+    nextCache(
+      async (): Promise<SiteSettings> => {
+        try {
+          const supabase = createClient();
+          const { data, error } = await supabase
+            .from("site_settings")
+            .select(
+              "church_name,tagline,phone,email,address,office_hours,google_maps_url,whatsapp,mpesa_paybill,mpesa_till,bank_instructions,seo_default_title,seo_default_description,seo_default_og_image",
+            )
+            .limit(1)
+            .maybeSingle();
+          if (error || !data) return DEFAULT_SETTINGS;
+          return {
+            church_name: data.church_name ?? DEFAULT_SETTINGS.church_name,
+            tagline: data.tagline ?? DEFAULT_SETTINGS.tagline,
+            phone: data.phone,
+            email: data.email,
+            address: data.address,
+            office_hours: data.office_hours,
+            google_maps_url: data.google_maps_url,
+            whatsapp: data.whatsapp,
+            mpesa_paybill: data.mpesa_paybill,
+            mpesa_till: data.mpesa_till,
+            bank_instructions: data.bank_instructions,
+            seo_default_title: data.seo_default_title,
+            seo_default_description: data.seo_default_description,
+            seo_default_og_image: data.seo_default_og_image,
+          };
+        } catch {
+          return DEFAULT_SETTINGS;
+        }
+      },
+      ["site_settings"],
+      { revalidate: 300, tags: ["site_settings"] },
+    )(),
+);
 
 export async function getActiveSocialLinks(): Promise<SocialLink[]> {
   try {

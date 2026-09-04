@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -9,14 +11,20 @@ import { EmptyState, SectionEyebrow } from "@/components/ui/Section";
 import { getAlbumBySlug, listAlbumItems, publicStorageUrl } from "@/services/gallery";
 import { AlbumItemGrid } from "../_components/AlbumItemGrid";
 
-export const dynamic = "force-dynamic";
+// Album content is admin-managed; admin actions revalidate this segment
+// via revalidatePath(). A 5-minute fallback is plenty.
+export const revalidate = 300;
+
+// Wrapped in react.cache() so the metadata fetch and body fetch dedupe
+// within the same render.
+const loadAlbum = cache((slug: string) => getAlbumBySlug(slug));
 
 export async function generateMetadata({
   params,
 }: {
   params: { album: string };
 }): Promise<Metadata> {
-  const album = await getAlbumBySlug(params.album);
+  const album = await loadAlbum(params.album);
   if (!album) return { title: "Album" };
   return {
     title: album.title,
@@ -39,7 +47,7 @@ export default async function AlbumDetailPage({
 }: {
   params: { album: string };
 }) {
-  const album = await getAlbumBySlug(params.album);
+  const album = await loadAlbum(params.album);
   if (!album) notFound();
   const items = await listAlbumItems(album.id);
 
@@ -84,11 +92,16 @@ export default async function AlbumDetailPage({
 
         {album.cover_image ? (
           <Container>
-            <img
-              src={album.cover_image}
-              alt={album.title}
-              className="aspect-[21/9] w-full rounded-2xl object-cover shadow-elevated"
-            />
+            <div className="relative aspect-[21/9] w-full overflow-hidden rounded-2xl shadow-elevated">
+              <Image
+                src={album.cover_image}
+                alt={album.title}
+                fill
+                sizes="(min-width: 1280px) 1280px, 100vw"
+                priority
+                className="object-cover"
+              />
+            </div>
           </Container>
         ) : null}
 

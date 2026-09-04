@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -7,17 +8,21 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState, SectionEyebrow } from "@/components/ui/Section";
 import Link from "next/link";
-import { getAllPublishedEvents, getEventBySlug } from "@/services/content";
+import Image from "next/image";
+import { getEventBySlug } from "@/services/content";
 import { EventRegistrationForm } from "@/app/events/_components/EventRegistrationForm";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
+
+// Dedupe metadata + body fetches via react.cache().
+const loadEvent = cache((slug: string) => getEventBySlug(slug));
 
 export async function generateMetadata({
   params,
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
-  const event = await getEventBySlug(params.slug);
+  const event = await loadEvent(params.slug);
   if (!event) return { title: "Event" };
   return {
     title: event.title,
@@ -42,9 +47,8 @@ export default async function EventDetailPage({
 }: {
   params: { slug: string };
 }) {
-  const event = await getEventBySlug(params.slug);
+  const event = await loadEvent(params.slug);
   if (!event) notFound();
-  void getAllPublishedEvents;
 
   return (
     <>
@@ -77,11 +81,16 @@ export default async function EventDetailPage({
 
         {event.poster_url ? (
           <Container>
-            <img
-              src={event.poster_url}
-              alt=""
-              className="aspect-[21/9] w-full rounded-2xl object-cover shadow-elevated"
-            />
+            <div className="relative aspect-[21/9] w-full overflow-hidden rounded-2xl shadow-elevated">
+              <Image
+                src={event.poster_url}
+                alt=""
+                fill
+                sizes="(min-width: 1280px) 1280px, 100vw"
+                priority
+                className="object-cover"
+              />
+            </div>
           </Container>
         ) : null}
 

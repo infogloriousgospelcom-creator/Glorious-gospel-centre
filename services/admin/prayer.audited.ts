@@ -57,6 +57,29 @@ async function listAllPrayerRequestsFiltered(
   }
 }
 
+/**
+ * Count prayer requests by status. Does NOT write an audit log row —
+ * use this for status-chip counts on the prayer-requests listing
+ * page so that rendering the page doesn't double-log.
+ */
+export async function countPrayerRequestsByStatus(): Promise<Record<string, number>> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("prayer_requests")
+      .select("status");
+    if (error || !data) return { all: 0, NEW: 0, READ: 0, RESPONDED: 0, ARCHIVED: 0 };
+    const counts: Record<string, number> = { all: data.length, NEW: 0, READ: 0, RESPONDED: 0, ARCHIVED: 0 };
+    for (const r of data) {
+      const s = (r as { status?: string }).status ?? "";
+      counts[s] = (counts[s] ?? 0) + 1;
+    }
+    return counts;
+  } catch {
+    return { all: 0, NEW: 0, READ: 0, RESPONDED: 0, ARCHIVED: 0 };
+  }
+}
+
 export async function getPrayerRequestForAdminAudited(
   id: string,
   actorId: string,

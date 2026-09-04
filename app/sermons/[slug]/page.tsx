@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -7,18 +8,22 @@ import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState, SectionEyebrow } from "@/components/ui/Section";
 import Link from "next/link";
+import Image from "next/image";
 import { getSermonBySlug, getSeriesForSermon } from "@/services/sermons";
 import { toEmbedUrl, formatDuration } from "@/lib/media";
 import { SermonAudioPlayer } from "../_components/SermonAudioPlayer";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
+
+// Dedupe metadata + body fetches via react.cache().
+const loadSermon = cache((slug: string) => getSermonBySlug(slug));
 
 export async function generateMetadata({
   params,
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
-  const sermon = await getSermonBySlug(params.slug);
+  const sermon = await loadSermon(params.slug);
   if (!sermon) return { title: "Sermon" };
   return {
     title: sermon.title,
@@ -40,7 +45,7 @@ export default async function SermonDetailPage({
 }: {
   params: { slug: string };
 }) {
-  const sermon = await getSermonBySlug(params.slug);
+  const sermon = await loadSermon(params.slug);
   if (!sermon) notFound();
   const series = await getSeriesForSermon(sermon.id);
 
@@ -102,6 +107,7 @@ export default async function SermonDetailPage({
                   <iframe
                     src={embed}
                     title={sermon.title}
+                    loading="lazy"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
                     className="h-full w-full"
@@ -109,11 +115,16 @@ export default async function SermonDetailPage({
                 </div>
               </div>
             ) : sermon.thumbnail_url ? (
-              <img
-                src={sermon.thumbnail_url}
-                alt=""
-                className="aspect-video w-full rounded-2xl object-cover shadow-elevated"
-              />
+              <div className="relative aspect-video w-full overflow-hidden rounded-2xl shadow-elevated">
+                <Image
+                  src={sermon.thumbnail_url}
+                  alt=""
+                  fill
+                  sizes="(min-width: 1280px) 1280px, 100vw"
+                  priority
+                  className="object-cover"
+                />
+              </div>
             ) : (
               <EmptyState
                 title="Media coming soon"

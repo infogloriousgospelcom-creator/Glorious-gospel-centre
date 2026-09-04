@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -10,14 +12,16 @@ import { EmptyState, SectionEyebrow } from "@/components/ui/Section";
 import { getSermonSeriesBySlug, listSermonsPaged } from "@/services/sermons";
 import { formatDuration } from "@/lib/media";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
+
+const loadSeries = cache((slug: string) => getSermonSeriesBySlug(slug));
 
 export async function generateMetadata({
   params,
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
-  const series = await getSermonSeriesBySlug(params.slug);
+  const series = await loadSeries(params.slug);
   if (!series) return { title: "Series" };
   return {
     title: series.title,
@@ -39,7 +43,7 @@ export default async function SeriesDetailPage({
 }: {
   params: { slug: string };
 }) {
-  const series = await getSermonSeriesBySlug(params.slug);
+  const series = await loadSeries(params.slug);
   if (!series) notFound();
 
   const paged = await listSermonsPaged(1, { seriesId: series.id });
@@ -73,11 +77,16 @@ export default async function SeriesDetailPage({
 
         {series.hero_image ? (
           <Container>
-            <img
-              src={series.hero_image}
-              alt=""
-              className="aspect-[21/9] w-full rounded-2xl object-cover shadow-elevated"
-            />
+            <div className="relative aspect-[21/9] w-full overflow-hidden rounded-2xl shadow-elevated">
+              <Image
+                src={series.hero_image}
+                alt=""
+                fill
+                sizes="(min-width: 1280px) 1280px, 100vw"
+                priority
+                className="object-cover"
+              />
+            </div>
           </Container>
         ) : null}
 
@@ -99,12 +108,15 @@ export default async function SeriesDetailPage({
                   return (
                     <Link key={s.id} href={`/sermons/${s.slug}`} className="group">
                       <Card className="flex h-full flex-col transition-shadow group-hover:shadow-elevated">
-                        <div className="aspect-video overflow-hidden bg-gradient-to-br from-brand-900 via-brand-800 to-accent-700" aria-hidden="true">
+                        <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-brand-900 via-brand-800 to-accent-700" aria-hidden="true">
                           {s.thumbnail_url ? (
-                            <img
+                            <Image
                               src={s.thumbnail_url}
                               alt=""
-                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              fill
+                              sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                              loading="lazy"
+                              className="object-cover transition-transform duration-500 group-hover:scale-105"
                             />
                           ) : null}
                         </div>

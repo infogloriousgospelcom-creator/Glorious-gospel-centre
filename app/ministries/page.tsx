@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
@@ -14,7 +15,9 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export const dynamic = "force-dynamic";
+// Ministries are admin-managed; mutations invalidate this segment
+// via revalidatePath(). 5-minute fallback is plenty.
+export const revalidate = 300;
 
 export default async function MinistriesPage() {
   const ministries = await getAllPublishedMinistries();
@@ -49,14 +52,17 @@ export default async function MinistriesPage() {
                   <Link key={m.id} href={`/ministries/${m.slug}`} className="group">
                     <Card className="flex h-full flex-col transition-shadow group-hover:shadow-elevated">
                       <div
-                        className="aspect-[4/3] bg-gradient-to-br from-brand-100 to-accent-100"
+                        className="relative aspect-[4/3] bg-gradient-to-br from-brand-100 to-accent-100"
                         aria-hidden="true"
                       >
                         {m.hero_image ? (
-                          <img
+                          <Image
                             src={m.hero_image}
                             alt=""
-                            className="h-full w-full object-cover"
+                            fill
+                            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                            loading="lazy"
+                            className="object-cover"
                           />
                         ) : null}
                       </div>

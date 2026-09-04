@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Container, Section } from "@/components/ui/Container";
 import { EmptyState, SectionEyebrow, SectionTitle } from "@/components/ui/Section";
 import { getPublishedGalleryAlbums } from "@/services/content";
@@ -40,10 +41,13 @@ export async function GallerySection() {
                 }`}
               >
                 {a.cover_image ? (
-                  <img
+                  <Image
                     src={a.cover_image}
                     alt={a.title}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    fill
+                    sizes="(min-width: 1024px) 16vw, (min-width: 640px) 33vw, 50vw"
+                    loading="lazy"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 ) : null}
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/80 to-transparent p-3 text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -6,16 +7,20 @@ import { Container, Section } from "@/components/ui/Container";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { EmptyState, SectionEyebrow } from "@/components/ui/Section";
 import Link from "next/link";
+import Image from "next/image";
 import { getMinistryBySlug, getMinistryLeaders } from "@/services/content";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
+
+// Dedupe metadata + page body lookups via react.cache().
+const loadMinistry = cache((slug: string) => getMinistryBySlug(slug));
 
 export async function generateMetadata({
   params,
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
-  const ministry = await getMinistryBySlug(params.slug);
+  const ministry = await loadMinistry(params.slug);
   if (!ministry) return { title: "Ministry" };
   return {
     title: ministry.name,
@@ -28,7 +33,7 @@ export default async function MinistryDetailPage({
 }: {
   params: { slug: string };
 }) {
-  const ministry = await getMinistryBySlug(params.slug);
+  const ministry = await loadMinistry(params.slug);
   if (!ministry) notFound();
   const leaders = await getMinistryLeaders(ministry.id);
 
@@ -56,11 +61,16 @@ export default async function MinistryDetailPage({
 
         {ministry.hero_image ? (
           <Container>
-            <img
-              src={ministry.hero_image}
-              alt=""
-              className="aspect-[21/9] w-full rounded-2xl object-cover shadow-elevated"
-            />
+            <div className="relative aspect-[21/9] w-full overflow-hidden rounded-2xl shadow-elevated">
+              <Image
+                src={ministry.hero_image}
+                alt=""
+                fill
+                sizes="(min-width: 1280px) 1280px, 100vw"
+                priority
+                className="object-cover"
+              />
+            </div>
           </Container>
         ) : null}
 
@@ -135,9 +145,16 @@ export default async function MinistryDetailPage({
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {leaders.map(({ leader, role }) => (
                   <Card key={leader.id}>
-                    <div className="aspect-[4/5] overflow-hidden bg-gradient-to-br from-brand-100 to-accent-100" aria-hidden="true">
+                    <div className="relative aspect-[4/5] overflow-hidden bg-gradient-to-br from-brand-100 to-accent-100" aria-hidden="true">
                       {leader.image_url ? (
-                        <img src={leader.image_url} alt="" className="h-full w-full object-cover" />
+                        <Image
+                          src={leader.image_url}
+                          alt=""
+                          fill
+                          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                          loading="lazy"
+                          className="object-cover"
+                        />
                       ) : null}
                     </div>
                     <CardHeader>

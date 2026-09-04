@@ -12,7 +12,10 @@ import { OutreachSection } from "@/components/home/OutreachSection";
 import { GivingCtaSection } from "@/components/home/GivingCtaSection";
 import { getSiteSettings } from "@/services/content";
 
-export const dynamic = "force-dynamic";
+// Homepage is the single most-visited page; cache it aggressively.
+// Admin mutations call revalidatePath("/") to bust the cache. A
+// 5-minute revalidate window is a safe fallback.
+export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();
