@@ -5,14 +5,17 @@ import { Container, Section } from "@/components/ui/Container";
 import { Card, CardHeader, CardTitle } from "@/components/ui/Card";
 import { SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
 import { PrayerRequestForm } from "./_components/PrayerRequestForm";
+import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "Prayer Request",
-  description: "Submit a confidential prayer request to our prayer team.",
-  robots: { index: true, follow: true },
-};
+  description:
+    "Submit a confidential prayer request to our prayer team. Every request is reviewed and prayed over by a staff member.",
+  path: "/prayer",
+  keywords: ["prayer request", "confidential prayer", "prayer team"],
+});
 
 export default function PrayerPage() {
   return (

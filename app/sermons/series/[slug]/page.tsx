@@ -7,8 +7,15 @@ import { Container, Section } from "@/components/ui/Container";
 import { Card, CardBody, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState, SectionEyebrow } from "@/components/ui/Section";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { getSermonSeriesBySlug, listSermonsPaged } from "@/services/sermons";
 import { formatDuration } from "@/lib/media";
+import {
+  buildPageMetadata,
+  buildBreadcrumbSchema,
+  plainText,
+  siteUrl,
+} from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -18,11 +25,23 @@ export async function generateMetadata({
   params: { slug: string };
 }): Promise<Metadata> {
   const series = await getSermonSeriesBySlug(params.slug);
-  if (!series) return { title: "Series" };
-  return {
+  if (!series) {
+    return buildPageMetadata({
+      title: "Series",
+      description: "Sermon series",
+      path: `/sermons/series/${params.slug}`,
+      noindex: true,
+    });
+  }
+  return buildPageMetadata({
     title: series.title,
-    description: series.description ?? `Sermon series: ${series.title}.`,
-  };
+    description: series.description
+      ? plainText(series.description, 200)
+      : `Sermon series: ${series.title} from Glorious Gospel Centre.`,
+    path: `/sermons/series/${series.slug}`,
+    image: series.hero_image,
+    imageAlt: `${series.title} sermon series`,
+  });
 }
 
 function formatDate(iso: string): string {
@@ -43,6 +62,12 @@ export default async function SeriesDetailPage({
   if (!series) notFound();
 
   const paged = await listSermonsPaged(1, { seriesId: series.id });
+
+  const breadcrumb = buildBreadcrumbSchema([
+    { name: "Home", url: siteUrl("/") },
+    { name: "Sermons", url: siteUrl("/sermons") },
+    { name: series.title, url: siteUrl(`/sermons/series/${series.slug}`) },
+  ]);
 
   return (
     <>
@@ -132,6 +157,7 @@ export default async function SeriesDetailPage({
             )}
           </Container>
         </Section>
+        <JsonLd data={breadcrumb} />
       </main>
       <Footer />
     </>

@@ -9,13 +9,17 @@ import { SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Secti
 import { LeaderGrid, PageHero } from "@/components/about/CmsPageView";
 import { getSiteSettings } from "@/services/content";
 import { getAllPublishedLeaders } from "@/services/pages";
+import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "About",
-  description: "Learn about Glorious Gospel Centre — our story, vision, mission, statement of faith, and leadership.",
-};
+  description:
+    "Learn about Glorious Gospel Centre — our story, vision, mission, statement of faith, and leadership.",
+  path: "/about",
+  keywords: ["about", "church", "vision", "mission", "leadership", "statement of faith"],
+});
 
 export default async function AboutPage() {
   const [settings, leaders] = await Promise.all([

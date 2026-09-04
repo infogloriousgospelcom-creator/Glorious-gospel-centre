@@ -10,13 +10,17 @@ import { GivingForm } from "./_components/GivingForm";
 import { listActiveGivingCategories } from "@/services/giving";
 import { getSiteSettings } from "@/services/content";
 import { getPaymentProvider } from "@/services/payment";
+import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "Give",
-  description: "Support the mission and ministry of Glorious Gospel Centre.",
-};
+  description:
+    "Support the mission and ministry of Glorious Gospel Centre — tithe, offering, missions, and outreach via M-Pesa.",
+  path: "/give",
+  keywords: ["give", "tithe", "offering", "M-Pesa", "donate", "stewardship"],
+});
 
 export default async function GivePage() {
   const [categories, settings, provider] = await Promise.all([

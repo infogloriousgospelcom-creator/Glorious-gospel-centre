@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2f3825"/>
+      <stop offset="55%" stop-color="#425031"/>
+      <stop offset="100%" stop-color="#a06827"/>
+    </linearGradient>
+    <linearGradient id="rays" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f4ead4" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#f4ead4" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <g opacity="0.4">
+    <polygon points="600,40 720,300 600,200 480,300" fill="url(#rays)"/>
+    <polygon points="600,80 800,360 600,260 400,360" fill="url(#rays)"/>
+  </g>
+  <g font-family="Georgia, 'Source Serif Pro', serif" fill="#f6f7f3" text-anchor="middle">
+    <text x="600" y="295" font-size="92" font-weight="600">Glorious Gospel Centre</text>
+    <text x="600" y="370" font-size="36" fill="#cfd5bd" font-weight="400">Worship · Community · Teaching · Outreach</text>
+    <text x="600" y="470" font-size="22" fill="#cfd5bd" letter-spacing="6">CHURCH · KENYA</text>
+  </g>
+  <rect x="40" y="40" width="1120" height="550" fill="none" stroke="#f6f7f3" stroke-opacity="0.15" stroke-width="2"/>
+</svg>

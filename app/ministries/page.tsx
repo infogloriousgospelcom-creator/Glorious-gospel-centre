@@ -6,12 +6,16 @@ import { Container, Section } from "@/components/ui/Container";
 import { Card, CardBody, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { EmptyState, SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
 import { getAllPublishedMinistries } from "@/services/content";
+import { buildPageMetadata } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return {
+  return buildPageMetadata({
     title: "Ministries",
-    description: "Explore the ministries of Glorious Gospel Centre.",
-  };
+    description:
+      "Explore the ministries of Glorious Gospel Centre — find a place to belong, serve, and grow.",
+    path: "/ministries",
+    keywords: ["ministries", "church groups", "serve", "fellowship"],
+  });
 }
 
 export const dynamic = "force-dynamic";
@@ -67,13 +71,13 @@ export default async function MinistriesPage() {
                         ) : null}
                       </CardHeader>
                       {m.meeting_info ? (
-                        <CardBody>
-                          <p className="text-xs uppercase tracking-wider text-ink-muted">
-                            Meetings
-                          </p>
-                          <p className="mt-1 text-sm text-ink">{m.meeting_info}</p>
-                        </CardBody>
-                      ) : null}
+                          <CardBody>
+                            <p className="text-xs uppercase tracking-wider text-ink-muted">
+                              Meetings
+                            </p>
+                            <p className="mt-1 text-sm text-ink">{m.meeting_info}</p>
+                          </CardBody>
+                        ) : null}
                     </Card>
                   </Link>
                 ))}

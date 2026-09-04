@@ -11,13 +11,17 @@ import { Pagination } from "./_components/Pagination";
 import { listSermonsPaged, SERMONS_PAGE_SIZE } from "@/services/sermons";
 import { listAllSermonSeries, listAllSermonCategories } from "@/services/sermons";
 import { formatDuration } from "@/lib/media";
+import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "Sermons",
-  description: "Sermon archive — listen, watch, and grow from the Word.",
-};
+  description:
+    "Sermon archive at Glorious Gospel Centre — listen, watch, and grow from the Word. Browse by series, speaker, or topic.",
+  path: "/sermons",
+  keywords: ["sermons", "preaching", "worship", "bible teaching", "kenya church"],
+});
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {

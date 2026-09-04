@@ -6,13 +6,17 @@ import { Container, Section } from "@/components/ui/Container";
 import { SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
 import { LeaderGrid } from "@/components/about/CmsPageView";
 import { getAllPublishedLeaders } from "@/services/pages";
+import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "Leadership",
-  description: "Meet the pastors and leaders serving Glorious Gospel Centre.",
-};
+  description:
+    "Meet the pastors, elders, and ministry leaders serving Glorious Gospel Centre Church.",
+  path: "/about/leadership",
+  keywords: ["leadership", "pastors", "church staff", "elders"],
+});
 
 export default async function LeadershipPage() {
   const leaders = await getAllPublishedLeaders();

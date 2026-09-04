@@ -4,13 +4,17 @@ import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
 import { EmptyState, SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
 import { getPublishedServices, groupServicesByDay } from "@/services/content";
+import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "Services",
-  description: "Weekly service schedule for Glorious Gospel Centre.",
-};
+  description:
+    "Weekly service schedule for Glorious Gospel Centre — Sunday worship, mid-week Bible study, youth service, and prayer meetings.",
+  path: "/services",
+  keywords: ["church services", "worship schedule", "sunday service", "bible study"],
+});
 
 function formatTime(time: string): string {
   const [h, m] = time.split(":");

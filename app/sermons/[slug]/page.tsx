@@ -1,14 +1,22 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState, SectionEyebrow } from "@/components/ui/Section";
-import Link from "next/link";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { getSermonBySlug, getSeriesForSermon } from "@/services/sermons";
 import { toEmbedUrl, formatDuration } from "@/lib/media";
+import {
+  buildPageMetadata,
+  buildVideoSchema,
+  buildBreadcrumbSchema,
+  plainText,
+  siteUrl,
+} from "@/lib/seo";
 import { SermonAudioPlayer } from "../_components/SermonAudioPlayer";
 
 export const dynamic = "force-dynamic";
@@ -19,11 +27,26 @@ export async function generateMetadata({
   params: { slug: string };
 }): Promise<Metadata> {
   const sermon = await getSermonBySlug(params.slug);
-  if (!sermon) return { title: "Sermon" };
-  return {
+  if (!sermon) {
+    return buildPageMetadata({
+      title: "Sermon",
+      description: "Sermon",
+      path: `/sermons/${params.slug}`,
+      noindex: true,
+    });
+  }
+  return buildPageMetadata({
     title: sermon.title,
-    description: sermon.description ?? `Sermon by ${sermon.speaker ?? "unknown"}.`,
-  };
+    description: sermon.description
+      ? plainText(sermon.description, 200)
+      : `Sermon by ${sermon.speaker ?? "unknown"} — ${new Date(sermon.preached_on).toLocaleDateString()}.`,
+    path: `/sermons/${sermon.slug}`,
+    image: sermon.thumbnail_url,
+    imageAlt: `${sermon.title} sermon thumbnail`,
+    type: "article",
+    publishedTime: sermon.published_at ?? undefined,
+    keywords: sermon.category ? ["sermon", sermon.category] : ["sermon"],
+  });
 }
 
 function formatDate(iso: string): string {
@@ -46,6 +69,24 @@ export default async function SermonDetailPage({
 
   const embed = toEmbedUrl(sermon.video_url);
   const duration = formatDuration(sermon.duration_seconds);
+
+  const videoSchema = sermon.video_url
+    ? buildVideoSchema({
+        name: sermon.title,
+        description: sermon.description ?? sermon.title,
+        thumbnailUrl: sermon.thumbnail_url,
+        uploadDate: sermon.published_at ?? `${sermon.preached_on}T00:00:00Z`,
+        contentUrl: sermon.video_url,
+        embedUrl: embed,
+        durationSeconds: sermon.duration_seconds,
+      })
+    : null;
+
+  const breadcrumb = buildBreadcrumbSchema([
+    { name: "Home", url: siteUrl("/") },
+    { name: "Sermons", url: siteUrl("/sermons") },
+    { name: sermon.title, url: siteUrl(`/sermons/${sermon.slug}`) },
+  ]);
 
   return (
     <>
@@ -111,7 +152,7 @@ export default async function SermonDetailPage({
             ) : sermon.thumbnail_url ? (
               <img
                 src={sermon.thumbnail_url}
-                alt=""
+                alt={`${sermon.title} sermon cover image`}
                 className="aspect-video w-full rounded-2xl object-cover shadow-elevated"
               />
             ) : (
@@ -215,6 +256,7 @@ export default async function SermonDetailPage({
             </div>
           </Container>
         </Section>
+        <JsonLd data={videoSchema ? [videoSchema, breadcrumb] : [breadcrumb]} />
       </main>
       <Footer />
     </>

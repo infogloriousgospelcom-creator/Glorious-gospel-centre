@@ -11,17 +11,22 @@ import { GallerySection } from "@/components/home/GallerySection";
 import { OutreachSection } from "@/components/home/OutreachSection";
 import { GivingCtaSection } from "@/components/home/GivingCtaSection";
 import { getSiteSettings } from "@/services/content";
+import { buildPageMetadata, siteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();
-  return {
+  return buildPageMetadata({
     title: settings.seo_default_title ?? "Home",
     description:
       settings.seo_default_description ??
       "Welcome to Glorious Gospel Centre Church — worship, community, teaching, and outreach.",
-  };
+    path: "/",
+    image: settings.seo_default_og_image ?? null,
+    imageAlt: `${settings.church_name} church`,
+    keywords: ["church kenya", "worship", "sermons", "ministries", "prayer"],
+  });
 }
 
 export default function HomePage() {
@@ -40,6 +45,9 @@ export default function HomePage() {
         <GivingCtaSection />
       </main>
       <Footer />
+      <span className="sr-only">
+        Visit {siteUrl("/events")} for upcoming events.
+      </span>
     </>
   );
 }

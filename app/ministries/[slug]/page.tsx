@@ -1,12 +1,19 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { EmptyState, SectionEyebrow } from "@/components/ui/Section";
-import Link from "next/link";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { getMinistryBySlug, getMinistryLeaders } from "@/services/content";
+import {
+  buildPageMetadata,
+  buildBreadcrumbSchema,
+  plainText,
+  siteUrl,
+} from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -16,11 +23,24 @@ export async function generateMetadata({
   params: { slug: string };
 }): Promise<Metadata> {
   const ministry = await getMinistryBySlug(params.slug);
-  if (!ministry) return { title: "Ministry" };
-  return {
+  if (!ministry) {
+    return buildPageMetadata({
+      title: "Ministry",
+      description: "Ministry",
+      path: `/ministries/${params.slug}`,
+      noindex: true,
+    });
+  }
+  return buildPageMetadata({
     title: ministry.name,
-    description: ministry.short_description ?? `Learn about the ${ministry.name} ministry.`,
-  };
+    description: ministry.short_description
+      ? plainText(ministry.short_description, 200)
+      : `Learn about the ${ministry.name} ministry at Glorious Gospel Centre.`,
+    path: `/ministries/${ministry.slug}`,
+    image: ministry.hero_image,
+    imageAlt: `${ministry.name} ministry`,
+    keywords: ["ministry", ministry.name],
+  });
 }
 
 export default async function MinistryDetailPage({
@@ -31,6 +51,12 @@ export default async function MinistryDetailPage({
   const ministry = await getMinistryBySlug(params.slug);
   if (!ministry) notFound();
   const leaders = await getMinistryLeaders(ministry.id);
+
+  const breadcrumb = buildBreadcrumbSchema([
+    { name: "Home", url: siteUrl("/") },
+    { name: "Ministries", url: siteUrl("/ministries") },
+    { name: ministry.name, url: siteUrl(`/ministries/${ministry.slug}`) },
+  ]);
 
   return (
     <>
@@ -58,7 +84,7 @@ export default async function MinistryDetailPage({
           <Container>
             <img
               src={ministry.hero_image}
-              alt=""
+              alt={`${ministry.name} ministry hero`}
               className="aspect-[21/9] w-full rounded-2xl object-cover shadow-elevated"
             />
           </Container>
@@ -157,6 +183,7 @@ export default async function MinistryDetailPage({
             </Container>
           </Section>
         ) : null}
+        <JsonLd data={breadcrumb} />
       </main>
       <Footer />
     </>

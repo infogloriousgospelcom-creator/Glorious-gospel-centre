@@ -7,13 +7,17 @@ import { Badge } from "@/components/ui/Badge";
 import { SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
 import { ContactForm } from "./_components/ContactForm";
 import { getSiteSettings, getActiveSocialLinks } from "@/services/content";
+import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "Contact",
-  description: "Get in touch with Glorious Gospel Centre — phone, email, location, and contact form.",
-};
+  description:
+    "Get in touch with Glorious Gospel Centre — phone, email, location, office hours, and contact form.",
+  path: "/contact",
+  keywords: ["contact", "church address", "phone", "email"],
+});
 
 const PLACEHOLDER = "[To be provided]";
 

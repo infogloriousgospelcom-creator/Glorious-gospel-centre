@@ -9,13 +9,17 @@ import { EmptyState, SectionEyebrow, SectionTitle, SectionLead } from "@/compone
 import { GalleryFilters } from "./_components/GalleryFilters";
 import { GalleryPagination } from "./_components/GalleryPagination";
 import { GALLERY_PAGE_SIZE, listAlbumsPaged, listAllAlbumCategories } from "@/services/gallery";
+import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "Gallery",
-  description: "Photo albums from worship, events, outreach, and church life.",
-};
+  description:
+    "Photo albums from Glorious Gospel Centre — worship, events, outreach, and church life.",
+  path: "/gallery",
+  keywords: ["church gallery", "photos", "worship photos"],
+});
 
 function formatDate(iso: string | null): string | null {
   if (!iso) return null;
@@ -85,7 +89,7 @@ export default async function GalleryPage({
                             {a.cover_image ? (
                               <img
                                 src={a.cover_image}
-                                alt={a.title}
+                                alt=""
                                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                               />
                             ) : null}

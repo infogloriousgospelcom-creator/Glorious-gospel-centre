@@ -7,13 +7,17 @@ import { Card, CardBody, CardHeader, CardTitle, CardDescription } from "@/compon
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState, SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
 import { getAllPublishedEvents } from "@/services/content";
+import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "Events",
-  description: "Upcoming events at Glorious Gospel Centre.",
-};
+  description:
+    "Upcoming and recent events at Glorious Gospel Centre Church — conferences, outreach, fellowships, and special services.",
+  path: "/events",
+  keywords: ["church events", "conferences", "outreach", "fellowship"],
+});
 
 function formatEventDateTime(iso: string): { day: string; time: string } {
   const d = new Date(iso);
