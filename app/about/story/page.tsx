@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: page?.seo_title ?? "Our Story",
     description:
       page?.seo_description ??
-      "The story of Glorious Gospel Centre — how God brought this church into being.",
+      "The story of Glorious Gospel Centre Church — how God brought this church into being.",
     path: "/about/story",
     image: page?.seo_og_image ?? page?.hero_image ?? null,
     imageAlt: page?.title ?? "Our Story",

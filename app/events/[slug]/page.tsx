@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
@@ -31,7 +32,7 @@ export async function generateMetadata({
     title: event.title,
     description: event.short_description
       ? plainText(event.short_description, 200)
-      : `${event.title} at Glorious Gospel Centre.`,
+      : `${event.title} at Glorious Gospel Centre Church.`,
     path: `/events/${event.slug}`,
     image: event.poster_url,
     imageAlt: `${event.title} event poster`,
@@ -112,11 +113,16 @@ export default async function EventDetailPage({
 
         {event.poster_url ? (
           <Container>
-            <img
-              src={event.poster_url}
-              alt={`${event.title} poster`}
-              className="aspect-[21/9] w-full rounded-2xl object-cover shadow-elevated"
-            />
+            <div className="relative aspect-[21/9] w-full rounded-2xl overflow-hidden shadow-elevated">
+              <Image
+                src={event.poster_url}
+                alt={`${event.title} poster`}
+                fill
+                className="object-cover"
+                priority
+                sizes="100vw"
+              />
+            </div>
           </Container>
         ) : null}
 

@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
-import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
-import { EmptyState, SectionEyebrow } from "@/components/ui/Section";
-import { JsonLd } from "@/components/seo/JsonLd";
+import { SectionEyebrow } from "@/components/ui/Section";
 import { getMinistryBySlug, getMinistryLeaders } from "@/services/content";
 import {
   buildPageMetadata,
@@ -14,6 +12,9 @@ import {
   plainText,
   siteUrl,
 } from "@/lib/seo";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { getMinistryImages } from "@/lib/ministry-images";
+import { MinistryHeroSlideshow } from "@/components/ministries/MinistryHeroSlideshow";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,7 @@ export async function generateMetadata({
     title: ministry.name,
     description: ministry.short_description
       ? plainText(ministry.short_description, 200)
-      : `Learn about the ${ministry.name} ministry at Glorious Gospel Centre.`,
+      : `Learn about the ${ministry.name} ministry at Glorious Gospel Centre Church.`,
     path: `/ministries/${ministry.slug}`,
     image: ministry.hero_image,
     imageAlt: `${ministry.name} ministry`,
@@ -49,8 +50,10 @@ export default async function MinistryDetailPage({
   params: { slug: string };
 }) {
   const ministry = await getMinistryBySlug(params.slug);
-  if (!ministry) notFound();
+  if (!ministry) return null;
   const leaders = await getMinistryLeaders(ministry.id);
+  const images = getMinistryImages(ministry.slug);
+  const hasImages = images.length > 0;
 
   const breadcrumb = buildBreadcrumbSchema([
     { name: "Home", url: siteUrl("/") },
@@ -62,33 +65,50 @@ export default async function MinistryDetailPage({
     <>
       <Navbar />
       <main id="main">
-        <Section className="bg-gradient-to-br from-brand-50 via-surface to-accent-50">
-          <Container>
-            <div className="mx-auto max-w-3xl">
-              <Link
-                href="/ministries"
-                className="mb-4 inline-block text-sm font-medium text-brand-700 hover:text-brand-800"
-              >
-                ← All ministries
-              </Link>
-              <SectionEyebrow>Ministry</SectionEyebrow>
-              <h1 className="heading-1 mb-4 text-balance">{ministry.name}</h1>
-              {ministry.short_description ? (
-                <p className="lead text-balance">{ministry.short_description}</p>
-              ) : null}
-            </div>
-          </Container>
-        </Section>
+        {/* Immersive hero with animated background images */}
+        <section className="relative flex min-h-[50vh] items-end overflow-hidden md:min-h-[60vh]">
+          {/* Background image slideshow or gradient fallback */}
+          {hasImages ? (
+            <MinistryHeroSlideshow images={images} />
+          ) : (
+            <div className="absolute inset-0 z-0 bg-gradient-to-br from-brand-800 via-brand-700 to-brand-900" />
+          )}
 
-        {ministry.hero_image ? (
-          <Container>
-            <img
-              src={ministry.hero_image}
-              alt={`${ministry.name} ministry hero`}
-              className="aspect-[21/9] w-full rounded-2xl object-cover shadow-elevated"
-            />
-          </Container>
-        ) : null}
+          {/* Dark gradient overlay for text contrast */}
+          <div
+            className="absolute inset-0 z-[1]"
+            style={{
+              background:
+                "linear-gradient(180deg, rgba(6,15,40,0.25) 0%, rgba(6,15,40,0.45) 50%, rgba(6,15,40,0.80) 100%)",
+            }}
+            aria-hidden="true"
+          />
+
+          {/* Hero content */}
+          <div className="relative z-10 w-full py-16 md:py-24">
+            <Container>
+              <div className="mx-auto max-w-3xl">
+                <Link
+                  href="/ministries"
+                  className="mb-6 inline-block text-sm font-semibold text-white/80 transition-colors hover:text-white"
+                >
+                  ← All ministries
+                </Link>
+                <SectionEyebrow className="text-accent-400">
+                  Ministry
+                </SectionEyebrow>
+                <h1 className="mt-3 mb-4 text-balance font-display text-3xl font-semibold text-white sm:text-4xl md:text-5xl">
+                  {ministry.name}
+                </h1>
+                {ministry.short_description ? (
+                  <p className="max-w-xl text-base leading-relaxed text-white/85 sm:text-lg">
+                    {ministry.short_description}
+                  </p>
+                ) : null}
+              </div>
+            </Container>
+          </div>
+        </section>
 
         <Section>
           <Container>
@@ -96,41 +116,33 @@ export default async function MinistryDetailPage({
               <div>
                 <h2 className="heading-2 mb-4">About this ministry</h2>
                 {ministry.description ? (
-                  <div className="prose max-w-none text-ink">
+                  <div className="space-y-4 text-base leading-relaxed text-ink">
                     {ministry.description.split(/\n{2,}/).map((p, i) => (
-                      <p key={i} className="mb-4 leading-relaxed">
-                        {p}
-                      </p>
+                      <p key={i}>{p}</p>
                     ))}
                   </div>
                 ) : (
-                  <EmptyState
-                    title="Description coming soon"
-                    description="Ministry leaders can publish a description through the admin."
-                  />
+                  <p className="text-sm text-ink-muted">
+                    Description coming soon. Ministry leaders can publish a
+                    description through the admin.
+                  </p>
                 )}
               </div>
               <aside className="space-y-6">
                 {ministry.meeting_info ? (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">Meetings</CardTitle>
-                    </CardHeader>
-                    <CardBody>
-                      <p className="text-sm text-ink">{ministry.meeting_info}</p>
-                    </CardBody>
-                  </Card>
+                  <div className="rounded-2xl border border-border bg-white p-6 shadow-soft">
+                    <p className="eyebrow">Meetings</p>
+                    <p className="mt-2 text-sm text-ink">{ministry.meeting_info}</p>
+                  </div>
                 ) : null}
                 {(ministry.contact_email || ministry.contact_phone) ? (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">Contact</CardTitle>
-                    </CardHeader>
-                    <CardBody className="space-y-1 text-sm">
+                  <div className="rounded-2xl border border-border bg-white p-6 shadow-soft">
+                    <p className="eyebrow">Contact</p>
+                    <div className="mt-2 space-y-1 text-sm">
                       {ministry.contact_email ? (
                         <p>
                           <span className="text-ink-muted">Email: </span>
-                          <a className="text-brand-700 hover:text-brand-800" href={`mailto:${ministry.contact_email}`}>
+                          <a className="text-brand-700 transition-colors hover:text-brand-800" href={`mailto:${ministry.contact_email}`}>
                             {ministry.contact_email}
                           </a>
                         </p>
@@ -138,13 +150,13 @@ export default async function MinistryDetailPage({
                       {ministry.contact_phone ? (
                         <p>
                           <span className="text-ink-muted">Phone: </span>
-                          <a className="text-brand-700 hover:text-brand-800" href={`tel:${ministry.contact_phone}`}>
+                          <a className="text-brand-700 transition-colors hover:text-brand-800" href={`tel:${ministry.contact_phone}`}>
                             {ministry.contact_phone}
                           </a>
                         </p>
                       ) : null}
-                    </CardBody>
-                  </Card>
+                    </div>
+                  </div>
                 ) : null}
               </aside>
             </div>
@@ -160,24 +172,35 @@ export default async function MinistryDetailPage({
               </div>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {leaders.map(({ leader, role }) => (
-                  <Card key={leader.id}>
-                    <div className="aspect-[4/5] overflow-hidden bg-gradient-to-br from-brand-100 to-accent-100" aria-hidden="true">
+                  <div
+                    key={leader.id}
+                    className="overflow-hidden rounded-2xl border border-border bg-white shadow-soft transition-all duration-200 hover:-translate-y-0.5 hover:shadow-elevated"
+                  >
+                    <div className="relative aspect-[4/5] overflow-hidden rounded-t-2xl bg-gradient-to-br from-brand-100 to-brand-50" aria-hidden="true">
                       {leader.image_url ? (
-                        <img src={leader.image_url} alt="" className="h-full w-full object-cover" />
+                        <Image
+                          src={leader.image_url}
+                          alt={leader.full_name}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        />
                       ) : null}
                     </div>
-                    <CardHeader>
-                      <CardTitle className="text-base">{leader.full_name}</CardTitle>
+                    <div className="p-6 pb-3">
+                      <h3 className="font-display text-base font-semibold text-brand-900">
+                        {leader.full_name}
+                      </h3>
                       <p className="text-sm text-ink-muted">
                         {role ?? leader.title ?? "Leader"}
                       </p>
-                    </CardHeader>
+                    </div>
                     {leader.bio ? (
-                      <CardBody>
+                      <div className="px-6 pb-6">
                         <p className="text-sm text-ink-muted line-clamp-3">{leader.bio}</p>
-                      </CardBody>
+                      </div>
                     ) : null}
-                  </Card>
+                  </div>
                 ))}
               </div>
             </Container>

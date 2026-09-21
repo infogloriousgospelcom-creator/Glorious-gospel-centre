@@ -23,7 +23,12 @@ export async function listAllServices(): Promise<AdminServiceRow[]> {
       "id,name,description,day_of_week,start_time,end_time,location,sort_order,is_recurring,status,published_at,created_at"
     ).order("day_of_week", { ascending: true }).order("start_time", { ascending: true });
     if (error) return [];
-    return (data ?? []) as AdminServiceRow[];
+    const rows = (data ?? []) as AdminServiceRow[];
+    return rows.sort((a, b) => {
+      const da = a.day_of_week === 0 ? 7 : a.day_of_week;
+      const db = b.day_of_week === 0 ? 7 : b.day_of_week;
+      return da - db || a.start_time.localeCompare(b.start_time);
+    });
   } catch { return []; }
 }
 

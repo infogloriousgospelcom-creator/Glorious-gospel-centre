@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -36,7 +37,7 @@ export async function generateMetadata({
     title: album.title,
     description: album.description
       ? plainText(album.description, 200)
-      : `Photos from ${album.title} at Glorious Gospel Centre.`,
+      : `Photos from ${album.title} at Glorious Gospel Centre Church.`,
     path: `/gallery/${album.slug}`,
     image: album.cover_image,
     imageAlt: `${album.title} photo album cover`,
@@ -121,11 +122,16 @@ export default async function AlbumDetailPage({
 
         {album.cover_image ? (
           <Container>
-            <img
-              src={album.cover_image}
-              alt={`${album.title} cover photo`}
-              className="aspect-[21/9] w-full rounded-2xl object-cover shadow-elevated"
-            />
+            <div className="relative aspect-[21/9] w-full rounded-2xl overflow-hidden shadow-elevated">
+              <Image
+                src={album.cover_image}
+                alt={`${album.title} cover photo`}
+                fill
+                className="object-cover"
+                priority
+                sizes="100vw"
+              />
+            </div>
           </Container>
         ) : null}
 

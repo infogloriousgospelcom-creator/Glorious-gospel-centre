@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { Container, Section } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/LinkButton";
 import { Card, CardBody, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Field, Input, Textarea } from "@/components/ui/Form";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SectionHeading, EmptyState, ErrorState } from "@/components/ui/Section";
 import { ModalPreview } from "./_components/ModalPreview";
 
 export const metadata: Metadata = {
@@ -17,29 +20,32 @@ export const metadata: Metadata = {
 export default function DesignSystemPage() {
   return (
     <main id="main" className="bg-surface-muted">
-      <Container className="py-section">
-        <header className="mb-10">
-          <Badge tone="accent" className="mb-3">Internal</Badge>
-          <h1 className="heading-1">Design System</h1>
-          <p className="lead mt-3 max-w-2xl">
-            Tokens and primitives used across the public site and admin. This page is
-            not indexed.
-          </p>
-        </header>
+      <PageHeader
+        eyebrow="Internal"
+        title="Design System"
+        description="Tokens and primitives used across the public site and admin. This page is not indexed."
+        variant="plain"
+        className="bg-surface-muted"
+      />
 
-        <Section className="bg-surface py-8 rounded-2xl shadow-soft px-6">
+      <Container className="pb-section">
+        <Section spacing="compact" className="mb-6 rounded-2xl bg-surface px-6 shadow-soft">
           <h2 className="heading-2 mb-6">Buttons</h2>
           <div className="flex flex-wrap gap-3">
             <Button>Primary</Button>
+            <Button variant="accent">Accent</Button>
             <Button variant="secondary">Secondary</Button>
             <Button variant="ghost">Ghost</Button>
             <Button variant="danger">Danger</Button>
             <Button variant="link">Link</Button>
             <Button isLoading>Loading</Button>
+            <LinkButton href="/design-system" variant="secondary">
+              LinkButton
+            </LinkButton>
           </div>
         </Section>
 
-        <Section className="bg-surface py-8 rounded-2xl shadow-soft px-6">
+        <Section spacing="compact" className="mb-6 rounded-2xl bg-surface px-6 shadow-soft">
           <h2 className="heading-2 mb-6">Badges</h2>
           <div className="flex flex-wrap gap-2">
             <Badge>Neutral</Badge>
@@ -49,10 +55,11 @@ export default function DesignSystemPage() {
             <Badge tone="warning">Warning</Badge>
             <Badge tone="danger">Danger</Badge>
             <Badge tone="info">Info</Badge>
+            <Badge tone="live">Live</Badge>
           </div>
         </Section>
 
-        <Section className="bg-surface py-8 rounded-2xl shadow-soft px-6">
+        <Section spacing="compact" className="mb-6 rounded-2xl bg-surface px-6 shadow-soft">
           <h2 className="heading-2 mb-6">Alerts</h2>
           <div className="grid gap-3">
             <Alert tone="info" title="Information">Helpful tip or context.</Alert>
@@ -62,10 +69,14 @@ export default function DesignSystemPage() {
           </div>
         </Section>
 
-        <Section className="bg-surface py-8 rounded-2xl shadow-soft px-6">
-          <h2 className="heading-2 mb-6">Cards</h2>
+        <Section spacing="compact" className="mb-6 rounded-2xl bg-surface px-6 shadow-soft">
+          <SectionHeading
+            eyebrow="Layout"
+            title="Section heading"
+            lead="Reusable intro block for one-purpose sections."
+          />
           <div className="grid gap-4 md:grid-cols-2">
-            <Card>
+            <Card hoverable>
               <CardHeader>
                 <CardTitle>Card title</CardTitle>
                 <CardDescription>Short description.</CardDescription>
@@ -93,7 +104,24 @@ export default function DesignSystemPage() {
           </div>
         </Section>
 
-        <Section className="bg-surface py-8 rounded-2xl shadow-soft px-6">
+        <Section spacing="compact" className="mb-6 rounded-2xl bg-surface px-6 shadow-soft">
+          <h2 className="heading-2 mb-6">Empty & error</h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            <EmptyState
+              title="Nothing scheduled here yet"
+              description="Upcoming gatherings will appear here when published."
+            >
+              <LinkButton href="/events" size="sm" variant="secondary">
+                Explore events
+              </LinkButton>
+            </EmptyState>
+            <ErrorState message="We couldn't load this information right now.">
+              <Button size="sm" variant="secondary">Try again</Button>
+            </ErrorState>
+          </div>
+        </Section>
+
+        <Section spacing="compact" className="mb-6 rounded-2xl bg-surface px-6 shadow-soft">
           <h2 className="heading-2 mb-6">Forms</h2>
           <form className="grid gap-4 sm:grid-cols-2">
             <Field label="Full name" htmlFor="name" required hint="First and last name.">
@@ -105,14 +133,14 @@ export default function DesignSystemPage() {
             <Field label="Message" htmlFor="message" className="sm:col-span-2">
               <Textarea id="message" placeholder="How can we pray for you?" />
             </Field>
-            <div className="sm:col-span-2 flex justify-end gap-2">
+            <div className="flex justify-end gap-2 sm:col-span-2">
               <Button variant="secondary">Cancel</Button>
               <Button type="submit">Submit</Button>
             </div>
           </form>
         </Section>
 
-        <Section className="bg-surface py-8 rounded-2xl shadow-soft px-6">
+        <Section spacing="compact" className="mb-6 rounded-2xl bg-surface px-6 shadow-soft">
           <h2 className="heading-2 mb-6">Skeleton</h2>
           <div className="grid gap-3 sm:grid-cols-3">
             <Skeleton className="h-32 w-full" />
@@ -121,17 +149,21 @@ export default function DesignSystemPage() {
           </div>
         </Section>
 
-        <Section className="bg-surface py-8 rounded-2xl shadow-soft px-6">
+        <Section spacing="compact" className="mb-6 rounded-2xl bg-surface px-6 shadow-soft">
           <h2 className="heading-2 mb-6">Modal</h2>
           <ModalPreview />
         </Section>
 
-        <Section className="bg-surface py-8 rounded-2xl shadow-soft px-6">
+        <Section spacing="compact" className="mb-6 rounded-2xl bg-surface px-6 shadow-soft">
           <h2 className="heading-2 mb-6">Typography</h2>
           <div className="space-y-4">
             <h1 className="heading-1">Heading 1 — Display</h1>
             <h2 className="heading-2">Heading 2 — Display</h2>
             <h3 className="heading-3">Heading 3 — Display</h3>
+            <p className="scripture">
+              &ldquo;If God be for us, who can be against us?&rdquo;
+              <span className="scripture-ref">Romans 8:31</span>
+            </p>
             <p className="lead">
               Lead paragraph — used for introductions and section openers.
             </p>

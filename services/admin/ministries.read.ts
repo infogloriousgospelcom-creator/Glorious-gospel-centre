@@ -50,3 +50,18 @@ export async function getMinistryForAdmin(id: string): Promise<AdminMinistryRow 
     return null;
   }
 }
+
+export async function listParentMinistries(): Promise<{ id: string; name: string }[]> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("ministries")
+      .select("id,name")
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
+    if (error) return [];
+    return (data ?? []) as { id: string; name: string }[];
+  } catch {
+    return [];
+  }
+}

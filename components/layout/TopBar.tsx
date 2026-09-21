@@ -1,18 +1,47 @@
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
+import { getSiteSettings } from "@/services/content";
 
-export function TopBar() {
+export async function TopBar() {
+  const settings = await getSiteSettings();
+  const phone = settings.phone?.trim() || null;
+  const email = settings.email?.trim() || null;
+
   return (
-    <div className="border-b border-brand-100 bg-brand-900 text-brand-50">
-      <Container className="flex h-9 items-center justify-between text-xs">
-        <p className="hidden sm:block">Welcome to Glorious Gospel Centre</p>
-        <div className="flex items-center gap-4">
-          <span className="inline-flex items-center gap-1">
-            <span aria-hidden="true" role="presentation">📞</span>
-            <span className="sr-only">Phone</span>
-            <span aria-label="Phone number to be provided">[Phone TBD]</span>
-          </span>
-          <Link href="/contact" className="hover:text-white">
+    <div className="bg-brand-900 text-brand-50">
+      <Container className="flex h-9 items-center justify-between gap-3 text-xs">
+        <p className="hidden truncate sm:block">
+          Welcome to {settings.church_name}
+        </p>
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-x-4 gap-y-1">
+          {phone ? (
+            <a
+              href={`tel:${phone.replace(/\s+/g, "")}`}
+              className="inline-flex min-h-touch items-center transition-colors duration-ui ease-smooth hover:text-accent-400 sm:min-h-0"
+            >
+              <span className="sr-only">Call </span>
+              {phone}
+            </a>
+          ) : null}
+          {email ? (
+            <a
+              href={`mailto:${email}`}
+              className="hidden min-h-touch items-center transition-colors duration-ui ease-smooth hover:text-accent-400 md:inline-flex md:min-h-0"
+            >
+              <span className="sr-only">Email </span>
+              {email}
+            </a>
+          ) : null}
+          <Link
+            href="/livestream"
+            className="hidden min-h-touch items-center transition-colors duration-ui ease-smooth hover:text-accent-400 sm:inline-flex sm:min-h-0"
+          >
+            Watch Online
+          </Link>
+          <Link
+            href="/visit"
+            className="inline-flex min-h-touch items-center font-medium text-accent-400 transition-colors duration-ui ease-smooth hover:text-accent-300 sm:min-h-0"
+          >
             Visit us
           </Link>
         </div>

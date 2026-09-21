@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
@@ -10,15 +11,16 @@ import { SermonsFilters } from "./_components/SermonsFilters";
 import { Pagination } from "./_components/Pagination";
 import { listSermonsPaged, SERMONS_PAGE_SIZE } from "@/services/sermons";
 import { listAllSermonSeries, listAllSermonCategories } from "@/services/sermons";
-import { formatDuration } from "@/lib/media";
+import { formatDuration, youtubeThumbnailUrl } from "@/lib/media";
 import { buildPageMetadata } from "@/lib/seo";
+import { SectionReveal } from "@/components/motion/SectionReveal";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Sermons",
   description:
-    "Sermon archive at Glorious Gospel Centre — listen, watch, and grow from the Word. Browse by series, speaker, or topic.",
+    "Sermon archive at Glorious Gospel Centre Church — listen, watch, and grow from the Word. Browse by series, speaker, or topic.",
   path: "/sermons",
   keywords: ["sermons", "preaching", "worship", "bible teaching", "kenya church"],
 });
@@ -42,7 +44,7 @@ export default async function SermonsPage({
   const category = searchParams.category ?? "all";
   const seriesId = searchParams.series ?? null;
 
-  const [paged, categories, series] = await Promise.all([
+  const [paged, categories_list, series] = await Promise.all([
     listSermonsPaged(page, { search, category, seriesId }),
     listAllSermonCategories(),
     listAllSermonSeries(),
@@ -52,7 +54,7 @@ export default async function SermonsPage({
     <>
       <Navbar />
       <main id="main">
-        <Section className="bg-gradient-to-br from-brand-50 via-surface to-accent-50">
+        <Section className="bg-gradient-to-br from-brand-50 via-white to-brand-50/60">
           <Container>
             <div className="mx-auto max-w-3xl text-center">
               <SectionEyebrow>Sermons</SectionEyebrow>
@@ -68,7 +70,7 @@ export default async function SermonsPage({
         <Section>
           <Container>
             <SermonsFilters
-              categories={categories}
+              categories={categories_list}
               series={series}
               defaultSearch={search}
               defaultCategory={category}
@@ -88,18 +90,21 @@ export default async function SermonsPage({
               />
             ) : (
               <>
+                <SectionReveal>
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {paged.items.map((s) => {
                     const duration = formatDuration(s.duration_seconds);
                     return (
                       <Link key={s.id} href={`/sermons/${s.slug}`} className="group">
-                        <Card className="flex h-full flex-col transition-shadow group-hover:shadow-elevated">
-                          <div className="aspect-video overflow-hidden bg-gradient-to-br from-brand-900 via-brand-800 to-accent-700" aria-hidden="true">
-                            {s.thumbnail_url ? (
-                              <img
-                                src={s.thumbnail_url}
-                                alt=""
-                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        <Card hoverable className="flex h-full flex-col overflow-hidden">
+                          <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-brand-900 via-brand-800 to-brand-700" aria-hidden="true">
+                            {(s.thumbnail_url ?? youtubeThumbnailUrl(s.video_url)) ? (
+                              <Image
+                                src={s.thumbnail_url ?? youtubeThumbnailUrl(s.video_url)!}
+                                alt={`${s.title} sermon thumbnail`}
+                                fill
+                                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                               />
                             ) : null}
                           </div>
@@ -109,7 +114,9 @@ export default async function SermonsPage({
                               {s.category ? <Badge tone="accent">{s.category}</Badge> : null}
                               {duration ? <Badge>{duration}</Badge> : null}
                             </div>
-                            <CardTitle className="line-clamp-2">{s.title}</CardTitle>
+                            <CardTitle className="line-clamp-2 transition-colors group-hover:text-brand-700">
+                              {s.title}
+                            </CardTitle>
                             {s.speaker ? (
                               <CardDescription>{s.speaker}</CardDescription>
                             ) : null}
@@ -124,6 +131,7 @@ export default async function SermonsPage({
                     );
                   })}
                 </div>
+                </SectionReveal>
                 <Pagination
                   currentPage={paged.page}
                   totalPages={paged.totalPages}
@@ -134,14 +142,14 @@ export default async function SermonsPage({
             )}
 
             {series.length > 0 ? (
-              <div className="mt-16 border-t border-brand-100 pt-10">
+              <div className="mt-16 border-t border-border pt-10">
                 <h2 className="heading-3 mb-6">Browse by series</h2>
                 <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {series.map((sr) => (
                     <li key={sr.id}>
                       <Link
                         href={`/sermons/series/${sr.slug}`}
-                        className="block rounded-2xl border border-brand-100 bg-surface px-4 py-3 text-sm font-medium text-ink shadow-soft transition-shadow hover:shadow-elevated"
+                        className="block rounded-2xl border border-border bg-white px-4 py-3 text-sm font-medium text-brand-900 shadow-soft transition-all duration-200 hover:-translate-y-0.5 hover:shadow-elevated"
                       >
                         {sr.title}
                         {sr.start_date ? (

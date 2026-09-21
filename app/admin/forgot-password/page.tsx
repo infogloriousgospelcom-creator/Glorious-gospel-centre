@@ -16,12 +16,13 @@ export default function ForgotPasswordPage() {
   return (
     <>
       <Navbar />
-      <main id="main" className="bg-surface-muted min-h-[calc(100vh-8rem)]">
+      <main id="main" className="bg-surface-muted">
         <div className="container-page py-section">
           <div className="mx-auto max-w-md">
             <Card>
               <CardHeader>
-                <CardTitle>Forgot your password?</CardTitle>
+                <p className="eyebrow">Administrator</p>
+                <CardTitle className="mt-2">Forgot your password?</CardTitle>
                 <CardDescription>
                   Enter your email and we will send a reset link.
                 </CardDescription>
@@ -30,7 +31,7 @@ export default function ForgotPasswordPage() {
                 <ForgotPasswordForm />
                 <p className="text-sm text-ink-muted">
                   Remembered it?{" "}
-                  <Link href="/admin/login" className="font-medium text-brand-700 hover:text-brand-800">
+                  <Link href="/admin/login" className="font-semibold text-brand-700 transition-colors hover:text-brand-800">
                     Back to sign in
                   </Link>
                 </p>

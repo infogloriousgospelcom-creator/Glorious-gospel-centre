@@ -4,8 +4,27 @@
 
 @layer base {
   :root {
+    /* Modern geometric sans for headings + Inter for body. */
     --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-display: "Poppins", "Inter", ui-sans-serif, system-ui, sans-serif;
     --font-serif: "Source Serif Pro", Georgia, serif;
+    --font-display-serif: "Cormorant Garamond", "Source Serif Pro", Georgia, serif;
+
+    /* Venue photo palette — hero background tones */
+    --burgundy: #5c1a2e;
+    --burgundy-light: #7a2540;
+    --cream: #f2ecd9;
+    --crimson: #b5142a;
+    --gold: #d9a441;
+    --ink: #1a1210;
+
+    /* Church logo brand palette — nav, buttons, UI chrome */
+    --brand-navy: #0f1f7a;
+    --brand-navy-dark: #0a1554;
+    --brand-red: #e8202a;
+    --brand-yellow: #f5e14c;
+    --brand-white: #ffffff;
+    --brand-sky: #6fa8d8;
   }
 
   html {
@@ -16,15 +35,18 @@
 
   body {
     @apply bg-surface text-ink antialiased;
+    font-feature-settings: "ss01", "cv11";
   }
 
-  /* Global focus ring for keyboard users. Visible only on :focus-visible
-     so mouse clicks don't show a focus outline, but keyboard nav does. */
+  h1, h2, h3 {
+    @apply font-display text-brand-900;
+  }
+
+  /* Global focus ring for keyboard users. Visible only on :focus-visible. */
   *:focus-visible {
     @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white;
   }
 
-  /* Links: add a subtle ring offset for keyboard focus. */
   a:focus-visible,
   button:focus-visible,
   [role="button"]:focus-visible,
@@ -42,22 +64,185 @@
     @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
   }
 
+  .container-prose {
+    @apply mx-auto w-full max-w-prose px-4 sm:px-6;
+  }
+
+  /* Section eyebrow — uppercase brand label. */
+  .eyebrow {
+    @apply mb-3 inline-block text-eyebrow font-semibold uppercase tracking-[0.18em] text-brand-700;
+  }
+
   .heading-1 {
-    @apply font-serif text-display-1 font-semibold;
+    @apply font-display text-display-1 font-semibold text-brand-900;
   }
   .heading-2 {
-    @apply font-serif text-display-2 font-semibold;
+    @apply font-display text-display-2 font-semibold text-brand-900;
   }
   .heading-3 {
-    @apply font-serif text-display-3 font-semibold;
+    @apply font-display text-display-3 font-semibold text-brand-900;
   }
 
   .lead {
     @apply text-lg leading-relaxed text-ink-muted;
   }
 
+  /* Scripture / editorial pull-quote. */
+  .scripture {
+    @apply font-display-serif text-xl italic leading-snug text-brand-900 sm:text-2xl;
+  }
+
+  .scripture-ref {
+    @apply mt-2 block font-sans text-sm not-italic tracking-wide text-accent-700;
+  }
+
+  /* Brand link styling — royal blue with consistent underline on hover. */
+  .brand-link {
+    @apply text-brand-700 underline-offset-4 transition-colors duration-ui ease-smooth hover:text-brand-800 hover:underline;
+  }
+
   .skip-link {
     @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-brand-700 focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white focus:shadow-elevated;
+  }
+
+  /* Decorative hairline used in section headers and dividers. */
+  .hairline {
+    @apply h-1 w-12 rounded-full bg-accent-400;
+  }
+
+  /* Comfortable interactive target for icon-only controls. */
+  .touch-target {
+    @apply inline-flex min-h-touch min-w-touch items-center justify-center;
+  }
+
+  /* Hero section styles */
+  .hero {
+    min-height: 60vh;
+    min-height: max(60vh, 420px);
+  }
+
+  @media (min-width: 768px) {
+    .hero {
+      min-height: 80vh;
+      max-height: 900px;
+    }
+  }
+
+  .hero-bg {
+    background-image: image-set(url("/hero_church_banner_fullpulpit_overlay.webp") type("image/webp"), url("/hero_church_banner_fullpulpit_overlay.jpg") type("image/jpeg"));
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+  }
+
+  /* Fallback if overlay image fails to load */
+  .hero-bg::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: image-set(url("/hero_church_banner_fullpulpit.webp") type("image/webp"), url("/hero_church_banner_fullpulpit.jpg") type("image/jpeg"));
+    background-size: cover;
+    background-position: center center;
+    z-index: -1;
+  }
+
+  /* Staggered fade-in animations */
+  .hero-eyebrow,
+  .hero-headline,
+  .hero-accent,
+  .hero-support,
+  .hero-scripture,
+  .hero-ctas,
+  .hero-strip {
+    opacity: 0;
+    transform: translateY(12px);
+    animation: hero-fade-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  .hero-eyebrow {
+    animation-delay: 0.15s;
+  }
+
+  .hero-headline {
+    animation-delay: 0.25s;
+  }
+
+  .hero-accent {
+    animation-delay: 0.35s;
+    transform: scaleX(0);
+    transform-origin: left;
+    animation: hero-line-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  .hero-support {
+    animation-delay: 0.4s;
+  }
+
+  .hero-scripture {
+    animation-delay: 0.5s;
+  }
+
+  .hero-ctas {
+    animation-delay: 0.6s;
+  }
+
+  .hero-strip {
+    animation-delay: 0.7s;
+  }
+
+  @keyframes hero-fade-in {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes hero-line-in {
+    to {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+  }
+
+  /* Scroll indicator — gentle float */
+  .scroll-indicator svg {
+    animation: scroll-float 2.5s ease-in-out infinite;
+  }
+
+  @keyframes scroll-float {
+    0%, 100% {
+      transform: translateY(0);
+      opacity: 0.6;
+    }
+    50% {
+      transform: translateY(3px);
+      opacity: 1;
+    }
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .hero-eyebrow,
+    .hero-headline,
+    .hero-accent,
+    .hero-support,
+    .hero-scripture,
+    .hero-ctas,
+    .hero-strip {
+      opacity: 1;
+      transform: none;
+      animation: none;
+    }
+
+    .scroll-indicator svg {
+      animation: none;
+    }
+
+    [data-stagger-item] {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+    }
   }
 }
 

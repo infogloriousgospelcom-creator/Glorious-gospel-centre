@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useState } from "react";
 import { GalleryLightbox, type LightboxItem } from "./GalleryLightbox";
 
@@ -35,11 +36,12 @@ export function AlbumItemGrid({ items }: { items: LightboxItem[] }) {
               aria-label={`Open photo ${i + 1}${item.caption ? `: ${item.caption}` : ""}`}
               className="group relative aspect-square w-full overflow-hidden rounded-xl bg-gradient-to-br from-brand-100 to-accent-100 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
             >
-              <img
+              <Image
                 src={item.src}
                 alt={item.alt}
-                loading="lazy"
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                fill
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               />
               <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/80 to-transparent p-2 text-left text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
                 {item.caption ?? item.alt}

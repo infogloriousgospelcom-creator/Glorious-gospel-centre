@@ -1,24 +1,21 @@
 import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { Button } from "@/components/ui/Button";
 
 export default function NotFound() {
   return (
     <>
       <Navbar />
-      <main id="main" className="container-page py-24 text-center">
-        <p className="mb-3 text-sm font-medium uppercase tracking-wider text-brand-600">
-          404
-        </p>
+      <main id="main" className="container-page py-section text-center">
+        <p className="eyebrow mb-3">404</p>
         <h1 className="heading-1 mb-4">Page not found</h1>
         <p className="lead mx-auto mb-8 max-w-xl">
-          The page you are looking for doesn&apos;t exist or has been moved.
+          We couldn&apos;t find that page. It may have moved — try returning home
+          or use the menu to continue.
         </p>
-        <Link
-          href="/"
-          className="inline-flex items-center justify-center rounded-xl bg-brand-700 px-5 py-3 text-sm font-medium text-white hover:bg-brand-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
-        >
-          Return home
+        <Link href="/">
+          <Button>Return home</Button>
         </Link>
       </main>
       <Footer />

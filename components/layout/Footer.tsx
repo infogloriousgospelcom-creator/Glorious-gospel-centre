@@ -1,73 +1,164 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Container } from "@/components/ui/Container";
+import { LinkButton } from "@/components/ui/LinkButton";
+import { getSiteSettings, getActiveSocialLinks } from "@/services/content";
 
 const groups = [
   {
-    heading: "Connect",
+    heading: "Church",
     links: [
       { href: "/about", label: "About" },
-      { href: "/leadership", label: "Leadership" },
+      { href: "/about/leadership", label: "Leadership" },
       { href: "/ministries", label: "Ministries" },
       { href: "/services", label: "Services" },
     ],
   },
   {
-    heading: "Engage",
+    heading: "Connect",
     links: [
+      { href: "/prayer", label: "Prayer" },
+      { href: "/contact", label: "Contact" },
       { href: "/events", label: "Events" },
-      { href: "/sermons", label: "Sermons" },
-      { href: "/gallery", label: "Gallery" },
-      { href: "/livestream", label: "Livestream" },
+      { href: "/livestream", label: "Watch Online" },
     ],
   },
   {
-    heading: "Support",
+    heading: "Resources",
     links: [
-      { href: "/give", label: "Give" },
-      { href: "/prayer", label: "Prayer Request" },
-      { href: "/orphans", label: "Orphans Ministry" },
-      { href: "/feeding", label: "Feeding Programme" },
+      { href: "/sermons", label: "Sermons" },
+      { href: "/gallery", label: "Gallery" },
+      { href: "/about/story", label: "Our Story" },
+      { href: "/privacy", label: "Privacy" },
     ],
   },
-];
+] as const;
 
-export function Footer() {
+export async function Footer() {
+  const [settings, socials] = await Promise.all([
+    getSiteSettings(),
+    getActiveSocialLinks(),
+  ]);
+
+  const churchName = settings.church_name ?? "Glorious Gospel Centre Church";
+
   return (
-    <footer className="mt-16 border-t border-brand-100 bg-brand-50">
-      <Container className="py-12">
-        <div className="grid gap-10 md:grid-cols-4">
+    <footer className="mt-20 bg-brand-900 text-brand-50">
+      <Container className="py-12 sm:py-14">
+        <div className="grid gap-10 lg:grid-cols-[1.35fr_2fr]">
           <div>
-            <p className="font-serif text-lg font-semibold text-ink">
-              Glorious Gospel Centre
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2.5 transition-opacity duration-ui ease-smooth hover:opacity-90"
+              aria-label={`${churchName} — Home`}
+            >
+              <span className="relative h-9 w-9 overflow-hidden rounded-md ring-1 ring-white/20">
+                <Image
+                  src="/logo.webp"
+                  alt=""
+                  width={36}
+                  height={36}
+                  className="h-9 w-9 object-contain"
+                />
+              </span>
+              <span className="font-display text-base font-semibold leading-tight text-white">
+                {churchName}
+              </span>
+            </Link>
+
+            <p className="scripture mt-5 max-w-sm text-lg text-brand-50 sm:text-xl">
+              &ldquo;If God be for us, who can be against us?&rdquo;
+              <span className="scripture-ref text-accent-400">Romans 8:31</span>
             </p>
-            <p className="mt-2 text-sm text-ink-muted">
-              A worshiping community committed to the Word, prayer, and outreach.
-            </p>
+
+            {settings.tagline ? (
+              <p className="mt-4 max-w-sm text-sm text-brand-100">{settings.tagline}</p>
+            ) : null}
+
+            <div className="mt-6 space-y-2 text-sm text-brand-100">
+              {settings.address ? (
+                <p className="whitespace-pre-line">{settings.address}</p>
+              ) : null}
+              {settings.phone ? (
+                <p>
+                  <a
+                    className="transition-colors duration-ui ease-smooth hover:text-accent-400"
+                    href={`tel:${settings.phone.replace(/\s+/g, "")}`}
+                  >
+                    {settings.phone}
+                  </a>
+                </p>
+              ) : null}
+              {settings.email ? (
+                <p>
+                  <a
+                    className="transition-colors duration-ui ease-smooth hover:text-accent-400"
+                    href={`mailto:${settings.email}`}
+                  >
+                    {settings.email}
+                  </a>
+                </p>
+              ) : null}
+            </div>
+
+            <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <LinkButton href="/visit" size="sm">
+                Plan Your Visit
+              </LinkButton>
+              <LinkButton href="/give" variant="secondary" size="sm" className="border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white">
+                Give
+              </LinkButton>
+            </div>
           </div>
-          {groups.map((g) => (
-            <div key={g.heading}>
-              <p className="text-sm font-semibold uppercase tracking-wider text-ink">
-                {g.heading}
-              </p>
-              <ul className="mt-3 space-y-2 text-sm text-ink-muted">
-                {g.links.map((l) => (
-                  <li key={l.href}>
-                    <Link href={l.href} className="hover:text-ink">
-                      {l.label}
-                    </Link>
+
+          <div className="grid gap-8 sm:grid-cols-3">
+            {groups.map((g) => (
+              <div key={g.heading}>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent-400">
+                  {g.heading}
+                </p>
+                <ul className="mt-3 space-y-1 text-sm text-brand-100">
+                  {g.links.map((l) => (
+                    <li key={l.href}>
+                      <Link
+                        href={l.href}
+                        className="inline-flex min-h-touch items-center transition-colors duration-ui ease-smooth hover:text-white sm:min-h-0 sm:py-0.5"
+                      >
+                        {l.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs text-brand-200 sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            © {new Date().getFullYear()} {churchName}. All rights reserved.
+          </p>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            {socials.length > 0 ? (
+              <ul className="flex flex-wrap items-center gap-3">
+                {socials.slice(0, 5).map((s) => (
+                  <li key={s.id}>
+                    <a
+                      href={s.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex min-h-touch items-center capitalize transition-colors duration-ui ease-smooth hover:text-white sm:min-h-0"
+                    >
+                      {s.platform}
+                    </a>
                   </li>
                 ))}
               </ul>
-            </div>
-          ))}
-        </div>
-        <div className="mt-10 flex flex-col gap-3 border-t border-brand-200 pt-6 text-xs text-ink-muted sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} Glorious Gospel Centre. All rights reserved.</p>
-          <div className="flex gap-4">
-            <Link href="/privacy" className="hover:text-ink">
-              Privacy
-            </Link>
-            <Link href="/admin/login" className="hover:text-ink">
+            ) : null}
+            <Link
+              href="/admin/login"
+              className="inline-flex min-h-touch items-center transition-colors duration-ui ease-smooth hover:text-white sm:min-h-0"
+            >
               Admin
             </Link>
           </div>

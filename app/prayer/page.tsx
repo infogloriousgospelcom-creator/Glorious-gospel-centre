@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/Card";
 import { SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
 import { PrayerRequestForm } from "./_components/PrayerRequestForm";
 import { buildPageMetadata } from "@/lib/seo";
+import { SectionReveal } from "@/components/motion/SectionReveal";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export default function PrayerPage() {
     <>
       <Navbar />
       <main id="main">
-        <Section className="bg-gradient-to-br from-brand-50 via-surface to-accent-50">
+        <Section className="bg-gradient-to-br from-brand-50 via-white to-brand-50/60">
           <Container>
             <div className="mx-auto max-w-3xl text-center">
               <SectionEyebrow>Prayer</SectionEyebrow>
@@ -39,6 +40,7 @@ export default function PrayerPage() {
         <Section>
           <Container>
             <div className="grid gap-12 lg:grid-cols-[2fr_1fr]">
+              <SectionReveal>
               <Card>
                 <CardHeader>
                   <CardTitle>Submit a prayer request</CardTitle>
@@ -47,7 +49,9 @@ export default function PrayerPage() {
                   <PrayerRequestForm />
                 </div>
               </Card>
+              </SectionReveal>
 
+              <SectionReveal delay={0.15}>
               <aside className="space-y-6">
                 <Card>
                   <CardHeader>
@@ -74,14 +78,15 @@ export default function PrayerPage() {
                   </div>
                 </Card>
                 <blockquote className="rounded-2xl bg-brand-900 p-6 text-brand-50 shadow-soft">
-                  <p className="font-serif text-lg font-semibold">
+                  <p className="font-display text-lg font-semibold">
                     &ldquo;The prayer of a righteous person is powerful and effective.&rdquo;
                   </p>
-                  <p className="mt-2 text-xs uppercase tracking-wider text-brand-200">
+                  <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-accent-400">
                     James 5:16
                   </p>
                 </blockquote>
               </aside>
+              </SectionReveal>
             </div>
           </Container>
         </Section>

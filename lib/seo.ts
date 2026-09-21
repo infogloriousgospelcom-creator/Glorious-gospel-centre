@@ -80,7 +80,7 @@ export function buildPageMetadata(input: PageSeoInput): Metadata {
       title: input.title,
       description: input.description,
       url: canonical,
-      siteName: "Glorious Gospel Centre",
+      siteName: "Glorious Gospel Centre Church",
       locale: "en_KE",
       images: [
         {
@@ -107,7 +107,7 @@ export function buildPageMetadata(input: PageSeoInput): Metadata {
  * Default church metadata used by the root layout.
  */
 export const DEFAULT_SEO = {
-  churchName: "Glorious Gospel Centre",
+  churchName: "Glorious Gospel Centre Church",
   defaultTitle: "Glorious Gospel Centre Church — worship, community, teaching, and outreach.",
   defaultDescription:
     "Glorious Gospel Centre Church in Kenya — worship, community, teaching, and outreach. Join us for Sunday services, mid-week fellowship, and outreach.",

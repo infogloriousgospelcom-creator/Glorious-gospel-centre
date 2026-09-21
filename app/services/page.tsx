@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = buildPageMetadata({
   title: "Services",
   description:
-    "Weekly service schedule for Glorious Gospel Centre — Sunday worship, mid-week Bible study, youth service, and prayer meetings.",
+    "Weekly service schedule for Glorious Gospel Centre Church — Sunday worship, mid-week Bible study, youth service, and prayer meetings.",
   path: "/services",
   keywords: ["church services", "worship schedule", "sunday service", "bible study"],
 });
@@ -33,7 +33,7 @@ export default async function ServicesPage() {
     <>
       <Navbar />
       <main id="main">
-        <Section className="bg-gradient-to-br from-brand-50 via-surface to-accent-50">
+        <Section className="bg-gradient-to-br from-brand-50 via-white to-brand-50/60">
           <Container>
             <div className="mx-auto max-w-3xl text-center">
               <SectionEyebrow>Weekly schedule</SectionEyebrow>
@@ -58,20 +58,17 @@ export default async function ServicesPage() {
                 {byDay.map(({ day, label, services }) => (
                   <article
                     key={day}
-                    className="overflow-hidden rounded-2xl border border-brand-100 bg-surface shadow-soft"
+                    className="overflow-hidden rounded-2xl border border-border bg-white shadow-soft transition-all duration-200 hover:-translate-y-0.5 hover:shadow-elevated"
                   >
-                    <header className="border-b border-brand-100 bg-brand-50 px-5 py-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">
-                        Day {day + 1}
-                      </p>
-                      <h2 className="heading-3 text-ink">{label}</h2>
+                    <header className="border-b border-border bg-brand-50 px-5 py-3">
+                      <p className="eyebrow">{label}</p>
                     </header>
-                    <ul className="divide-y divide-brand-100">
+                    <ul className="divide-y divide-border">
                       {services.map((s) => (
                         <li key={s.id} className="px-5 py-4">
                           <div className="flex items-start justify-between gap-4">
                             <div>
-                              <p className="font-medium text-ink">{s.name}</p>
+                              <p className="font-medium text-brand-900">{s.name}</p>
                               {s.description ? (
                                 <p className="mt-1 text-sm text-ink-muted">
                                   {s.description}
@@ -84,7 +81,7 @@ export default async function ServicesPage() {
                               ) : null}
                             </div>
                             <div className="shrink-0 text-right">
-                              <p className="text-sm font-medium text-brand-700">
+                              <p className="text-sm font-semibold text-brand-700">
                                 {formatTime(s.start_time)}
                               </p>
                               {s.end_time ? (
@@ -105,7 +102,7 @@ export default async function ServicesPage() {
             {hasRecurring ? (
               <p className="mt-10 text-center text-xs text-ink-muted">
                 Schedule repeats weekly. Special services and one-time events appear on the{" "}
-                <a href="/events" className="text-brand-700 hover:text-brand-800">
+                <a href="/events" className="text-brand-700 transition-colors hover:text-brand-800">
                   events page
                 </a>
                 .

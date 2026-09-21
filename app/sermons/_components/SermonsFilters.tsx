@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { Input } from "@/components/ui/Form";
+import { Input, Select } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 import type { SermonSeries } from "@/types/content";
 
@@ -79,7 +79,7 @@ export function SermonsFilters({
       <label className="sr-only" htmlFor="sermons-category">
         Filter by category
       </label>
-      <select
+      <Select
         id="sermons-category"
         name="category"
         value={category}
@@ -88,7 +88,6 @@ export function SermonsFilters({
           setCategory(next);
           pushWithReset({ q: search, category: next, series: seriesId });
         }}
-        className="h-11 rounded-xl border border-brand-200 bg-white px-3.5 text-sm text-ink focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
       >
         <option value="all">All categories</option>
         {categories.map((c) => (
@@ -96,12 +95,12 @@ export function SermonsFilters({
             {c}
           </option>
         ))}
-      </select>
+      </Select>
 
       <label className="sr-only" htmlFor="sermons-series">
         Filter by series
       </label>
-      <select
+      <Select
         id="sermons-series"
         name="series"
         value={seriesId}
@@ -110,7 +109,6 @@ export function SermonsFilters({
           setSeriesId(next);
           pushWithReset({ q: search, category, series: next });
         }}
-        className="h-11 rounded-xl border border-brand-200 bg-white px-3.5 text-sm text-ink focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
       >
         <option value="">All series</option>
         {series.map((sr) => (
@@ -118,7 +116,7 @@ export function SermonsFilters({
             {sr.title}
           </option>
         ))}
-      </select>
+      </Select>
 
       <Button type="submit" isLoading={pending}>
         Apply

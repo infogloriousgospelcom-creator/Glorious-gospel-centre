@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -9,7 +10,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState, SectionEyebrow } from "@/components/ui/Section";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { getSermonSeriesBySlug, listSermonsPaged } from "@/services/sermons";
-import { formatDuration } from "@/lib/media";
+import { formatDuration, youtubeThumbnailUrl } from "@/lib/media";
 import {
   buildPageMetadata,
   buildBreadcrumbSchema,
@@ -37,7 +38,7 @@ export async function generateMetadata({
     title: series.title,
     description: series.description
       ? plainText(series.description, 200)
-      : `Sermon series: ${series.title} from Glorious Gospel Centre.`,
+      : `Sermon series: ${series.title} from Glorious Gospel Centre Church.`,
     path: `/sermons/series/${series.slug}`,
     image: series.hero_image,
     imageAlt: `${series.title} sermon series`,
@@ -98,11 +99,16 @@ export default async function SeriesDetailPage({
 
         {series.hero_image ? (
           <Container>
-            <img
-              src={series.hero_image}
-              alt=""
-              className="aspect-[21/9] w-full rounded-2xl object-cover shadow-elevated"
-            />
+            <div className="relative aspect-[21/9] w-full rounded-2xl overflow-hidden shadow-elevated">
+              <Image
+                src={series.hero_image}
+                alt={`${series.title} sermon series`}
+                fill
+                className="object-cover"
+                priority
+                sizes="100vw"
+              />
+            </div>
           </Container>
         ) : null}
 
@@ -124,12 +130,14 @@ export default async function SeriesDetailPage({
                   return (
                     <Link key={s.id} href={`/sermons/${s.slug}`} className="group">
                       <Card className="flex h-full flex-col transition-shadow group-hover:shadow-elevated">
-                        <div className="aspect-video overflow-hidden bg-gradient-to-br from-brand-900 via-brand-800 to-accent-700" aria-hidden="true">
-                          {s.thumbnail_url ? (
-                            <img
-                              src={s.thumbnail_url}
-                              alt=""
-                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-brand-900 via-brand-800 to-accent-700" aria-hidden="true">
+                          {(s.thumbnail_url ?? youtubeThumbnailUrl(s.video_url)) ? (
+                            <Image
+                              src={s.thumbnail_url ?? youtubeThumbnailUrl(s.video_url)!}
+                              alt={`${s.title} sermon thumbnail`}
+                              fill
+                              className="object-cover transition-transform duration-500 group-hover:scale-105"
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                             />
                           ) : null}
                         </div>

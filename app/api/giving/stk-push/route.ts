@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { initiateGiving } from "@/services/giving";
+import { isSupabaseConfigured, publicEnv } from "@/lib/env";
 
 const Body = z.object({
   category_id: z.string().uuid(),
@@ -13,20 +15,42 @@ const Body = z.object({
 /**
  * Programmatic STK Push initiation endpoint.
  *
- * Used by:
- *   - The /give server action (which calls `initiateGiving` directly).
- *   - Future third-party integrations that need a programmatic API.
+ * Decision: KEEP this route. Primary giving uses the server action → Edge
+ * Function path. This route exists for programmatic callers and must validate
+ * the JWT (not merely check for a `Bearer ` prefix).
  *
- * Authentication: callers must be authenticated admin sessions OR
- * provide the same honeypot/rate-limit protections as the public form.
- * For now this endpoint is gated to authenticated admins only.
+ * Authorization model matches giving: any authenticated Supabase user may
+ * initiate a gift for themselves (Edge Function binds `created_by`).
  */
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return NextResponse.json({ error: "Missing authorization." }, { status: 401 });
-  }
   try {
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json({ error: "Not configured." }, { status: 503 });
+    }
+
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const token = authHeader.slice("Bearer ".length).trim();
+    if (!token || token.length < 20) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const verifier = createSupabaseClient(
+      publicEnv.NEXT_PUBLIC_SUPABASE_URL!,
+      publicEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { auth: { persistSession: false, autoRefreshToken: false } },
+    );
+    const {
+      data: { user },
+      error: authError,
+    } = await verifier.auth.getUser(token);
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const json = (await request.json()) as Record<string, unknown>;
     const parsed = Body.safeParse(json);
     if (!parsed.success) {
@@ -35,12 +59,14 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+
     const result = await initiateGiving({
       categoryId: parsed.data.category_id,
       amountCents: Math.round(parsed.data.amount * 100),
       currency: parsed.data.currency,
       phone: parsed.data.phone,
       description: parsed.data.description ?? "GGC Giving",
+      accessToken: token,
     });
     return NextResponse.json(result, { status: result.ok ? 200 : 502 });
   } catch {

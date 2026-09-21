@@ -7,12 +7,14 @@ import { Card, CardBody, CardHeader, CardTitle, CardDescription } from "@/compon
 import { EmptyState, SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
 import { getAllPublishedMinistries } from "@/services/content";
 import { buildPageMetadata } from "@/lib/seo";
+import { getMinistryImages } from "@/lib/ministry-images";
+import { MinistryCardSlideshow } from "@/components/ministries/MinistryCardSlideshow";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
     title: "Ministries",
     description:
-      "Explore the ministries of Glorious Gospel Centre — find a place to belong, serve, and grow.",
+      "Explore the ministries of Glorious Gospel Centre Church — find a place to belong, serve, and grow.",
     path: "/ministries",
     keywords: ["ministries", "church groups", "serve", "fellowship"],
   });
@@ -27,7 +29,7 @@ export default async function MinistriesPage() {
     <>
       <Navbar />
       <main id="main">
-        <Section className="bg-gradient-to-br from-brand-50 via-surface to-accent-50">
+        <Section className="bg-gradient-to-br from-brand-50 via-white to-brand-50/60">
           <Container>
             <div className="mx-auto max-w-3xl text-center">
               <SectionEyebrow>Get involved</SectionEyebrow>
@@ -49,38 +51,39 @@ export default async function MinistriesPage() {
               />
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {ministries.map((m) => (
-                  <Link key={m.id} href={`/ministries/${m.slug}`} className="group">
-                    <Card className="flex h-full flex-col transition-shadow group-hover:shadow-elevated">
-                      <div
-                        className="aspect-[4/3] bg-gradient-to-br from-brand-100 to-accent-100"
-                        aria-hidden="true"
-                      >
-                        {m.hero_image ? (
-                          <img
-                            src={m.hero_image}
-                            alt=""
-                            className="h-full w-full object-cover"
+                {ministries.map((m) => {
+                  const images = getMinistryImages(m.slug);
+                  const hasImages = images.length > 0;
+
+                  return (
+                    <Link key={m.id} href={`/ministries/${m.slug}`} className="group">
+                      <Card hoverable className="flex h-full flex-col overflow-hidden">
+                        {hasImages ? (
+                          <MinistryCardSlideshow images={images} />
+                        ) : (
+                          <div
+                            className="relative aspect-[4/3] bg-gradient-to-br from-brand-100 to-brand-50"
+                            aria-hidden="true"
                           />
-                        ) : null}
-                      </div>
-                      <CardHeader>
-                        <CardTitle>{m.name}</CardTitle>
-                        {m.short_description ? (
-                          <CardDescription>{m.short_description}</CardDescription>
-                        ) : null}
-                      </CardHeader>
-                      {m.meeting_info ? (
+                        )}
+                        <CardHeader>
+                          <CardTitle className="transition-colors group-hover:text-brand-700">
+                            {m.name}
+                          </CardTitle>
+                          {m.short_description ? (
+                            <CardDescription>{m.short_description}</CardDescription>
+                          ) : null}
+                        </CardHeader>
+                        {m.meeting_info ? (
                           <CardBody>
-                            <p className="text-xs uppercase tracking-wider text-ink-muted">
-                              Meetings
-                            </p>
+                            <p className="eyebrow">Meetings</p>
                             <p className="mt-1 text-sm text-ink">{m.meeting_info}</p>
                           </CardBody>
                         ) : null}
-                    </Card>
-                  </Link>
-                ))}
+                      </Card>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </Container>

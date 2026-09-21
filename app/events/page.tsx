@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
@@ -8,6 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState, SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
 import { getAllPublishedEvents } from "@/services/content";
 import { buildPageMetadata } from "@/lib/seo";
+import { SectionReveal } from "@/components/motion/SectionReveal";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +44,7 @@ export default async function EventsPage() {
     <>
       <Navbar />
       <main id="main">
-        <Section className="bg-gradient-to-br from-brand-50 via-surface to-accent-50">
+        <Section className="bg-gradient-to-br from-brand-50 via-white to-brand-50/60">
           <Container>
             <div className="mx-auto max-w-3xl text-center">
               <SectionEyebrow>Events</SectionEyebrow>
@@ -64,18 +66,21 @@ export default async function EventsPage() {
                 description="Schedule events through the admin to see them here."
               />
             ) : (
+              <SectionReveal>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {upcoming.map((e) => {
                   const { day, time } = formatEventDateTime(e.starts_at);
                   return (
                     <Link key={e.id} href={`/events/${e.slug}`} className="group">
-                      <Card className="flex h-full flex-col transition-shadow group-hover:shadow-elevated">
-                        <div className="aspect-[4/3] bg-gradient-to-br from-brand-100 to-accent-100" aria-hidden="true">
+                      <Card hoverable className="flex h-full flex-col overflow-hidden">
+                        <div className="relative aspect-[4/3] bg-gradient-to-br from-brand-100 to-brand-50" aria-hidden="true">
                           {e.poster_url ? (
-                            <img
+                            <Image
                               src={e.poster_url}
-                              alt=""
-                              className="h-full w-full object-cover"
+                              alt={e.title}
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                             />
                           ) : null}
                         </div>
@@ -86,7 +91,9 @@ export default async function EventsPage() {
                               <Badge tone="accent">Registration</Badge>
                             ) : null}
                           </div>
-                          <CardTitle>{e.title}</CardTitle>
+                          <CardTitle className="transition-colors group-hover:text-brand-700">
+                            {e.title}
+                          </CardTitle>
                           {e.short_description ? (
                             <CardDescription>{e.short_description}</CardDescription>
                           ) : null}
@@ -102,6 +109,7 @@ export default async function EventsPage() {
                   );
                 })}
               </div>
+              </SectionReveal>
             )}
           </Container>
         </Section>
@@ -110,17 +118,17 @@ export default async function EventsPage() {
           <Section className="bg-surface-muted">
             <Container>
               <h2 className="heading-3 mb-6">Past events</h2>
-              <ul className="divide-y divide-brand-100 overflow-hidden rounded-2xl border border-brand-100 bg-surface shadow-soft">
+              <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-white shadow-soft">
                 {past.slice(0, 10).map((e) => {
                   const { day } = formatEventDateTime(e.starts_at);
                   return (
                     <li key={e.id}>
                       <Link
                         href={`/events/${e.slug}`}
-                        className="flex items-center justify-between px-5 py-4 hover:bg-brand-50"
+                        className="flex items-center justify-between px-5 py-4 transition-colors hover:bg-brand-50"
                       >
                         <div>
-                          <p className="font-medium text-ink">{e.title}</p>
+                          <p className="font-medium text-brand-900">{e.title}</p>
                           {e.location ? (
                             <p className="text-xs text-ink-muted">{e.location}</p>
                           ) : null}

@@ -17,10 +17,10 @@ export function Field({ label, htmlFor, hint, error, required, className, childr
   const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
   return (
     <div className={cn("space-y-1.5", className)}>
-      <label htmlFor={htmlFor} className="block text-sm font-medium text-ink">
+      <label htmlFor={htmlFor} className="block text-sm font-medium text-brand-900">
         {label}
         {required ? (
-          <span className="ml-0.5 text-danger-600" aria-hidden="true">
+          <span className="ml-0.5 text-ruby-500" aria-hidden="true">
             *
           </span>
         ) : null}
@@ -43,7 +43,7 @@ export function Field({ label, htmlFor, hint, error, required, className, childr
 }
 
 const inputBase =
-  "block w-full rounded-xl border border-brand-200 bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-subtle focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 disabled:bg-surface-inset disabled:cursor-not-allowed aria-[invalid=true]:border-danger-600";
+  "block w-full rounded-lg border border-border bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-subtle focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 disabled:bg-surface-inset disabled:cursor-not-allowed aria-[invalid=true]:border-danger-600 aria-[invalid=true]:focus:ring-danger-600/30";
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
   function Input({ className, ...props }, ref) {
@@ -60,6 +60,24 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<H
         className={cn(inputBase, "resize-y", className)}
         {...props}
       />
+    );
+  },
+);
+
+export const Select = forwardRef<HTMLSelectElement, React.SelectHTMLAttributes<HTMLSelectElement>>(
+  function Select({ className, children, ...props }, ref) {
+    return (
+      <select
+        ref={ref}
+        className={cn(inputBase, "appearance-none pr-10 bg-no-repeat bg-[right_0.75rem_center]", className)}
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23172033'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E\")",
+        }}
+        {...props}
+      >
+        {children}
+      </select>
     );
   },
 );

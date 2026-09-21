@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/supabase/server";
+import { invalidateCache } from "@/lib/cache";
 import type { AdminActionState } from "./sermons";
 
 const STATUS = ["DRAFT", "PENDING_APPROVAL", "APPROVED", "PUBLISHED", "REJECTED", "ARCHIVED"] as const;
@@ -51,6 +52,7 @@ export async function createService(_p: AdminActionState | null, fd: FormData): 
     if (error || !data) return { ok: false, message: "Could not create service." };
     revalidatePath("/admin/services");
     revalidatePath("/services");
+    invalidateCache("published-services");
     redirect(`/admin/services/${data.id}`);
   } catch (e) { if (e instanceof Error && e.message === "NEXT_REDIRECT") throw e; return { ok: false, message: "Could not create service." }; }
 }
@@ -75,6 +77,7 @@ export async function updateService(id: string, _p: AdminActionState | null, fd:
     revalidatePath("/admin/services");
     revalidatePath(`/admin/services/${id}`);
     revalidatePath("/services");
+    invalidateCache("published-services");
     return { ok: true, message: "Service updated.", id };
   } catch { return { ok: false, message: "Could not update service." }; }
 }
@@ -88,6 +91,7 @@ export async function deleteService(id: string): Promise<AdminActionState> {
     if (error) return { ok: false, message: "Could not delete service." };
     revalidatePath("/admin/services");
     revalidatePath("/services");
+    invalidateCache("published-services");
     return { ok: true, message: "Service deleted." };
   } catch { return { ok: false, message: "Could not delete service." }; }
 }

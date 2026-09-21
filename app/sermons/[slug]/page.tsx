@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
@@ -131,36 +132,41 @@ export default async function SermonDetailPage({
                 {sermon.audio_url ? <Badge tone="info">Audio</Badge> : null}
                 {sermon.livestream_url ? <Badge tone="warning">Livestream</Badge> : null}
               </div>
-            </div>
-          </Container>
-        </Section>
-
-        <Section>
-          <Container>
-            {embed ? (
-              <div className="overflow-hidden rounded-2xl bg-ink shadow-elevated">
-                <div className="aspect-video">
-                  <iframe
-                    src={embed}
-                    title={sermon.title}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    className="h-full w-full"
+</div>
+            </Container>
+          </Section>
+ 
+          <Section>
+            <Container>
+              {embed ? (
+                <div className="overflow-hidden rounded-2xl bg-ink shadow-elevated">
+                  <div className="aspect-video">
+                    <iframe
+                      src={embed}
+                      title={sermon.title}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                      className="h-full w-full"
+                    />
+                  </div>
+                </div>
+              ) : sermon.thumbnail_url ? (
+                <div className="relative aspect-video w-full rounded-2xl overflow-hidden shadow-elevated">
+                  <Image
+                    src={sermon.thumbnail_url}
+                    alt={`${sermon.title} sermon cover image`}
+                    fill
+                    className="object-cover"
+                    priority
+                    sizes="100vw"
                   />
                 </div>
-              </div>
-            ) : sermon.thumbnail_url ? (
-              <img
-                src={sermon.thumbnail_url}
-                alt={`${sermon.title} sermon cover image`}
-                className="aspect-video w-full rounded-2xl object-cover shadow-elevated"
-              />
-            ) : (
-              <EmptyState
-                title="Media coming soon"
-                description="The video, audio, or livestream link will appear once published."
-              />
-            )}
+              ) : (
+                <EmptyState
+                  title="Media coming soon"
+                  description="The video, audio, or livestream link will appear once published."
+                />
+              )}
 
             {sermon.audio_url ? (
               <div className="mt-6">

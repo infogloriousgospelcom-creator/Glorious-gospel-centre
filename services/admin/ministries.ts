@@ -5,6 +5,8 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/supabase/server";
+import { invalidateCache } from "@/lib/cache";
+import { isAllowedCmsMediaUrl } from "@/lib/safe-url";
 import type { AdminActionState } from "./sermons";
 
 const STATUS = ["DRAFT", "PENDING_APPROVAL", "APPROVED", "PUBLISHED", "REJECTED", "ARCHIVED"] as const;
@@ -19,7 +21,12 @@ const MinistrySchema = z.object({
   name: z.string().trim().min(2, "Name is required.").max(120),
   short_description: z.string().trim().max(500).optional().or(z.literal("")),
   description: z.string().trim().max(20000).optional().or(z.literal("")),
-  hero_image: z.string().url().optional().or(z.literal("")),
+  hero_image: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal(""))
+    .refine((v) => !v || isAllowedCmsMediaUrl(v), "Hero image must be HTTPS on an approved host."),
   meeting_info: z.string().trim().max(500).optional().or(z.literal("")),
   contact_email: z.string().email().optional().or(z.literal("")),
   contact_phone: z.string().trim().max(40).optional().or(z.literal("")),
@@ -81,6 +88,7 @@ export async function createMinistry(
     }
     revalidatePath("/admin/ministries");
     revalidatePath("/ministries");
+    invalidateCache("featured-ministries");
     redirect(`/admin/ministries/${data.id}`);
   } catch (err) {
     if (err instanceof Error && err.message === "NEXT_REDIRECT") throw err;
@@ -124,6 +132,7 @@ export async function updateMinistry(
     revalidatePath(`/admin/ministries/${id}`);
     revalidatePath("/ministries");
     revalidatePath(`/ministries/${d.slug}`);
+    invalidateCache("featured-ministries");
     return { ok: true, message: "Ministry updated.", id };
   } catch {
     return { ok: false, message: "Could not update ministry." };
@@ -139,6 +148,7 @@ export async function deleteMinistry(id: string): Promise<AdminActionState> {
     if (error) return { ok: false, message: "Could not delete ministry." };
     revalidatePath("/admin/ministries");
     revalidatePath("/ministries");
+    invalidateCache("featured-ministries");
     return { ok: true, message: "Ministry deleted." };
   } catch {
     return { ok: false, message: "Could not delete ministry." };

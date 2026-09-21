@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
+import { Select } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 
 export function GalleryFilters({
@@ -40,12 +41,11 @@ export function GalleryFilters({
       <label className="sr-only" htmlFor="gallery-category">
         Filter by category
       </label>
-      <select
+      <Select
         id="gallery-category"
         name="category"
         value={category}
         onChange={(e) => apply(e.target.value)}
-        className="h-11 rounded-xl border border-brand-200 bg-white px-3.5 text-sm text-ink focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
       >
         <option value="all">All categories</option>
         {categories.map((c) => (
@@ -53,7 +53,7 @@ export function GalleryFilters({
             {c}
           </option>
         ))}
-      </select>
+      </Select>
       <Button type="submit" isLoading={pending}>
         Apply
       </Button>

@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Container } from "@/components/ui/Container";
 
 const links = [
@@ -22,25 +25,27 @@ const links = [
   { href: "/admin/account", label: "Account" },
 ];
 
-export function AdminSubnav({ active }: { active?: string }) {
+export function AdminSubnav() {
+  const pathname = usePathname() ?? "";
   return (
     <nav
       aria-label="Admin sections"
-      className="sticky top-16 z-30 border-b border-brand-100 bg-surface/95 backdrop-blur"
+      className="sticky top-16 z-30 border-b border-brand-100 bg-brand-50/40 backdrop-blur supports-[backdrop-filter]:bg-brand-50/30"
     >
       <Container>
-        <ul className="-mb-px flex flex-wrap gap-x-5 gap-y-1 overflow-x-auto py-2 text-sm font-medium text-ink-muted">
+        <ul className="-mb-px flex flex-wrap gap-x-1 gap-y-1 overflow-x-auto py-2 text-sm font-medium">
           {links.map((l) => {
-            const isActive = active ? l.href === active || l.href.startsWith(`${active}/`) : false;
+            const isActive = pathname === l.href || pathname.startsWith(`${l.href}/`);
             return (
               <li key={l.href}>
                 <Link
                   href={l.href}
                   aria-current={isActive ? "page" : undefined}
                   className={
-                    isActive
-                      ? "border-b-2 border-brand-700 pb-1.5 text-ink"
-                      : "hover:text-ink"
+                    "inline-flex h-9 items-center rounded-md px-3 transition-colors " +
+                    (isActive
+                      ? "bg-brand-50 text-brand-800 ring-1 ring-inset ring-brand-100"
+                      : "text-ink-muted hover:bg-brand-50 hover:text-brand-800")
                   }
                 >
                   {l.label}

@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/supabase/server";
+import { encodeStoragePath, isSafeStoragePath } from "@/lib/safe-url";
 import type { GalleryAlbum, GalleryItem } from "@/types/content";
 
 export const GALLERY_PAGE_SIZE = 12;
@@ -124,6 +125,7 @@ export async function getAlbumItemCount(albumId: string): Promise<number> {
 export function publicStorageUrl(bucket: string, storagePath: string): string | null {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!base) return null;
-  const encodedPath = storagePath.split("/").map(encodeURIComponent).join("/");
+  if (!isSafeStoragePath(storagePath)) return null;
+  const encodedPath = encodeStoragePath(storagePath);
   return `${base}/storage/v1/object/public/${bucket}/${encodedPath}`;
 }

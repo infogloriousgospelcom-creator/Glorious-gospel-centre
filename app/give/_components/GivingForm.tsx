@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { submitGiving, type GivingState } from "@/services/giving.actions";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Form";
+import { usePaymentStatus, type PaymentStatus } from "@/lib/hooks/usePaymentStatus";
 
 interface CategoryOpt {
   id: string;
@@ -25,25 +26,121 @@ function SubmitButton() {
   );
 }
 
+function PaymentStatusDisplay({ status, transaction, error }: { 
+  status: PaymentStatus; 
+  transaction: { amountCents: number; currency: string; categoryLabel: string | null; mpesaReceiptNumber?: string | null } | null; 
+  error: string | null;
+}) {
+  const formatKES = (cents: number, currency: string) => 
+    new Intl.NumberFormat("en-KE", { style: "currency", currency }).format(cents / 100);
+
+  switch (status) {
+    case "PROCESSING":
+      return (
+        <Alert tone="info" title="Processing your request">
+          <p>We are initiating the M-Pesa payment...</p>
+        </Alert>
+      );
+    case "STK_SENT":
+      return (
+        <Alert tone="info" title="Check your phone">
+          <p>An M-Pesa payment request has been sent to your phone.</p>
+          <p className="mt-2">Enter your M-Pesa PIN to complete the transaction.</p>
+          <p className="mt-2 text-xs text-ink-muted">
+            This may take up to 2 minutes. We will update this page automatically.
+          </p>
+        </Alert>
+      );
+    case "SUCCESS":
+      return (
+        <Alert tone="success" title="Thank you!">
+          <p>Your giving of {transaction ? formatKES(transaction.amountCents, transaction.currency) : "the specified amount"} has been received successfully.</p>
+          {transaction?.mpesaReceiptNumber && (
+            <p className="mt-2 text-sm">
+              M-Pesa Receipt: <span className="font-mono font-semibold">{transaction.mpesaReceiptNumber}</span>
+            </p>
+          )}
+          {transaction?.categoryLabel && (
+            <p className="mt-1 text-sm text-ink-muted">Purpose: {transaction.categoryLabel}</p>
+          )}
+        </Alert>
+      );
+    case "FAILED":
+      return (
+        <Alert tone="danger" title="Payment failed">
+          <p>Your payment could not be completed.</p>
+          <p className="mt-2">You can try again by submitting the form below.</p>
+        </Alert>
+      );
+    case "CANCELLED":
+      return (
+        <Alert tone="warning" title="Payment cancelled">
+          <p>The M-Pesa payment was cancelled.</p>
+          <p className="mt-2">You can try again by submitting the form below.</p>
+        </Alert>
+      );
+    case "TIMEOUT":
+      return (
+        <Alert tone="danger" title="Payment timed out">
+          <p>{error || "The payment took too long to complete."}</p>
+          <p className="mt-2">Your payment has not been completed. You can try again by submitting the form below.</p>
+        </Alert>
+      );
+    default:
+      return null;
+  }
+}
+
 export function GivingForm({ categories }: { categories: CategoryOpt[] }) {
-  const [state, formAction] = useFormState(submitGiving, initialState);
+ const [state, formAction] = useFormState(submitGiving, initialState);
   const formRef = useRef<HTMLFormElement>(null);
   const defaultId = categories.find((c) => c.is_default)?.id ?? categories[0]?.id ?? "";
+  const [showForm, setShowForm] = useState(true);
+
+  const { status, transaction, error, startPolling } = usePaymentStatus({
+    transactionId: state.transactionId,
+    externalReference: state.externalReference,
+    enabled: state.ok && !!state.transactionId,
+    intervalMs: 3000,
+    maxAttempts: 40,
+  });
 
   useEffect(() => {
-    if (state.ok) formRef.current?.reset();
-  }, [state.ok]);
+    if (state.ok && state.transactionId) {
+      formRef.current?.reset();
+      setShowForm(false);
+      startPolling();
+    }
+  }, [state.ok, state.transactionId, startPolling]);
 
-  if (state.ok) {
+  
+
+  if (!showForm && (status === "SUCCESS" || status === "FAILED" || status === "CANCELLED" || status === "TIMEOUT")) {
     return (
-      <Alert tone="success" title="Thank you">
-        {state.message}
-        {state.mode === "mock" ? (
-          <p className="mt-2 text-xs">
-            (Mock mode: configure <code>M_PESA_*</code> env vars for live payments.)
-          </p>
-        ) : null}
-      </Alert>
+      <div>
+        <PaymentStatusDisplay 
+          status={status} 
+          transaction={transaction} 
+          error={error}
+        />
+        <div className="mt-6 flex justify-end">
+          <Button onClick={() => setShowForm(true)} variant="secondary">
+            Make another gift
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!showForm) {
+    return (
+      <div>
+        <PaymentStatusDisplay 
+          status={status} 
+          transaction={transaction} 
+          error={error}
+        />
+      </div>
     );
   }
 

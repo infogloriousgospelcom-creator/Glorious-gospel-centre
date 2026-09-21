@@ -75,13 +75,13 @@ describe("seo helpers", () => {
   describe("structured data", () => {
     it("builds a Church schema", () => {
       const node = buildChurchSchema({
-        name: "Glorious Gospel Centre",
+        name: "Glorious Gospel Centre Church",
         description: "Worship",
         url: "https://ggc.example",
       });
       expect(node["@context"]).toBe("https://schema.org");
       expect(node["@type"]).toBe("Church");
-      expect(node.name).toBe("Glorious Gospel Centre");
+      expect(node.name).toBe("Glorious Gospel Centre Church");
     });
 
     it("builds an Event schema with organizer", () => {

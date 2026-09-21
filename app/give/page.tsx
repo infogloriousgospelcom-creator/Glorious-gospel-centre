@@ -11,13 +11,14 @@ import { listActiveGivingCategories } from "@/services/giving";
 import { getSiteSettings } from "@/services/content";
 import { getPaymentProvider } from "@/services/payment";
 import { buildPageMetadata } from "@/lib/seo";
+import { SectionReveal } from "@/components/motion/SectionReveal";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Give",
   description:
-    "Support the mission and ministry of Glorious Gospel Centre — tithe, offering, missions, and outreach via M-Pesa.",
+    "Support the mission and ministry of Glorious Gospel Centre Church — tithe, offering, missions, and outreach via M-Pesa.",
   path: "/give",
   keywords: ["give", "tithe", "offering", "M-Pesa", "donate", "stewardship"],
 });
@@ -35,7 +36,7 @@ export default async function GivePage() {
     <>
       <Navbar />
       <main id="main">
-        <Section className="bg-gradient-to-br from-brand-50 via-surface to-accent-50">
+        <Section className="bg-gradient-to-br from-brand-50 via-white to-brand-50/60">
           <Container>
             <div className="mx-auto max-w-3xl text-center">
               <SectionEyebrow>Generosity</SectionEyebrow>
@@ -61,6 +62,7 @@ export default async function GivePage() {
             ) : null}
 
             <div className="grid gap-10 lg:grid-cols-[2fr_1fr]">
+              <SectionReveal>
               <Card>
                 <CardHeader>
                   <CardTitle>Give now</CardTitle>
@@ -76,7 +78,9 @@ export default async function GivePage() {
                   )}
                 </div>
               </Card>
+              </SectionReveal>
 
+              <SectionReveal delay={0.15}>
               <aside className="space-y-6">
                 <Card>
                   <CardHeader>
@@ -85,7 +89,7 @@ export default async function GivePage() {
                   <div className="px-6 pb-6 text-sm text-ink-muted">
                     <ul className="space-y-3">
                       <li>
-                        <p className="font-medium text-ink">M-Pesa</p>
+                        <p className="font-medium text-brand-900">M-Pesa</p>
                         {settings.mpesa_paybill ? (
                           <p>Paybill: {settings.mpesa_paybill}</p>
                         ) : (
@@ -94,7 +98,7 @@ export default async function GivePage() {
                         {settings.mpesa_till ? <p>Till: {settings.mpesa_till}</p> : null}
                       </li>
                       <li>
-                        <p className="font-medium text-ink">Bank</p>
+                        <p className="font-medium text-brand-900">Bank</p>
                         {settings.bank_instructions ? (
                           <p className="whitespace-pre-line">{settings.bank_instructions}</p>
                         ) : (
@@ -102,7 +106,7 @@ export default async function GivePage() {
                         )}
                       </li>
                       <li>
-                        <p className="font-medium text-ink">In person</p>
+                        <p className="font-medium text-brand-900">In person</p>
                         <p>Drop your offering in the bag during any service.</p>
                       </li>
                     </ul>
@@ -110,7 +114,7 @@ export default async function GivePage() {
                 </Card>
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">Tax & receipts</CardTitle>
+                    <CardTitle className="text-base">Tax &amp; receipts</CardTitle>
                   </CardHeader>
                   <div className="px-6 pb-6 text-sm text-ink-muted">
                     <p>
@@ -121,6 +125,7 @@ export default async function GivePage() {
                   </div>
                 </Card>
               </aside>
+              </SectionReveal>
             </div>
           </Container>
         </Section>

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Source_Serif_4 } from "next/font/google";
+import { Inter, Poppins, Source_Serif_4, Cormorant_Garamond } from "next/font/google";
 import { TopBar } from "@/components/layout/TopBar";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { DEFAULT_SEO, buildChurchSchema, siteUrl } from "@/lib/seo";
@@ -10,14 +10,28 @@ const inter = Inter({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-sans",
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600"],
+});
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-display",
+  weight: ["400", "600"],
 });
 
 const sourceSerif = Source_Serif_4({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-serif",
-  weight: ["400", "600", "700"],
+  weight: ["400", "600"],
+});
+
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-display-serif",
+  weight: ["400", "600"],
 });
 
 export const metadata: Metadata = {
@@ -30,7 +44,7 @@ export const metadata: Metadata = {
   applicationName: DEFAULT_SEO.churchName,
   keywords: [
     "church",
-    "Glorious Gospel Centre",
+    "Glorious Gospel Centre Church",
     "Kenya",
     "worship",
     "sermons",
@@ -77,7 +91,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#2f3825",
+  themeColor: "#062B87",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -87,7 +101,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     description:
       settings.seo_default_description ?? DEFAULT_SEO.defaultDescription,
     url: siteUrl("/"),
-    logoUrl: siteUrl("/logo.png"),
+    logoUrl: siteUrl("/logo.webp"),
     imageUrl: siteUrl(settings.seo_default_og_image ?? DEFAULT_SEO.defaultOgImage),
     telephone: settings.phone,
     email: settings.email,
@@ -95,7 +109,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   });
 
   return (
-    <html lang="en" className={`${inter.variable} ${sourceSerif.variable}`}>
+    <html lang="en" className={`${inter.variable} ${poppins.variable} ${sourceSerif.variable} ${cormorant.variable}`}>
       <body className="min-h-screen bg-surface text-ink antialiased">
         <a href="#main" className="skip-link">
           Skip to main content

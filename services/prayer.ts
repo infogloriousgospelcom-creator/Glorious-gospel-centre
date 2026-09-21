@@ -2,8 +2,8 @@
 
 import "server-only";
 import { z } from "zod";
-import { createClient } from "@/supabase/server";
-import { consume } from "@/lib/rate-limit";
+import { createServiceRoleClient, isServiceRoleConfigured } from "@/supabase/admin";
+import { consumeAsync } from "@/lib/rate-limit";
 import { getClientIpHash } from "@/lib/ip-hash";
 
 const SUBMIT_SCHEMA = z.object({
@@ -22,7 +22,6 @@ const SUBMIT_SCHEMA = z.object({
     .min(10, "Please share at least a sentence so we can pray meaningfully.")
     .max(4000, "Please keep your request under 4000 characters."),
   is_confidential: z.literal("on").optional().or(z.literal("")),
-  // Honeypot — must remain empty. Bots commonly fill every input.
   website: z.string().max(0, "Spam detected.").optional().or(z.literal("")),
 });
 
@@ -36,10 +35,11 @@ export async function submitPrayerRequest(
   _prev: PrayerSubmitState | null,
   formData: FormData,
 ): Promise<PrayerSubmitState> {
-  // Rate limit by hashed IP. Anonymous submissions get the strictest cap.
   const ipHash = getClientIpHash();
-  const rateKey = `prayer:${ipHash ?? "anon"}`;
-  const rate = consume(rateKey, { capacity: 3, windowMs: 10 * 60 * 1000 });
+  const rate = await consumeAsync(`prayer:${ipHash ?? "anon"}`, {
+    capacity: 3,
+    windowMs: 10 * 60 * 1000,
+  });
   if (!rate.ok) {
     const minutes = Math.ceil(rate.resetMs / 60000);
     return {
@@ -60,12 +60,15 @@ export async function submitPrayerRequest(
 
   const d = parsed.data;
   if (d.website) {
-    // Honeypot triggered — silently accept and discard.
     return { ok: true, message: "Your request has been received." };
   }
 
+  if (!isServiceRoleConfigured()) {
+    return { ok: false, message: "We couldn't save your prayer request. Please try again." };
+  }
+
   try {
-    const supabase = createClient();
+    const supabase = createServiceRoleClient();
     const { error } = await supabase.from("prayer_requests").insert({
       full_name: d.full_name || null,
       email: d.email || null,
@@ -74,7 +77,9 @@ export async function submitPrayerRequest(
       is_confidential: d.is_confidential === "on",
       ip_hash: ipHash,
     });
-    if (error) return { ok: false, message: "We couldn't save your prayer request. Please try again." };
+    if (error) {
+      return { ok: false, message: "We couldn't save your prayer request. Please try again." };
+    }
     return {
       ok: true,
       message: "Your prayer request has been received. Our prayer team will lift it up.",
