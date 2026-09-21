@@ -9,14 +9,22 @@ export function PrayerCtaSection() {
         <div className="grid items-center gap-8 md:grid-cols-2">
           <SectionReveal>
             <div>
-              <p className="eyebrow mb-3 text-accent-700">Prayer</p>
-              <h2 className="heading-2 mb-4 text-balance">How can we pray for you?</h2>
+              <p className="eyebrow mb-3 text-accent-700">Prayer Center</p>
+              <h2 className="heading-2 mb-4 text-balance">
+                You&apos;re not alone. Bring your prayer to God.
+              </h2>
               <p className="lead mb-6 max-w-xl text-balance">
-                Share a prayer request with our prayer team. All requests are kept confidential.
+                Share a confidential prayer request with our prayer team, or join us as we
+                seek God together.
               </p>
-              <LinkButton href="/prayer" variant="accent">
-                Request Prayer
-              </LinkButton>
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <LinkButton href="/prayer" variant="accent">
+                  Request Prayer
+                </LinkButton>
+                <LinkButton href="/prayer#prayer-request" variant="ghost">
+                  Go to the form
+                </LinkButton>
+              </div>
             </div>
           </SectionReveal>
           <SectionReveal delay={0.12}>
