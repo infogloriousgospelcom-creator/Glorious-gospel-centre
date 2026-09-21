@@ -11,6 +11,7 @@ import { buildPageMetadata } from "@/lib/seo";
 import { getMinistryImages } from "@/lib/ministry-images";
 import { MinistryCardSlideshow } from "@/components/ministries/MinistryCardSlideshow";
 import { SectionReveal } from "@/components/motion/SectionReveal";
+import { ContextualNextSteps } from "@/components/church/ContextualNextSteps";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
@@ -90,6 +91,17 @@ export default async function MinistriesPage() {
             )}
           </Container>
         </Section>
+
+        <ContextualNextSteps
+          title="Find your place"
+          description="Explore a ministry, plan a visit, or contact us if you have questions."
+          actions={[
+            { href: "/visit", label: "Plan Your Visit" },
+            { href: "/contact", label: "Contact Us", variant: "secondary" },
+            { href: "/prayer", label: "Request Prayer", variant: "ghost" },
+          ]}
+          surface="muted"
+        />
       </main>
       <Footer />
     </>

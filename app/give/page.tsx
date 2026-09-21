@@ -13,6 +13,7 @@ import { getSiteSettings } from "@/services/content";
 import { getPaymentProvider } from "@/services/payment";
 import { buildPageMetadata } from "@/lib/seo";
 import { SectionReveal } from "@/components/motion/SectionReveal";
+import { ContextualNextSteps } from "@/components/church/ContextualNextSteps";
 
 export const dynamic = "force-dynamic";
 
@@ -120,6 +121,17 @@ export default async function GivePage() {
             </div>
           </Container>
         </Section>
+
+        <ContextualNextSteps
+          title="Thank you for partnering with us"
+          description="Continue exploring church life — or plan a visit if you are new."
+          actions={[
+            { href: "/", label: "Return to GGCC" },
+            { href: "/ministries", label: "Explore Ministries", variant: "secondary" },
+            { href: "/visit", label: "Plan Your Visit", variant: "ghost" },
+          ]}
+          surface="muted"
+        />
       </main>
       <Footer />
     </>

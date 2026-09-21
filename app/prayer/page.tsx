@@ -8,6 +8,7 @@ import { LinkButton } from "@/components/ui/LinkButton";
 import { PrayerRequestForm } from "./_components/PrayerRequestForm";
 import { buildPageMetadata } from "@/lib/seo";
 import { SectionReveal } from "@/components/motion/SectionReveal";
+import { ContextualNextSteps } from "@/components/church/ContextualNextSteps";
 
 export const dynamic = "force-dynamic";
 
@@ -85,6 +86,17 @@ export default function PrayerPage() {
             </div>
           </Container>
         </Section>
+
+        <ContextualNextSteps
+          title="We are praying with you"
+          description="As you wait on God, you are also welcome to grow with us and visit in person."
+          actions={[
+            { href: "/sermons", label: "Explore Sermons" },
+            { href: "/visit", label: "Plan Your Visit", variant: "secondary" },
+            { href: "/contact", label: "Contact GGCC", variant: "ghost" },
+          ]}
+          surface="muted"
+        />
       </main>
       <Footer />
     </>

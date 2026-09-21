@@ -9,6 +9,7 @@ import { LinkButton } from "@/components/ui/LinkButton";
 import { getPublishedServices, groupServicesByDay } from "@/services/content";
 import { buildPageMetadata } from "@/lib/seo";
 import { SectionReveal } from "@/components/motion/SectionReveal";
+import { ContextualNextSteps } from "@/components/church/ContextualNextSteps";
 
 export const dynamic = "force-dynamic";
 
@@ -102,6 +103,17 @@ export default async function ServicesPage() {
             ) : null}
           </Container>
         </Section>
+
+        <ContextualNextSteps
+          title="Ready to join us?"
+          description="See the weekly rhythm above, then plan your visit or watch online."
+          actions={[
+            { href: "/visit", label: "Plan Your Visit" },
+            { href: "/livestream", label: "Watch Online", variant: "secondary" },
+            { href: "/events", label: "View Events", variant: "ghost" },
+          ]}
+          surface="muted"
+        />
       </main>
       <Footer />
     </>

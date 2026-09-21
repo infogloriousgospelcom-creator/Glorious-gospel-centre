@@ -12,6 +12,8 @@ import { UpcomingEventsSection } from "@/components/home/UpcomingEventsSection";
 import { PrayerCtaSection } from "@/components/home/PrayerCtaSection";
 import { ScriptureBandSection } from "@/components/home/ScriptureBandSection";
 import { GivingCtaSection } from "@/components/home/GivingCtaSection";
+import { ThisWeekSection } from "@/components/church/ThisWeekSection";
+import { InviteSomeone } from "@/components/church/InviteSomeone";
 import { getSiteSettings } from "@/services/content";
 import { buildPageMetadata, siteUrl } from "@/lib/seo";
 
@@ -31,7 +33,10 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const settings = await getSiteSettings();
+  const churchName = settings.church_name?.trim() || "Glorious Gospel Centre Church";
+
   return (
     <>
       <SiteHeader />
@@ -39,8 +44,10 @@ export default function HomePage() {
         <HeroSection />
         <SundayServicesSection />
         <AttendWatchSection />
+        <ThisWeekSection />
         <WelcomeSection />
         <NextStepSection />
+        <InviteSomeone inviteUrl={siteUrl("/visit")} churchName={churchName} />
         <MinistriesSection />
         <LatestSermonSection />
         <UpcomingEventsSection />

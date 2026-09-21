@@ -12,6 +12,7 @@ import { getSiteSettings } from "@/services/content";
 import { getAllPublishedLeaders } from "@/services/pages";
 import { buildPageMetadata } from "@/lib/seo";
 import { SectionReveal } from "@/components/motion/SectionReveal";
+import { ContextualNextSteps } from "@/components/church/ContextualNextSteps";
 
 export const dynamic = "force-dynamic";
 
@@ -131,6 +132,16 @@ export default async function AboutPage() {
             </SectionReveal>
           </Container>
         </Section>
+
+        <ContextualNextSteps
+          title="Ready for a next step?"
+          description="After learning about GGCC, plan a visit or find a place to belong."
+          actions={[
+            { href: "/visit", label: "Plan Your Visit" },
+            { href: "/ministries", label: "Explore Ministries", variant: "secondary" },
+          ]}
+          surface="muted"
+        />
       </main>
       <Footer />
     </>

@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { getAllPublishedEvents } from "@/services/content";
 import { buildPageMetadata } from "@/lib/seo";
 import { SectionReveal } from "@/components/motion/SectionReveal";
+import { ContextualNextSteps } from "@/components/church/ContextualNextSteps";
 
 export const dynamic = "force-dynamic";
 
@@ -136,6 +137,16 @@ export default async function EventsPage() {
             </Container>
           </Section>
         ) : null}
+
+        <ContextualNextSteps
+          title="Coming to an event?"
+          description="Plan your visit, explore ministries, or reach out if you have questions."
+          actions={[
+            { href: "/visit", label: "Plan Your Visit" },
+            { href: "/ministries", label: "Explore Ministries", variant: "secondary" },
+            { href: "/contact", label: "Contact GGCC", variant: "ghost" },
+          ]}
+        />
       </main>
       <Footer />
     </>

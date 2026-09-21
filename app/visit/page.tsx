@@ -7,13 +7,17 @@ import { LinkButton } from "@/components/ui/LinkButton";
 import { Container, Section } from "@/components/ui/Container";
 import { SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
-import { buildPageMetadata } from "@/lib/seo";
+import { buildPageMetadata, siteUrl } from "@/lib/seo";
 import {
   getPublishedServices,
   getSiteSettings,
   groupServicesByDay,
 } from "@/services/content";
 import { SectionReveal } from "@/components/motion/SectionReveal";
+import { SundayAtGgcc } from "@/components/church/SundayAtGgcc";
+import { JourneyPathway } from "@/components/church/JourneyPathway";
+import { InviteSomeone } from "@/components/church/InviteSomeone";
+import { ContextualNextSteps } from "@/components/church/ContextualNextSteps";
 
 export const dynamic = "force-dynamic";
 
@@ -105,9 +109,20 @@ export default async function VisitPage() {
         "Yes. Children's Ministry and Youth are part of church life. Ask a greeter when you arrive, or explore Children's Ministry on our Ministries pages.",
     },
     {
-      question: "Can I join online instead?",
+      question: "How can I request prayer?",
       answer:
-        "Yes. You can watch through our livestream platforms when a service is streaming, and catch up anytime through our sermon library.",
+        "You can submit a confidential prayer request on our Prayer page. Requests are reviewed by authorized prayer team members.",
+    },
+    {
+      question: "How can I give?",
+      answer:
+        "You can give online through our Give page, or use the Paybill, Till, bank, or in-person options listed there.",
+    },
+    {
+      question: "How can I contact GGCC?",
+      answer: settings.phone
+        ? `Call ${settings.phone}${settings.email ? ` or email ${settings.email}` : ""}, or use the Contact page form.`
+        : "Use the Contact page form, or reach us through the phone and email published in church settings.",
     },
   ];
 
@@ -125,6 +140,8 @@ export default async function VisitPage() {
             Watch Online
           </LinkButton>
         </PageHeader>
+
+        <SundayAtGgcc />
 
         <Section className="bg-surface-muted">
           <Container>
@@ -382,6 +399,8 @@ export default async function VisitPage() {
           </Container>
         </Section>
 
+        <JourneyPathway />
+
         <Section className="bg-surface-muted">
           <Container>
             <SectionReveal>
@@ -401,29 +420,18 @@ export default async function VisitPage() {
           </Container>
         </Section>
 
-        <Section>
-          <Container width="prose" className="text-center">
-            <SectionReveal>
-              <SectionEyebrow>Next steps</SectionEyebrow>
-              <SectionTitle>We look forward to meeting you</SectionTitle>
-              <SectionLead>
-                Choose one simple action — come in person, join online, or reach out.
-              </SectionLead>
-              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:flex-wrap">
-                <LinkButton href="/contact">Contact Us</LinkButton>
-                <LinkButton href="/livestream" variant="secondary">
-                  Watch Online
-                </LinkButton>
-                <LinkButton href="/ministries" variant="ghost">
-                  Explore Ministries
-                </LinkButton>
-                <LinkButton href="/prayer" variant="ghost">
-                  Request Prayer
-                </LinkButton>
-              </div>
-            </SectionReveal>
-          </Container>
-        </Section>
+        <InviteSomeone inviteUrl={siteUrl("/visit")} churchName={churchName} />
+
+        <ContextualNextSteps
+          title="We look forward to meeting you"
+          description="Choose one simple action — come in person, join online, or reach out."
+          actions={[
+            { href: "/contact", label: "Contact GGCC" },
+            { href: "/livestream", label: "Watch Online", variant: "secondary" },
+            { href: "/ministries", label: "Explore Ministries", variant: "ghost" },
+            { href: "/prayer", label: "Request Prayer", variant: "ghost" },
+          ]}
+        />
       </main>
       <Footer />
     </>
