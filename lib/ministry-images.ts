@@ -5,14 +5,18 @@ export interface MinistryImageEntry {
 
 export type MinistrySlug = string;
 
+/**
+ * Local slideshow images under /public.
+ * Use URL-safe folder names (no apostrophes) so next/image can resolve files.
+ */
 export const ministryImages: Record<MinistrySlug, MinistryImageEntry[]> = {
   children: [
-    { src: "/CHILDREN%27S%20MINISTRY/DSC_0469.JPG", alt: "Children's Ministry — children gathered for a church activity" },
-    { src: "/CHILDREN%27S%20MINISTRY/DSC_0473.JPG", alt: "Children's Ministry — children engaged in fellowship" },
-    { src: "/CHILDREN%27S%20MINISTRY/DSC_0475.JPG", alt: "Children's Ministry — young ones participating in a program" },
-    { src: "/CHILDREN%27S%20MINISTRY/DSC_0476.JPG", alt: "Children's Ministry — children learning and growing together" },
-    { src: "/CHILDREN%27S%20MINISTRY/DSC_0477.JPG", alt: "Children's Ministry — children enjoying a church event" },
-    { src: "/CHILDREN%27S%20MINISTRY/DSC_0478.JPG", alt: "Children's Ministry — children in worship and prayer" },
+    { src: "/childrens-ministry/DSC_0469.JPG", alt: "Children's Ministry — children gathered for a church activity" },
+    { src: "/childrens-ministry/DSC_0473.JPG", alt: "Children's Ministry — children engaged in fellowship" },
+    { src: "/childrens-ministry/DSC_0475.JPG", alt: "Children's Ministry — young ones participating in a program" },
+    { src: "/childrens-ministry/DSC_0476.JPG", alt: "Children's Ministry — children learning and growing together" },
+    { src: "/childrens-ministry/DSC_0477.JPG", alt: "Children's Ministry — children enjoying a church event" },
+    { src: "/childrens-ministry/DSC_0478.JPG", alt: "Children's Ministry — children in worship and prayer" },
   ],
   youth: [
     { src: "/YOUTH%20MINISTRY/DSC_0427.JPG", alt: "Youth Ministry — young people gathered for fellowship" },
@@ -36,13 +40,13 @@ export const ministryImages: Record<MinistrySlug, MinistryImageEntry[]> = {
     { src: "/WOMEN/DSC_1281.JPG", alt: "Women's Ministry — women gathered for a church program" },
   ],
   men: [
-    { src: "/MEN%27S%20MINISTRY/DSC_0406.JPG", alt: "Men's Ministry — men gathered for fellowship" },
-    { src: "/MEN%27S%20MINISTRY/DSC_0422.JPG", alt: "Men's Ministry — men connecting in faith" },
-    { src: "/MEN%27S%20MINISTRY/DSC_0424.JPG", alt: "Men's Ministry — men participating in a church event" },
-    { src: "/MEN%27S%20MINISTRY/DSC_0461.JPG", alt: "Men's Ministry — men growing together in Christ" },
-    { src: "/MEN%27S%20MINISTRY/DSC_0481.JPG", alt: "Men's Ministry — men serving the church community" },
-    { src: "/MEN%27S%20MINISTRY/DSC_0503.JPG", alt: "Men's Ministry — men in worship and prayer" },
-    { src: "/MEN%27S%20MINISTRY/IMG_0782.JPG", alt: "Men's Ministry — men enjoying a special gathering" },
+    { src: "/mens-ministry/DSC_0406.JPG", alt: "Men's Ministry — men gathered for fellowship" },
+    { src: "/mens-ministry/DSC_0422.JPG", alt: "Men's Ministry — men connecting in faith" },
+    { src: "/mens-ministry/DSC_0424.JPG", alt: "Men's Ministry — men participating in a church event" },
+    { src: "/mens-ministry/DSC_0461.JPG", alt: "Men's Ministry — men growing together in Christ" },
+    { src: "/mens-ministry/DSC_0481.JPG", alt: "Men's Ministry — men serving the church community" },
+    { src: "/mens-ministry/DSC_0503.JPG", alt: "Men's Ministry — men in worship and prayer" },
+    { src: "/mens-ministry/IMG_0782.JPG", alt: "Men's Ministry — men enjoying a special gathering" },
   ],
   worship: [
     { src: "/WORSHIP%20MINISTRY/DSC_0390.JPG", alt: "Worship Ministry — worshippers leading in praise" },

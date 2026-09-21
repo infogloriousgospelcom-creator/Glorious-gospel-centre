@@ -2,13 +2,50 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { createClient } from "@/supabase/server";
 
-export interface AdminSession {
+export interface UserSession {
   userId: string;
   email: string;
   fullName: string | null;
   avatarUrl: string | null;
+}
+
+export interface AdminSession extends UserSession {
   roleKeys: string[];
   permissionKeys: string[];
+}
+
+/**
+ * Any authenticated Supabase user (not necessarily an admin).
+ * Used for session checks such as online giving — not a public member portal.
+ */
+export async function getCurrentUser(): Promise<UserSession | null> {
+  try {
+    const supabase = createClient();
+    const { data: userData, error: userErr } = await supabase.auth.getUser();
+    if (userErr || !userData.user) return null;
+
+    const userId = userData.user.id;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name,avatar_url")
+      .eq("id", userId)
+      .maybeSingle();
+
+    return {
+      userId,
+      email: userData.user.email ?? "",
+      fullName: profile?.full_name ?? null,
+      avatarUrl: profile?.avatar_url ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function requireUser(redirectTo = "/"): Promise<UserSession> {
+  const session = await getCurrentUser();
+  if (!session) redirect(redirectTo);
+  return session;
 }
 
 export async function getCurrentAdmin(): Promise<AdminSession | null> {

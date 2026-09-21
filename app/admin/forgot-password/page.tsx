@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Navbar } from "@/components/layout/Navbar";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { ForgotPasswordForm } from "./_components/ForgotPasswordForm";
 
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default function ForgotPasswordPage() {
   return (
     <>
-      <Navbar />
+      <SiteHeader />
       <main id="main" className="bg-surface-muted">
         <div className="container-page py-section">
           <div className="mx-auto max-w-md">

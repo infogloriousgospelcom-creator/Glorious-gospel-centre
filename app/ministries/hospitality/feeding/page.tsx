@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Navbar } from "@/components/layout/Navbar";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -21,7 +21,7 @@ export const metadata: Metadata = buildPageMetadata({
 export default async function FeedingProgrammePage() {
   return (
     <>
-      <Navbar />
+      <SiteHeader />
       <main id="main">
         <PageHeader
           eyebrow="Hospitality Ministry"

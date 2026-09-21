@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { Navbar } from "@/components/layout/Navbar";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
 import { Card, CardBody, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { EmptyState, SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
+import { EmptyState } from "@/components/ui/Section";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { LinkButton } from "@/components/ui/LinkButton";
 import { SermonsFilters } from "./_components/SermonsFilters";
 import { Pagination } from "./_components/Pagination";
 import { listSermonsPaged, SERMONS_PAGE_SIZE } from "@/services/sermons";
@@ -52,20 +54,17 @@ export default async function SermonsPage({
 
   return (
     <>
-      <Navbar />
+      <SiteHeader />
       <main id="main">
-        <Section className="bg-gradient-to-br from-brand-50 via-white to-brand-50/60">
-          <Container>
-            <div className="mx-auto max-w-3xl text-center">
-              <SectionEyebrow>Sermons</SectionEyebrow>
-              <SectionTitle>Word for today and every day</SectionTitle>
-              <SectionLead>
-                Browse our sermon library. Listen, watch, and let God&apos;s Word
-                transform your everyday.
-              </SectionLead>
-            </div>
-          </Container>
-        </Section>
+        <PageHeader
+          eyebrow="Sermons"
+          title="Word for today and every day"
+          description="Browse our sermon library. Listen, watch, and let God's Word transform your everyday."
+        >
+          <LinkButton href="/visit" variant="secondary">
+            Plan Your Visit
+          </LinkButton>
+        </PageHeader>
 
         <Section>
           <Container>
@@ -149,7 +148,7 @@ export default async function SermonsPage({
                     <li key={sr.id}>
                       <Link
                         href={`/sermons/series/${sr.slug}`}
-                        className="block rounded-2xl border border-border bg-white px-4 py-3 text-sm font-medium text-brand-900 shadow-soft transition-all duration-200 hover:-translate-y-0.5 hover:shadow-elevated"
+                        className="block border-t border-border px-1 py-3 text-sm font-medium text-brand-900 transition-colors duration-ui ease-smooth hover:text-brand-700"
                       >
                         {sr.title}
                         {sr.start_date ? (

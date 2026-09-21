@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Navbar } from "@/components/layout/Navbar";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { AboutSubnav } from "@/components/layout/AboutSubnav";
 import { CmsPageView } from "@/components/about/CmsPageView";
@@ -26,10 +26,15 @@ export default async function StoryPage() {
   const page = await getPublishedPage("about-story");
   return (
     <>
-      <Navbar />
+      <SiteHeader />
       <main id="main">
         <AboutSubnav active="/about/story" />
-        <CmsPageView page={page} fallbackTitle="Our Story" />
+        <CmsPageView
+          page={page}
+          fallbackTitle="Our Story"
+          nextHref="/about/vision-mission"
+          nextLabel="Read our vision & mission"
+        />
       </main>
       <Footer />
     </>

@@ -1,0 +1,396 @@
+Phase E — Member UX Foundation
+
+Only if the existing architecture supports it safely.
+
+### Phase F — Future Digital Church Features
+
+Document but do not automatically implement:
+
+* Bible study
+* devotionals
+* visitor management
+* automated follow-up
+* growth journey
+* ministry participation
+* advanced notifications
+* WhatsApp/SMS
+* GGCC Church Assistant
+
+---
+
+# 40. VISUAL QUALITY STANDARD
+
+The finished site should feel:
+
+* premium
+* modern
+* welcoming
+* spiritual
+* human
+* trustworthy
+* uncluttered
+* responsive
+
+It should NOT feel:
+
+* like a generic template
+* like a SaaS dashboard
+* like an AI-generated website
+* overly animated
+* visually crowded
+* like a clone of another church website
+
+---
+
+# 41. FINAL ACCEPTANCE CRITERIA
+
+Before considering the redesign complete, verify:
+
+### Homepage
+
+* [ ] GGCC identity immediately visible
+* [ ] Romans 8:31 identity clearly represented
+* [ ] services easy to find
+* [ ] Plan Your Visit prominent
+* [ ] Watch Online prominent
+* [ ] ministries accessible
+* [ ] latest sermon accessible
+* [ ] events accessible
+* [ ] prayer accessible
+* [ ] giving accessible
+
+### Navigation
+
+* [ ] desktop navigation works
+* [ ] mobile navigation works
+* [ ] no dead links
+* [ ] CTA hierarchy is clear
+
+### Mobile
+
+* [ ] no horizontal overflow
+* [ ] typography readable
+* [ ] buttons easy to tap
+* [ ] forms usable
+* [ ] navigation usable
+
+### Accessibility
+
+* [ ] keyboard navigation
+* [ ] focus states
+* [ ] semantic headings
+* [ ] labels
+* [ ] alt text
+* [ ] contrast
+* [ ] reduced motion
+
+### Functionality
+
+* [ ] authentication still works
+* [ ] admin routes still work
+* [ ] announcements still work
+* [ ] events still work
+* [ ] sermons still work
+* [ ] ministries still work
+* [ ] prayer requests still work
+* [ ] giving still works
+* [ ] M-Pesa flow remains intact
+* [ ] Supabase RLS remains intact
+
+### Performance
+
+* [ ] no unnecessary client rendering
+* [ ] optimized images
+* [ ] reasonable JavaScript
+* [ ] no obvious layout shifts
+* [ ] no unnecessary dependencies
+
+---
+
+# 42. IMPORTANT EXECUTION INSTRUCTION
+
+For the FIRST PASS:
+
+**DO NOT IMPLEMENT THE REDESIGN YET.**
+
+Inspect the repository and produce the complete audit and proposed implementation plan.
+
+After producing the audit:
+
+1. Identify which proposed changes are UI-only.
+2. Identify which require backend/database changes.
+3. Identify which existing components can be reused.
+4. Identify any conflicts with the current architecture.
+5. Identify any risks.
+6. Recommend the safest implem\n\n----\n\nMember Experience
+
+## 18. Features That Should NOT Be Changed
+
+## 19. New Features Required
+
+Separate these into:
+
+### UI-only
+
+### Requires backend work
+
+### Future phase
+
+## 20. Implementation Phases
+
+Provide a safe phased plan.
+
+---
+
+# 39. IMPLEMENTATION PHASES
+
+After the audit, propose implementation in this order:
+
+### Phase A — Design Foundation
+
+* typography
+* spacing
+* colors
+* buttons
+* cards
+* containers
+* section primitives
+* responsive rules
+* animation primitives
+
+### Phase B — Global Navigation
+
+* desktop header
+* mobile header
+* CTA hierarchy
+* footer
+
+### Phase C — Homepage
+
+* hero
+* services
+* attend/watch online
+* welcome
+* next step
+* ministries
+* sermon
+* events
+* prayer
+* scripture
+* giving
+
+### Phase D — Public Experience Pages
+
+* About
+* Ministries
+* Sermons
+* Events
+* Prayer
+* Giving
+* Gallery
+* Contact
+* Plan Your Visit
+
+### Phase E — Member UX Foundation
+
+Only if the existing architecture supports it safely.
+
+### Phase F — Future Digital Church Features
+
+Document but do not automatically implement:
+
+* Bible study
+* devotionals
+* visitor management
+* automated follow-up
+* growth journey
+* ministry participation
+* advanced notifications
+* WhatsApp/SMS
+* GGCC Church Assistant
+
+---
+
+# 40. VISUAL QUALITY STANDARD
+
+The finished site should feel:
+
+* premium
+* modern
+* welcoming
+* spiritual
+* human
+* trustworthy
+* uncluttered
+* responsive
+
+It should NOT feel:
+
+* like a generic template
+* like a SaaS dashboard
+* like an AI-generated website
+* overly animated
+* visually crowded
+* like a clone of another church website
+
+---
+
+# 41. FINAL ACCEPTANCE CRITERIA
+
+Before considering the redesign complete, verify:
+
+### Homepage
+
+* [ ] GGCC identity immediately visible
+* [ ] Romans 8:31 identity clearly represented
+* [ ] services easy to find
+* [ ] Plan Your Visit prominent
+* [ ] Watch Online prominent
+* [ ] ministries accessible
+* [ ] latest sermon accessible
+* [ ] events accessible
+* [ ] prayer accessible
+* [ ] giving accessible
+
+### Navigation
+
+* [ ] deskto\n\n----\n\notography
+* dedicated Plan Your Visit experience
+* in-person and online participation pathways
+* ministry experiences rather than simple ministry listings
+* accessible prayer and giving experiences
+* member-centered navigation
+
+IMPORTANT:
+
+Do **not** copy another church's branding, layout, text, colors, assets, or visual identity.
+
+Use the principles only as UX inspiration.
+
+The resulting product must clearly feel like **Glorious Gospel Centre Church**.
+
+---
+
+# 2. CRITICAL RULE: AUDIT BEFORE MODIFYING
+
+DO NOT immediately redesign the application.
+
+First inspect the actual repository.
+
+Determine:
+
+* framework and version
+* app structure
+* routes
+* components
+* layouts
+* styling system
+* fonts
+* design tokens
+* existing responsive behavior
+* Supabase integration
+* authentication
+* admin architecture
+* public pages
+* member functionality
+* database-dependent UI
+* existing reusable components
+* existing navigation
+* existing forms
+* existing loading states
+* existing error states
+* existing animations
+* existing image handling
+* existing SEO implementation
+
+Do not assume anything about the repository.
+
+Inspect the actual code.
+
+---
+
+# 3. EXISTING GGCC FUNCTIONALITY TO PRESERVE
+
+The existing GGCC project already contains important church-system functionality.
+
+Treat all existing working functionality as protected unless a redesign specifically requires a presentation-layer change.
+
+Known functionality includes:
+
+* authentication
+* protected admin routes
+* admin dashboard
+* announcements
+* events
+* sermons
+* sermon series
+* ministries
+* leadership
+* services
+* pages/content
+* gallery
+* prayer requests
+* messages/contact
+* giving
+* M-Pesa integration
+* admin approvals
+* audit fu\n\n----\n\nMember Experience
+
+**Future only.** Foundation: keep `/admin/login` for staff; later add member auth/roles without mixing CMS privileges.
+
+Document placeholders: My Prayer, My Events, My Giving, Bible Study, Profile — **do not build** in Phases A–D.
+
+---
+
+## 18. Features That Should NOT Be Changed
+
+- Supabase Auth, RLS, middleware session refresh  
+- M-Pesa Edge Functions, callback HMAC, giving business logic  
+- Admin CRUD, approvals, audit, users  
+- Prayer/contact server-action security (service role, honeypot, rate limits)  
+- Event registration backend  
+- Ministry data rows / hospitality content  
+- Existing sermon/event/gallery schemas  
+- SEO helpers & JsonLd escaping  
+
+---
+
+## 19. New Features Required
+
+### UI-only
+- Shared public layout wrapper  
+- Nav/footer IA + Plan Your Visit CTA  
+- Homepage section reorder/polish  
+- `/visit` static/UX page from `site_settings` + services  
+- Next Step section (real links only)  
+- Design-token cleanup (`font-display`, hero/site palette alignment)  
+- Empty/loading copy consistency  
+
+### Requires backend work
+- True “LIVE NOW” status  
+- Guest giving without confusing auth (product decision)  
+- Member portal / roles  
+- Visitor “I’m coming Sunday” persistence  
+- Sermon transcripts / notes  
+- Event capacity / waitlists  
+
+### Future phase
+- Bible study / devotionals  
+- WhatsApp/SMS follow-up  
+- Growth journey / notifications  
+- GGCC Church Assistant  
+- Member bottom navigation  
+
+---
+
+## 20. Implementation Phases
+
+| Phase | Scope | Risk |
+|---|---|---|
+| **A — Design foundation** | Tokens, typography fix, Button/Section/PageHeader polish | Low |
+| **B — Global chrome** | TopBar, Navbar (More + CTAs), Footer; optional `(public)/layout` | Low–Med |
+| **C — Homepage** | Hero, services, attend/watch, welcome, next step, ministries, sermon, events, prayer, giving | Med |
+| **D — Public pages** | `/visit` new; About, Ministries, Sermons, Events, Prayer, Give, Gallery, Contact, Livestream | Med |
+| **E — Member UX**\n\n----\n\nPhase E.
+
+**Stopped at Phase D.**

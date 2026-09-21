@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { Navbar } from "@/components/layout/Navbar";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
 import { SectionEyebrow } from "@/components/ui/Section";
+import { LinkButton } from "@/components/ui/LinkButton";
 import { getMinistryBySlug, getMinistryLeaders } from "@/services/content";
 import {
   buildPageMetadata,
@@ -63,7 +64,7 @@ export default async function MinistryDetailPage({
 
   return (
     <>
-      <Navbar />
+      <SiteHeader />
       <main id="main">
         {/* Immersive hero with animated background images */}
         <section className="relative flex min-h-[50vh] items-end overflow-hidden md:min-h-[60vh]">
@@ -206,6 +207,26 @@ export default async function MinistryDetailPage({
             </Container>
           </Section>
         ) : null}
+
+        <Section>
+          <Container width="prose" className="text-center">
+            <SectionEyebrow>Next step</SectionEyebrow>
+            <h2 className="heading-2 mb-4">Want to get involved?</h2>
+            <p className="lead mb-8">
+              Explore more ministries, plan a visit, or reach out — we would love to walk with you.
+            </p>
+            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <LinkButton href="/ministries">Explore Ministries</LinkButton>
+              <LinkButton href="/visit" variant="secondary">
+                Plan Your Visit
+              </LinkButton>
+              <LinkButton href="/contact" variant="ghost">
+                Contact Us
+              </LinkButton>
+            </div>
+          </Container>
+        </Section>
+
         <JsonLd data={breadcrumb} />
       </main>
       <Footer />

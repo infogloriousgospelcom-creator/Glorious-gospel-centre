@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Navbar } from "@/components/layout/Navbar";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { AboutSubnav } from "@/components/layout/AboutSubnav";
 import { CmsPageView } from "@/components/about/CmsPageView";
@@ -25,10 +25,15 @@ export default async function VisionMissionPage() {
   const page = await getPublishedPage("about-vision-mission");
   return (
     <>
-      <Navbar />
+      <SiteHeader />
       <main id="main">
         <AboutSubnav active="/about/vision-mission" />
-        <CmsPageView page={page} fallbackTitle="Vision & Mission" />
+        <CmsPageView
+          page={page}
+          fallbackTitle="Vision & Mission"
+          nextHref="/about/statement-of-faith"
+          nextLabel="Read our statement of faith"
+        />
       </main>
       <Footer />
     </>

@@ -32,15 +32,18 @@ export function Section({
   className,
   as: Tag = "section",
   spacing = "default",
+  id,
 }: {
   children: ReactNode;
   className?: string;
   as?: "section" | "div" | "article";
   /** default = py-section / section-lg; compact for denser bands */
   spacing?: "default" | "compact" | "none";
+  id?: string;
 }) {
   return (
     <Tag
+      id={id}
       className={cn(
         spacing === "default" && "py-section sm:py-section-lg",
         spacing === "compact" && "py-10 sm:py-14",

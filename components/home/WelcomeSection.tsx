@@ -1,9 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Container, Section } from "@/components/ui/Container";
-import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { EmptyState, SectionEyebrow, SectionTitle } from "@/components/ui/Section";
-import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/LinkButton";
 import { getFeaturedLeaders } from "@/services/content";
 import { SectionReveal } from "@/components/motion/SectionReveal";
 
@@ -11,30 +10,28 @@ export async function WelcomeSection() {
   const leaders = await getFeaturedLeaders(3);
 
   return (
-    <div id="welcome">
-    <Section>
+    <Section id="welcome" className="bg-surface-muted">
       <Container>
         <div className="grid items-start gap-12 lg:grid-cols-2">
           <SectionReveal delay={0}>
             <div>
               <SectionEyebrow>Welcome</SectionEyebrow>
-              <SectionTitle>Our story and our people</SectionTitle>
+              <SectionTitle>A church family for you</SectionTitle>
               <p className="lead mb-6 max-w-xl">
-                We are a Christ-centered community in Kenya, gathered to worship
-                Jesus, grow in the Word, and serve our neighbors. Whether you are
-                exploring faith or looking for a church home, you are welcome
-                here.
+                We are a Christ-centered community in Kenya, gathered to worship Jesus, grow in
+                the Word, and serve our neighbors. Whether you are exploring faith or looking for
+                a church home, you are welcome here.
               </p>
               <div className="flex flex-wrap gap-3">
-                <Link href="/about"><Button>About us</Button></Link>
-                <Link href="/about/leadership">
-                  <Button variant="secondary">Meet our leaders</Button>
-                </Link>
+                <LinkButton href="/about">Learn About GGCC</LinkButton>
+                <LinkButton href="/about/leadership" variant="secondary">
+                  Meet our leaders
+                </LinkButton>
               </div>
             </div>
           </SectionReveal>
 
-          <SectionReveal delay={0.15}>
+          <SectionReveal delay={0.12}>
             <div>
               <p className="eyebrow mb-4">Leadership</p>
               {leaders.length === 0 ? (
@@ -43,47 +40,45 @@ export async function WelcomeSection() {
                   description="Add leaders in the admin to introduce them here."
                 />
               ) : (
-                <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
+                <ul className="divide-y divide-border border-y border-border">
                   {leaders.map((l) => (
-                    <Card key={l.id} hoverable>
-                      <CardHeader>
-                        <div className="flex items-center gap-4">
-                          <div
-                            className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-brand-200 to-brand-50 ring-2 ring-white"
-                            aria-hidden="true"
-                          >
-                            {l.image_url ? (
-                              <Image
-                                src={l.image_url}
-                                alt={l.full_name}
-                                fill
-                                className="object-cover"
-                                sizes="56px"
-                              />
-                            ) : null}
-                          </div>
-                          <div>
-                            <CardTitle className="text-base">{l.full_name}</CardTitle>
-                            {l.title ? (
-                              <p className="text-xs text-ink-muted">{l.title}</p>
-                            ) : null}
-                          </div>
-                        </div>
-                      </CardHeader>
-                      {l.bio ? (
-                        <CardBody>
-                          <p className="text-sm text-ink-muted line-clamp-3">{l.bio}</p>
-                        </CardBody>
-                      ) : null}
-                    </Card>
+                    <li key={l.id} className="flex items-center gap-4 py-4">
+                      <div
+                        className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-brand-100 ring-1 ring-border"
+                        aria-hidden={!l.image_url}
+                      >
+                        {l.image_url ? (
+                          <Image
+                            src={l.image_url}
+                            alt=""
+                            fill
+                            className="object-cover"
+                            sizes="48px"
+                          />
+                        ) : null}
+                      </div>
+                      <div>
+                        <p className="font-medium text-brand-900">{l.full_name}</p>
+                        {l.title ? (
+                          <p className="text-xs text-ink-muted">{l.title}</p>
+                        ) : null}
+                      </div>
+                    </li>
                   ))}
-                </div>
+                </ul>
               )}
+              <p className="mt-4">
+                <Link
+                  href="/about/leadership"
+                  className="text-sm font-semibold text-brand-700 transition-colors duration-ui ease-smooth hover:text-brand-800"
+                >
+                  Full leadership team →
+                </Link>
+              </p>
             </div>
           </SectionReveal>
         </div>
       </Container>
     </Section>
-    </div>
   );
 }

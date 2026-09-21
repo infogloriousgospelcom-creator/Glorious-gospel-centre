@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Navbar } from "@/components/layout/Navbar";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -91,7 +91,7 @@ export default async function SermonDetailPage({
 
   return (
     <>
-      <Navbar />
+      <SiteHeader />
       <main id="main">
         <Section className="bg-gradient-to-br from-brand-50 via-surface to-accent-50">
           <Container>

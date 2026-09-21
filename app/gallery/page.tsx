@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { Navbar } from "@/components/layout/Navbar";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
 import { Card, CardBody, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { EmptyState, SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
+import { EmptyState } from "@/components/ui/Section";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { GalleryFilters } from "./_components/GalleryFilters";
 import { GalleryPagination } from "./_components/GalleryPagination";
 import { GALLERY_PAGE_SIZE, listAlbumsPaged, listAllAlbumCategories } from "@/services/gallery";
@@ -45,20 +46,13 @@ export default async function GalleryPage({
 
   return (
     <>
-      <Navbar />
+      <SiteHeader />
       <main id="main">
-        <Section className="bg-gradient-to-br from-brand-50 via-white to-brand-50/60">
-          <Container>
-            <div className="mx-auto max-w-3xl text-center">
-              <SectionEyebrow>Gallery</SectionEyebrow>
-              <SectionTitle>Moments from our life together</SectionTitle>
-              <SectionLead>
-                Photos from worship, events, outreach, and the everyday life of
-                our church family.
-              </SectionLead>
-            </div>
-          </Container>
-        </Section>
+        <PageHeader
+          eyebrow="Gallery"
+          title="Moments from our life together"
+          description="Photos from worship, events, outreach, and the everyday life of our church family."
+        />
 
         <Section>
           <Container>

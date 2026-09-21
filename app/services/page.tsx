@@ -1,17 +1,21 @@
 import type { Metadata } from "next";
-import { Navbar } from "@/components/layout/Navbar";
+import Link from "next/link";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
-import { EmptyState, SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
+import { EmptyState } from "@/components/ui/Section";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { LinkButton } from "@/components/ui/LinkButton";
 import { getPublishedServices, groupServicesByDay } from "@/services/content";
 import { buildPageMetadata } from "@/lib/seo";
+import { SectionReveal } from "@/components/motion/SectionReveal";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Services",
   description:
-    "Weekly service schedule for Glorious Gospel Centre Church — Sunday worship, mid-week Bible study, youth service, and prayer meetings.",
+    "Weekly service schedule for Glorious Gospel Centre Church — Sunday worship, mid-week gatherings, and prayer meetings.",
   path: "/services",
   keywords: ["church services", "worship schedule", "sunday service", "bible study"],
 });
@@ -27,24 +31,21 @@ function formatTime(time: string): string {
 export default async function ServicesPage() {
   const services = await getPublishedServices();
   const byDay = groupServicesByDay(services);
-  const hasRecurring = services.some((s) => s.is_recurring);
 
   return (
     <>
-      <Navbar />
+      <SiteHeader />
       <main id="main">
-        <Section className="bg-gradient-to-br from-brand-50 via-white to-brand-50/60">
-          <Container>
-            <div className="mx-auto max-w-3xl text-center">
-              <SectionEyebrow>Weekly schedule</SectionEyebrow>
-              <SectionTitle>Join us in worship</SectionTitle>
-              <SectionLead>
-                We gather throughout the week for prayer, teaching, and worship.
-                All are welcome to participate.
-              </SectionLead>
-            </div>
-          </Container>
-        </Section>
+        <PageHeader
+          eyebrow="Weekly schedule"
+          title="Join us in worship"
+          description="We gather throughout the week for prayer, teaching, and worship. All are welcome to participate."
+        >
+          <LinkButton href="/visit">Plan Your Visit</LinkButton>
+          <LinkButton href="/livestream" variant="secondary">
+            Watch Online
+          </LinkButton>
+        </PageHeader>
 
         <Section>
           <Container>
@@ -54,30 +55,21 @@ export default async function ServicesPage() {
                 description="Weekly services will appear here once added through the admin."
               />
             ) : (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {byDay.map(({ day, label, services }) => (
-                  <article
-                    key={day}
-                    className="overflow-hidden rounded-2xl border border-border bg-white shadow-soft transition-all duration-200 hover:-translate-y-0.5 hover:shadow-elevated"
-                  >
-                    <header className="border-b border-border bg-brand-50 px-5 py-3">
-                      <p className="eyebrow">{label}</p>
-                    </header>
-                    <ul className="divide-y divide-border">
-                      {services.map((s) => (
-                        <li key={s.id} className="px-5 py-4">
-                          <div className="flex items-start justify-between gap-4">
+              <SectionReveal>
+                <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                  {byDay.map(({ day, label, services: dayServices }) => (
+                    <article key={day} className="border-t border-accent-400/70 pt-4">
+                      <h2 className="font-display text-lg font-semibold text-brand-900">{label}</h2>
+                      <ul className="mt-3 divide-y divide-border border-y border-border">
+                        {dayServices.map((s) => (
+                          <li key={s.id} className="flex items-start justify-between gap-4 py-3">
                             <div>
                               <p className="font-medium text-brand-900">{s.name}</p>
                               {s.description ? (
-                                <p className="mt-1 text-sm text-ink-muted">
-                                  {s.description}
-                                </p>
+                                <p className="mt-1 text-sm text-ink-muted">{s.description}</p>
                               ) : null}
                               {s.location ? (
-                                <p className="mt-2 inline-flex items-center gap-1 text-xs text-ink-muted">
-                                  <span aria-hidden="true">📍</span> {s.location}
-                                </p>
+                                <p className="mt-1 text-xs text-ink-muted">{s.location}</p>
                               ) : null}
                             </div>
                             <div className="shrink-0 text-right">
@@ -90,21 +82,21 @@ export default async function ServicesPage() {
                                 </p>
                               ) : null}
                             </div>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </article>
-                ))}
-              </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </article>
+                  ))}
+                </div>
+              </SectionReveal>
             )}
 
-            {hasRecurring ? (
+            {services.length > 0 ? (
               <p className="mt-10 text-center text-xs text-ink-muted">
-                Schedule repeats weekly. Special services and one-time events appear on the{" "}
-                <a href="/events" className="text-brand-700 transition-colors hover:text-brand-800">
+                Schedule typically repeats weekly. Special services and one-time events appear on the{" "}
+                <Link href="/events" className="brand-link">
                   events page
-                </a>
+                </Link>
                 .
               </p>
             ) : null}

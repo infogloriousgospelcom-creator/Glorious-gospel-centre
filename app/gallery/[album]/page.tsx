@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { Navbar } from "@/components/layout/Navbar";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
 import { Badge } from "@/components/ui/Badge";
@@ -90,7 +90,7 @@ export default async function AlbumDetailPage({
 
   return (
     <>
-      <Navbar />
+      <SiteHeader />
       <main id="main">
         <Section className="bg-gradient-to-br from-brand-50 via-surface to-accent-50">
           <Container>

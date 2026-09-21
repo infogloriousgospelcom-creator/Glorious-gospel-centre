@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
-import { Navbar } from "@/components/layout/Navbar";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { HeroSection } from "@/components/home/HeroSection";
+import { SundayServicesSection } from "@/components/home/SundayServicesSection";
+import { AttendWatchSection } from "@/components/home/AttendWatchSection";
 import { WelcomeSection } from "@/components/home/WelcomeSection";
-import { ThisWeekSection } from "@/components/home/ThisWeekSection";
+import { NextStepSection } from "@/components/home/NextStepSection";
 import { MinistriesSection } from "@/components/home/MinistriesSection";
 import { LatestSermonSection } from "@/components/home/LatestSermonSection";
+import { UpcomingEventsSection } from "@/components/home/UpcomingEventsSection";
 import { PrayerCtaSection } from "@/components/home/PrayerCtaSection";
-import { GallerySection } from "@/components/home/GallerySection";
-import { OutreachSection } from "@/components/home/OutreachSection";
+import { ScriptureBandSection } from "@/components/home/ScriptureBandSection";
 import { GivingCtaSection } from "@/components/home/GivingCtaSection";
 import { getSiteSettings } from "@/services/content";
 import { buildPageMetadata, siteUrl } from "@/lib/seo";
@@ -32,16 +34,18 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function HomePage() {
   return (
     <>
-      <Navbar />
+      <SiteHeader />
       <main id="main">
         <HeroSection />
+        <SundayServicesSection />
+        <AttendWatchSection />
         <WelcomeSection />
-        <ThisWeekSection />
+        <NextStepSection />
         <MinistriesSection />
         <LatestSermonSection />
+        <UpcomingEventsSection />
         <PrayerCtaSection />
-        <GallerySection />
-        <OutreachSection />
+        <ScriptureBandSection />
         <GivingCtaSection />
       </main>
       <Footer />

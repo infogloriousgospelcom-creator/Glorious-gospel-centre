@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Navbar } from "@/components/layout/Navbar";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
-import { Card, CardBody, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
-import { EmptyState, SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
+import { EmptyState } from "@/components/ui/Section";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { LinkButton } from "@/components/ui/LinkButton";
 import { getAllPublishedMinistries } from "@/services/content";
 import { buildPageMetadata } from "@/lib/seo";
 import { getMinistryImages } from "@/lib/ministry-images";
 import { MinistryCardSlideshow } from "@/components/ministries/MinistryCardSlideshow";
+import { SectionReveal } from "@/components/motion/SectionReveal";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
@@ -27,20 +29,17 @@ export default async function MinistriesPage() {
 
   return (
     <>
-      <Navbar />
+      <SiteHeader />
       <main id="main">
-        <Section className="bg-gradient-to-br from-brand-50 via-white to-brand-50/60">
-          <Container>
-            <div className="mx-auto max-w-3xl text-center">
-              <SectionEyebrow>Get involved</SectionEyebrow>
-              <SectionTitle>Our ministries</SectionTitle>
-              <SectionLead>
-                Find a place to belong, serve, and grow. Each ministry exists to
-                strengthen our church family and serve our community.
-              </SectionLead>
-            </div>
-          </Container>
-        </Section>
+        <PageHeader
+          eyebrow="Get involved"
+          title="Our ministries"
+          description="Find a place to belong, serve, and grow. Each ministry exists to strengthen our church family and serve our community."
+        >
+          <LinkButton href="/visit" variant="secondary">
+            Plan Your Visit
+          </LinkButton>
+        </PageHeader>
 
         <Section>
           <Container>
@@ -50,41 +49,44 @@ export default async function MinistriesPage() {
                 description="Add ministries in the admin to populate this section."
               />
             ) : (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {ministries.map((m) => {
-                  const images = getMinistryImages(m.slug);
-                  const hasImages = images.length > 0;
+              <SectionReveal>
+                <ul className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                  {ministries.map((m) => {
+                    const images = getMinistryImages(m.slug);
+                    const hasImages = images.length > 0;
 
-                  return (
-                    <Link key={m.id} href={`/ministries/${m.slug}`} className="group">
-                      <Card hoverable className="flex h-full flex-col overflow-hidden">
-                        {hasImages ? (
-                          <MinistryCardSlideshow images={images} />
-                        ) : (
-                          <div
-                            className="relative aspect-[4/3] bg-gradient-to-br from-brand-100 to-brand-50"
-                            aria-hidden="true"
-                          />
-                        )}
-                        <CardHeader>
-                          <CardTitle className="transition-colors group-hover:text-brand-700">
-                            {m.name}
-                          </CardTitle>
-                          {m.short_description ? (
-                            <CardDescription>{m.short_description}</CardDescription>
-                          ) : null}
-                        </CardHeader>
-                        {m.meeting_info ? (
-                          <CardBody>
-                            <p className="eyebrow">Meetings</p>
-                            <p className="mt-1 text-sm text-ink">{m.meeting_info}</p>
-                          </CardBody>
-                        ) : null}
-                      </Card>
-                    </Link>
-                  );
-                })}
-              </div>
+                    return (
+                      <li key={m.id}>
+                        <Link href={`/ministries/${m.slug}`} className="group block h-full">
+                          <div className="overflow-hidden">
+                            {hasImages ? (
+                              <MinistryCardSlideshow images={images} />
+                            ) : (
+                              <div
+                                className="aspect-[4/3] bg-gradient-to-br from-brand-100 to-brand-50"
+                                aria-hidden="true"
+                              />
+                            )}
+                            <div className="border-t border-border pt-4">
+                              <h2 className="font-display text-lg font-semibold text-brand-900 transition-colors duration-ui ease-smooth group-hover:text-brand-700">
+                                {m.name}
+                              </h2>
+                              {m.short_description ? (
+                                <p className="mt-1 line-clamp-3 text-sm text-ink-muted">
+                                  {m.short_description}
+                                </p>
+                              ) : null}
+                              {m.meeting_info ? (
+                                <p className="mt-2 text-xs text-ink-muted">{m.meeting_info}</p>
+                              ) : null}
+                            </div>
+                          </div>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </SectionReveal>
             )}
           </Container>
         </Section>

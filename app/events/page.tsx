@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { Navbar } from "@/components/layout/Navbar";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
 import { Card, CardBody, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { EmptyState, SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
+import { EmptyState } from "@/components/ui/Section";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { getAllPublishedEvents } from "@/services/content";
 import { buildPageMetadata } from "@/lib/seo";
 import { SectionReveal } from "@/components/motion/SectionReveal";
@@ -42,20 +43,13 @@ export default async function EventsPage() {
 
   return (
     <>
-      <Navbar />
+      <SiteHeader />
       <main id="main">
-        <Section className="bg-gradient-to-br from-brand-50 via-white to-brand-50/60">
-          <Container>
-            <div className="mx-auto max-w-3xl text-center">
-              <SectionEyebrow>Events</SectionEyebrow>
-              <SectionTitle>What&apos;s coming up</SectionTitle>
-              <SectionLead>
-                Conferences, outreach, fellowships, and special services. Join us
-                for any of these events.
-              </SectionLead>
-            </div>
-          </Container>
-        </Section>
+        <PageHeader
+          eyebrow="Events"
+          title="What's coming up"
+          description="Conferences, outreach, fellowships, and special services. Join us for any of these gatherings."
+        />
 
         <Section>
           <Container>
@@ -118,14 +112,14 @@ export default async function EventsPage() {
           <Section className="bg-surface-muted">
             <Container>
               <h2 className="heading-3 mb-6">Past events</h2>
-              <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-white shadow-soft">
+              <ul className="divide-y divide-border border-y border-border">
                 {past.slice(0, 10).map((e) => {
                   const { day } = formatEventDateTime(e.starts_at);
                   return (
                     <li key={e.id}>
                       <Link
                         href={`/events/${e.slug}`}
-                        className="flex items-center justify-between px-5 py-4 transition-colors hover:bg-brand-50"
+                        className="flex min-h-touch items-center justify-between gap-4 py-4 transition-colors duration-ui ease-smooth hover:text-brand-800"
                       >
                         <div>
                           <p className="font-medium text-brand-900">{e.title}</p>

@@ -8,6 +8,7 @@ import { createHash } from "node:crypto";
 import { createClient } from "@/supabase/server";
 import { consumeAsync } from "@/lib/rate-limit";
 import { getClientIpHash } from "@/lib/ip-hash";
+import { getCurrentAdmin } from "@/services/auth";
 
 const LoginSchema = z.object({
   email: z.string().trim().email("Enter a valid email.").max(254),
@@ -21,19 +22,34 @@ function emailHash(email: string): string {
   return createHash("sha256").update(email.trim().toLowerCase()).digest("hex").slice(0, 32);
 }
 
-function safeAdminRedirect(redirect_to: string | undefined): string {
-  if (
-    redirect_to &&
-    redirect_to.startsWith("/admin/") &&
-    !redirect_to.includes("//") &&
-    !redirect_to.includes("\\") &&
-    !redirect_to.includes("@")
-  ) {
-    return redirect_to;
-  }
-  return "/admin/dashboard";
+function isSafeInternalPath(path: string): boolean {
+  return (
+    path.startsWith("/") &&
+    !path.startsWith("//") &&
+    !path.includes("\\") &&
+    !path.includes("@") &&
+    !path.includes("://")
+  );
 }
 
+/** Safe post-login destinations for non-admin sessions (e.g. give). */
+function safeMemberRedirect(redirect_to: string | undefined): string | null {
+  if (!redirect_to || !isSafeInternalPath(redirect_to)) return null;
+  if (redirect_to === "/give" || redirect_to.startsWith("/give?")) return redirect_to;
+  return null;
+}
+
+function safeAdminRedirect(redirect_to: string | undefined): string | null {
+  if (!redirect_to || !isSafeInternalPath(redirect_to)) return null;
+  if (redirect_to.startsWith("/admin/")) return redirect_to;
+  return null;
+}
+
+/**
+ * After password sign-in:
+ * - Admins may go to /admin/* (default dashboard)
+ * - Everyone else goes home or an allowlisted redirect (/give)
+ */
 export async function signInAction(
   _prev: AuthState | null,
   formData: FormData,
@@ -72,14 +88,22 @@ export async function signInAction(
           : "Sign-in failed. Please try again.",
       };
     }
+
     revalidatePath("/", "layout");
-    redirect(safeAdminRedirect(redirect_to));
+
+    const admin = await getCurrentAdmin();
+    if (admin) {
+      redirect(safeAdminRedirect(redirect_to) ?? "/admin/dashboard");
+    }
+
+    redirect(safeMemberRedirect(redirect_to) ?? "/");
   } catch (err) {
     if (err instanceof Error && err.message === "NEXT_REDIRECT") throw err;
     return { ok: false, message: "Sign-in failed. Please try again." };
   }
 }
 
+/** Admin sign-out — returns to admin login. */
 export async function signOutAction(): Promise<void> {
   try {
     const supabase = createClient();
@@ -107,7 +131,6 @@ export async function requestPasswordResetAction(
     capacity: 3,
     windowMs: 60 * 60 * 1000,
   });
-  // Always return the same success message (anti-enumeration), even when rate-limited.
   const antiEnumMessage =
     "If an account exists for that email, a reset link has been sent.";
   if (!rate.ok) {

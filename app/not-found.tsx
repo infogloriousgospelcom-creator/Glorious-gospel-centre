@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { Navbar } from "@/components/layout/Navbar";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/Button";
 
 export default function NotFound() {
   return (
     <>
-      <Navbar />
+      <SiteHeader />
       <main id="main" className="container-page py-section text-center">
         <p className="eyebrow mb-3">404</p>
         <h1 className="heading-1 mb-4">Page not found</h1>

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Navbar } from "@/components/layout/Navbar";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { ChangePasswordForm } from "../(protected)/account/_components/ChangePasswordForm";
 import { createClient } from "@/supabase/server";
@@ -29,7 +29,7 @@ export default async function ResetPasswordPage() {
 
   return (
     <>
-      <Navbar />
+      <SiteHeader />
       <main id="main" className="bg-surface-muted">
         <div className="container-page py-section">
           <div className="mx-auto max-w-md">

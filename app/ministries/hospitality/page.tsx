@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Navbar } from "@/components/layout/Navbar";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { SectionEyebrow } from "@/components/ui/Section";
-import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/LinkButton";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +21,7 @@ export const metadata: Metadata = buildPageMetadata({
 export default async function HospitalityMinistryPage() {
   return (
     <>
-      <Navbar />
+      <SiteHeader />
       <main id="main">
         <PageHeader
           eyebrow="Ministry"
@@ -49,12 +49,11 @@ export default async function HospitalityMinistryPage() {
                 </p>
               </article>
 
-              <div className="grid gap-6 sm:grid-cols-2">
-                <Link href="/ministries/hospitality/orphans" className="group">
-                  <div className="rounded-2xl border border-border bg-white p-8 shadow-soft transition-all duration-200 hover:-translate-y-0.5 hover:shadow-elevated">
-                    <SectionEyebrow className="text-accent-400">Area of Focus</SectionEyebrow>
-                    <h3 className="mt-3 font-display text-xl font-semibold text-brand-900 group-hover:text-brand-700 transition-colors">
-                      Orphans & Vulnerables
+              <div className="grid gap-8 sm:grid-cols-2">
+                <Link href="/ministries/hospitality/orphans" className="group block border-t border-border pt-5">
+                    <SectionEyebrow>Area of focus</SectionEyebrow>
+                    <h3 className="mt-2 font-display text-xl font-semibold text-brand-900 transition-colors duration-ui group-hover:text-brand-700">
+                      Orphans &amp; Vulnerables
                     </h3>
                     <p className="mt-3 text-sm leading-relaxed text-ink-muted">
                       Caring for orphans, vulnerable children, and individuals or families facing
@@ -62,15 +61,13 @@ export default async function HospitalityMinistryPage() {
                       the dignity of knowing they are valued.
                     </p>
                     <span className="mt-4 inline-block text-sm font-semibold text-brand-700 transition-colors group-hover:text-brand-800">
-                      Learn more &rarr;
+                      Learn more →
                     </span>
-                  </div>
                 </Link>
 
-                <Link href="/ministries/hospitality/feeding" className="group">
-                  <div className="rounded-2xl border border-border bg-white p-8 shadow-soft transition-all duration-200 hover:-translate-y-0.5 hover:shadow-elevated">
-                    <SectionEyebrow className="text-accent-400">Area of Focus</SectionEyebrow>
-                    <h3 className="mt-3 font-display text-xl font-semibold text-brand-900 group-hover:text-brand-700 transition-colors">
+                <Link href="/ministries/hospitality/feeding" className="group block border-t border-border pt-5">
+                    <SectionEyebrow>Area of focus</SectionEyebrow>
+                    <h3 className="mt-2 font-display text-xl font-semibold text-brand-900 transition-colors duration-ui group-hover:text-brand-700">
                       Feeding Programme
                     </h3>
                     <p className="mt-3 text-sm leading-relaxed text-ink-muted">
@@ -79,21 +76,18 @@ export default async function HospitalityMinistryPage() {
                       seen and cared for.
                     </p>
                     <span className="mt-4 inline-block text-sm font-semibold text-brand-700 transition-colors group-hover:text-brand-800">
-                      Learn more &rarr;
+                      Learn more →
                     </span>
-                  </div>
                 </Link>
               </div>
 
-              <div className="pt-6 border-t border-border">
-                <div className="flex flex-wrap gap-4">
-                  <Link href="/ministries">
-                    <Button variant="secondary">All Ministries</Button>
-                  </Link>
-                  <Link href="/contact">
-                    <Button variant="ghost">Contact us</Button>
-                  </Link>
-                </div>
+              <div className="flex flex-wrap gap-3 border-t border-border pt-6">
+                <LinkButton href="/ministries" variant="secondary">
+                  All ministries
+                </LinkButton>
+                <LinkButton href="/contact" variant="ghost">
+                  Contact us
+                </LinkButton>
               </div>
             </div>
           </Container>

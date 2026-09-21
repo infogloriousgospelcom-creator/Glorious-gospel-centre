@@ -16,7 +16,7 @@ export function AboutSubnav({ active }: { active: string }) {
       className="sticky top-16 z-30 border-b border-border bg-surface-muted/95 backdrop-blur supports-[backdrop-filter]:bg-surface-muted/80"
     >
       <Container>
-        <ul className="-mb-px flex flex-wrap gap-x-2 gap-y-1 py-2 text-sm font-medium">
+        <ul className="-mb-px flex flex-wrap gap-x-1 gap-y-1 py-2 text-sm font-medium">
           {links.map((l) => {
             const isActive = l.href === active;
             return (
@@ -24,7 +24,7 @@ export function AboutSubnav({ active }: { active: string }) {
                 <Link
                   href={l.href}
                   className={
-                    "inline-flex h-9 items-center rounded-md px-3 transition-colors " +
+                    "inline-flex min-h-touch items-center rounded-md px-3 transition-colors duration-ui ease-smooth sm:min-h-9 " +
                     (isActive
                       ? "bg-white text-brand-800 shadow-soft"
                       : "text-ink-muted hover:bg-white/60 hover:text-brand-700")

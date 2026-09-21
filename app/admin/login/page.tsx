@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Navbar } from "@/components/layout/Navbar";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { getCurrentAdmin } from "@/services/auth";
 import { LoginForm } from "./_components/LoginForm";
@@ -23,7 +23,7 @@ export default async function LoginPage({
 
   return (
     <>
-      <Navbar />
+      <SiteHeader />
       <main id="main" className="bg-surface-muted">
         <div className="container-page py-section">
           <div className="mx-auto max-w-md">

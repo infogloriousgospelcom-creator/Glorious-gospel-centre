@@ -1,6 +1,5 @@
-import Link from "next/link";
 import { Container, Section } from "@/components/ui/Container";
-import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/LinkButton";
 import { SectionReveal } from "@/components/motion/SectionReveal";
 
 export function GivingCtaSection() {
@@ -15,39 +14,36 @@ export function GivingCtaSection() {
           <SectionReveal>
             <div>
               <p className="eyebrow mb-3 text-accent-400">Generosity</p>
-              <h2 className="heading-2 mb-4 text-white text-balance">
-                Partner with our ministry
-              </h2>
+              <h2 className="heading-2 mb-4 text-balance text-white">Partner with our ministry</h2>
               <p className="lead mb-6 max-w-2xl text-brand-100">
-                Your tithes, offerings, and designated gifts enable the work of
-                the Gospel in our church and beyond. Every gift matters.
+                Your tithes, offerings, and designated gifts enable the work of the Gospel in our
+                church and beyond. Every gift matters.
               </p>
               <div className="flex flex-wrap gap-3">
-                <Link href="/give">
-                  <Button variant="accent">Give now</Button>
-                </Link>
-                <Link href="/about">
-                  <Button variant="ghost" className="text-white hover:bg-white/10">
-                    Why we give
-                  </Button>
-                </Link>
+                <LinkButton href="/give" variant="accent">
+                  Give
+                </LinkButton>
+                <LinkButton
+                  href="/about"
+                  variant="ghost"
+                  className="text-white hover:bg-white/10 hover:text-white"
+                >
+                  Why we give
+                </LinkButton>
               </div>
             </div>
           </SectionReveal>
-          <SectionReveal delay={0.15}>
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-brand-50 backdrop-blur">
-              <p className="font-display text-lg font-semibold text-white">
-                Ways to give
-              </p>
+          <SectionReveal delay={0.12}>
+            <div className="border-t border-white/20 pt-5 text-sm text-brand-50 md:border-l md:border-t-0 md:pl-8 md:pt-0">
+              <p className="font-display text-lg font-semibold text-white">Ways to give</p>
               <ul className="mt-3 space-y-2">
-                <li>· Tithe</li>
-                <li>· Offering</li>
-                <li>· Missions</li>
-                <li>· Other designated giving</li>
+                <li>Tithe</li>
+                <li>Offering</li>
+                <li>Missions</li>
+                <li>Designated giving</li>
               </ul>
               <p className="mt-4 text-xs text-brand-100">
-                Payment options (M-Pesa, bank, online) are configured in the
-                admin settings.
+                Give securely online — including M-Pesa where available.
               </p>
             </div>
           </SectionReveal>
