@@ -26,7 +26,7 @@ const journey = [
     key: "SERVE",
     title: "Serve",
     body: "Explore ways to participate in the life of the church.",
-    href: "/ministries",
+    href: "/serve",
   },
   {
     key: "GIVE",

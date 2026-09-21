@@ -96,6 +96,8 @@ export interface MinistryItem {
   meeting_info: string | null;
   contact_email: string | null;
   contact_phone: string | null;
+  /** Self-referencing parent for nested ministries (e.g. Hospitality children). */
+  parent_id: string | null;
   sort_order: number;
   published_at: string | null;
 }

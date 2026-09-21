@@ -1,25 +1,26 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
-import { EmptyState } from "@/components/ui/Section";
+import { EmptyState, SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { getAllPublishedMinistries } from "@/services/content";
 import { buildPageMetadata } from "@/lib/seo";
-import { getMinistryImages } from "@/lib/ministry-images";
-import { MinistryCardSlideshow } from "@/components/ministries/MinistryCardSlideshow";
 import { SectionReveal } from "@/components/motion/SectionReveal";
 import { ContextualNextSteps } from "@/components/church/ContextualNextSteps";
+import { MinistryDiscovery } from "@/components/ministries/MinistryDiscovery";
+import { ServeAtGgcc } from "@/components/ministries/ServeAtGgcc";
+import { ConnectAtGgcc } from "@/components/ministries/ConnectAtGgcc";
+import { topLevelMinistries } from "@/lib/ministries";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
     title: "Ministries",
     description:
-      "Explore the ministries of Glorious Gospel Centre Church — find a place to belong, serve, and grow.",
+      "Where can I belong or serve at Glorious Gospel Centre Church? Explore ministries for families, worship, and outreach.",
     path: "/ministries",
-    keywords: ["ministries", "church groups", "serve", "fellowship"],
+    keywords: ["ministries", "church groups", "serve", "fellowship", "GGCC"],
   });
 }
 
@@ -27,16 +28,18 @@ export const dynamic = "force-dynamic";
 
 export default async function MinistriesPage() {
   const ministries = await getAllPublishedMinistries();
+  const topLevel = topLevelMinistries(ministries);
 
   return (
     <>
       <SiteHeader />
       <main id="main">
         <PageHeader
-          eyebrow="Get involved"
-          title="Our ministries"
-          description="Find a place to belong, serve, and grow. Each ministry exists to strengthen our church family and serve our community."
+          eyebrow="Discover · Connect · Serve"
+          title="Where can I belong or serve?"
+          description="Find a ministry that fits your season of life — grow in faith, build community, and participate in the work of the Gospel at GGCC."
         >
+          <LinkButton href="/serve">Serve at GGCC</LinkButton>
           <LinkButton href="/visit" variant="secondary">
             Plan Your Visit
           </LinkButton>
@@ -44,61 +47,39 @@ export default async function MinistriesPage() {
 
         <Section>
           <Container>
-            {ministries.length === 0 ? (
+            <SectionReveal>
+              <div className="mx-auto mb-12 max-w-2xl text-center">
+                <SectionEyebrow>Our ministries</SectionEyebrow>
+                <SectionTitle>Find your place in the church family</SectionTitle>
+                <SectionLead>
+                  From children and youth to worship, prayer, hospitality, and outreach —
+                  every ministry exists to strengthen our church and serve our community.
+                </SectionLead>
+              </div>
+            </SectionReveal>
+
+            {topLevel.length === 0 ? (
               <EmptyState
                 title="Ministries coming soon"
                 description="Add ministries in the admin to populate this section."
               />
             ) : (
-              <SectionReveal>
-                <ul className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-                  {ministries.map((m) => {
-                    const images = getMinistryImages(m.slug);
-                    const hasImages = images.length > 0;
-
-                    return (
-                      <li key={m.id}>
-                        <Link href={`/ministries/${m.slug}`} className="group block h-full">
-                          <div className="overflow-hidden">
-                            {hasImages ? (
-                              <MinistryCardSlideshow images={images} />
-                            ) : (
-                              <div
-                                className="aspect-[4/3] bg-gradient-to-br from-brand-100 to-brand-50"
-                                aria-hidden="true"
-                              />
-                            )}
-                            <div className="border-t border-border pt-4">
-                              <h2 className="font-display text-lg font-semibold text-brand-900 transition-colors duration-ui ease-smooth group-hover:text-brand-700">
-                                {m.name}
-                              </h2>
-                              {m.short_description ? (
-                                <p className="mt-1 line-clamp-3 text-sm text-ink-muted">
-                                  {m.short_description}
-                                </p>
-                              ) : null}
-                              {m.meeting_info ? (
-                                <p className="mt-2 text-xs text-ink-muted">{m.meeting_info}</p>
-                              ) : null}
-                            </div>
-                          </div>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </SectionReveal>
+              <MinistryDiscovery ministries={ministries} />
             )}
           </Container>
         </Section>
 
+        <ConnectAtGgcc />
+
+        <ServeAtGgcc />
+
         <ContextualNextSteps
-          title="Find your place"
-          description="Explore a ministry, plan a visit, or contact us if you have questions."
+          title="Ready for a next step?"
+          description="Explore how to serve, plan a visit, or reach out with a question."
           actions={[
-            { href: "/visit", label: "Plan Your Visit" },
-            { href: "/contact", label: "Contact Us", variant: "secondary" },
-            { href: "/prayer", label: "Request Prayer", variant: "ghost" },
+            { href: "/serve", label: "Serve at GGCC" },
+            { href: "/visit", label: "Plan Your Visit", variant: "secondary" },
+            { href: "/contact", label: "Contact Us", variant: "ghost" },
           ]}
           surface="muted"
         />

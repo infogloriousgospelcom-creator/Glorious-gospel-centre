@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
-import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/LinkButton";
+import { ContextualNextSteps } from "@/components/church/ContextualNextSteps";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Orphans & Vulnerables",
+  title: "Orphans & Vulnerable Persons",
   description:
     "GGCC's ministry to orphans and vulnerable children — providing care, encouragement, and practical support through the Hospitality Ministry.",
   path: "/ministries/hospitality/orphans",
@@ -25,9 +25,13 @@ export default async function OrphansVulnerablesPage() {
       <main id="main">
         <PageHeader
           eyebrow="Hospitality Ministry"
-          title="Orphans & Vulnerables"
-          description="The Orphans & Vulnerables ministry is part of the Hospitality Ministry of Glorious Gospel Centre Church. We care for children and people who are facing difficult circumstances and seek practical ways to stand with them."
-        />
+          title="Orphans & Vulnerable Persons"
+          description="Part of the Hospitality Ministry of Glorious Gospel Centre Church. We care for children and people who are facing difficult circumstances and seek practical ways to stand with them."
+        >
+          <LinkButton href="/ministries/hospitality" variant="secondary">
+            Hospitality Ministry
+          </LinkButton>
+        </PageHeader>
 
         <Section>
           <Container>
@@ -47,7 +51,9 @@ export default async function OrphansVulnerablesPage() {
                   <li>Providing support and encouragement.</li>
                   <li>Standing with vulnerable individuals and families.</li>
                   <li>Creating a caring church community where people know they are valued.</li>
-                  <li>Encouraging church members to participate through prayer, giving and volunteering.</li>
+                  <li>
+                    Encouraging church members to participate through prayer, giving and volunteering.
+                  </li>
                 </ul>
 
                 <h2 className="heading-3">Our Heart</h2>
@@ -61,41 +67,20 @@ export default async function OrphansVulnerablesPage() {
                 </p>
               </article>
 
-              <div className="pt-6 border-t border-border">
+              <div className="border-t border-border pt-6">
                 <h3 className="heading-4 mb-4">Get Involved</h3>
-                <p className="text-ink-muted mb-6">
-                  Members of Glorious Gospel Centre Church can support this ministry through:
+                <p className="mb-6 text-ink-muted">
+                  Members of Glorious Gospel Centre Church can support this ministry through prayer,
+                  giving, and volunteering when opportunities arise.
                 </p>
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="rounded-2xl border border-border bg-white p-6 shadow-soft">
-                    <p className="font-display text-base font-semibold text-brand-900">Prayer</p>
-                    <p className="mt-2 text-sm text-ink-muted">
-                      Pray for the children, families and individuals being served.
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-border bg-white p-6 shadow-soft">
-                    <p className="font-display text-base font-semibold text-brand-900">Giving</p>
-                    <p className="mt-2 text-sm text-ink-muted">
-                      Contribute towards practical needs and ministry activities.
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-border bg-white p-6 shadow-soft">
-                    <p className="font-display text-base font-semibold text-brand-900">Volunteering</p>
-                    <p className="mt-2 text-sm text-ink-muted">
-                      Give your time and skills when opportunities arise.
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-6 flex flex-wrap gap-4">
-                  <Link href="/prayer">
-                    <Button variant="primary">Pray for this ministry</Button>
-                  </Link>
-                  <Link href="/give">
-                    <Button variant="secondary">Give support</Button>
-                  </Link>
-                  <Link href="/contact">
-                    <Button variant="ghost">Volunteer or learn more</Button>
-                  </Link>
+                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                  <LinkButton href="/prayer">Pray for this ministry</LinkButton>
+                  <LinkButton href="/give" variant="secondary">
+                    Give support
+                  </LinkButton>
+                  <LinkButton href="/contact" variant="ghost">
+                    Contact us to learn more
+                  </LinkButton>
                 </div>
               </div>
             </div>
@@ -111,13 +96,23 @@ export default async function OrphansVulnerablesPage() {
                 We want to be a church that remembers those who need care and support.
               </SectionLead>
               <div className="mt-6">
-                <Link href="/ministries/hospitality">
-                  <Button variant="secondary">Back to Hospitality Ministry</Button>
-                </Link>
+                <LinkButton href="/ministries/hospitality" variant="secondary">
+                  Back to Hospitality Ministry
+                </LinkButton>
               </div>
             </div>
           </Container>
         </Section>
+
+        <ContextualNextSteps
+          title="Continue exploring"
+          description="Learn about the Feeding Programme, serve with Hospitality, or plan a visit."
+          actions={[
+            { href: "/ministries/hospitality/feeding", label: "Feeding Programme" },
+            { href: "/serve", label: "Serve at GGCC", variant: "secondary" },
+            { href: "/visit", label: "Plan Your Visit", variant: "ghost" },
+          ]}
+        />
       </main>
       <Footer />
     </>

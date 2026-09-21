@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
-import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/LinkButton";
+import { ContextualNextSteps } from "@/components/church/ContextualNextSteps";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -26,8 +26,12 @@ export default async function FeedingProgrammePage() {
         <PageHeader
           eyebrow="Hospitality Ministry"
           title="Feeding Programme"
-          description="The Feeding Programme is part of the Hospitality Ministry of Glorious Gospel Centre Church. It provides food and practical support to people who are experiencing need."
-        />
+          description="Part of the Hospitality Ministry of Glorious Gospel Centre Church. It provides food and practical support to people who are experiencing need."
+        >
+          <LinkButton href="/ministries/hospitality" variant="secondary">
+            Hospitality Ministry
+          </LinkButton>
+        </PageHeader>
 
         <Section>
           <Container>
@@ -46,7 +50,7 @@ export default async function FeedingProgrammePage() {
                   <li>Supporting community outreach activities.</li>
                   <li>Mobilising church members to share what they have.</li>
                   <li>Encouraging generosity and practical service.</li>
-                  <li>Showings the compassion of Christ through acts of care.</li>
+                  <li>Showing the compassion of Christ through acts of care.</li>
                 </ul>
 
                 <h2 className="heading-3">Serving Our Community</h2>
@@ -64,41 +68,19 @@ export default async function FeedingProgrammePage() {
                 </p>
               </article>
 
-              <div className="pt-6 border-t border-border">
+              <div className="border-t border-border pt-6">
                 <h3 className="heading-4 mb-4">Get Involved</h3>
-                <p className="text-ink-muted mb-6">
-                  You can support the Feeding Programme through:
+                <p className="mb-6 text-ink-muted">
+                  You can support the Feeding Programme through giving, volunteering, and prayer.
                 </p>
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="rounded-2xl border border-border bg-white p-6 shadow-soft">
-                    <p className="font-display text-base font-semibold text-brand-900">Giving</p>
-                    <p className="mt-2 text-sm text-ink-muted">
-                      Help provide food and other resources needed for the programme.
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-border bg-white p-6 shadow-soft">
-                    <p className="font-display text-base font-semibold text-brand-900">Volunteering</p>
-                    <p className="mt-2 text-sm text-ink-muted">
-                      Take part in preparation, distribution and outreach activities.
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-border bg-white p-6 shadow-soft">
-                    <p className="font-display text-base font-semibold text-brand-900">Prayer</p>
-                    <p className="mt-2 text-sm text-ink-muted">
-                      Pray for the people being served and for the ministry team.
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-6 flex flex-wrap gap-4">
-                  <Link href="/give">
-                    <Button variant="primary">Give to the programme</Button>
-                  </Link>
-                  <Link href="/contact">
-                    <Button variant="secondary">Volunteer to serve</Button>
-                  </Link>
-                  <Link href="/prayer">
-                    <Button variant="ghost">Pray for provision</Button>
-                  </Link>
+                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                  <LinkButton href="/give">Give to the programme</LinkButton>
+                  <LinkButton href="/contact" variant="secondary">
+                    Contact us to serve
+                  </LinkButton>
+                  <LinkButton href="/prayer" variant="ghost">
+                    Pray for provision
+                  </LinkButton>
                 </div>
               </div>
             </div>
@@ -109,18 +91,31 @@ export default async function FeedingProgrammePage() {
           <Container>
             <div className="mx-auto max-w-3xl text-center">
               <SectionEyebrow>Hospitality Ministry</SectionEyebrow>
-              <SectionTitle>We serve because caring for people is part of living out the Gospel.</SectionTitle>
+              <SectionTitle>
+                We serve because caring for people is part of living out the Gospel.
+              </SectionTitle>
               <SectionLead>
-                Every act of giving and serving is an opportunity to show Christ&apos;s love in a practical way.
+                Every act of giving and serving is an opportunity to show Christ&apos;s love in a
+                practical way.
               </SectionLead>
               <div className="mt-6">
-                <Link href="/ministries/hospitality">
-                  <Button variant="secondary">Back to Hospitality Ministry</Button>
-                </Link>
+                <LinkButton href="/ministries/hospitality" variant="secondary">
+                  Back to Hospitality Ministry
+                </LinkButton>
               </div>
             </div>
           </Container>
         </Section>
+
+        <ContextualNextSteps
+          title="Continue exploring"
+          description="Learn about Orphans & Vulnerable Persons, serve with Hospitality, or plan a visit."
+          actions={[
+            { href: "/ministries/hospitality/orphans", label: "Orphans & Vulnerable Persons" },
+            { href: "/serve", label: "Serve at GGCC", variant: "secondary" },
+            { href: "/visit", label: "Plan Your Visit", variant: "ghost" },
+          ]}
+        />
       </main>
       <Footer />
     </>

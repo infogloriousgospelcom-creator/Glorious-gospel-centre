@@ -24,6 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/ministries/hospitality",
     "/ministries/hospitality/orphans",
     "/ministries/hospitality/feeding",
+    "/serve",
     "/services",
     "/events",
     "/sermons",
@@ -96,6 +97,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     for (const m of ministries) {
       if (!m?.slug) continue;
+      // Dedicated Hospitality routes are listed in staticEntries.
+      if (
+        m.slug === "hospitality" ||
+        m.slug === "orphans-vulnerables" ||
+        m.slug === "feeding-programme"
+      ) {
+        continue;
+      }
       dynamicEntries.push({
         url: siteUrl(`/ministries/${m.slug}`),
         lastModified: parseDate(m.updated_at ?? m.published_at) ?? now,

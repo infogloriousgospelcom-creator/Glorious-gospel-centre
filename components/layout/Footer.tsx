@@ -11,6 +11,7 @@ const groups = [
       { href: "/about", label: "About" },
       { href: "/about/leadership", label: "Leadership" },
       { href: "/ministries", label: "Ministries" },
+      { href: "/serve", label: "Serve" },
       { href: "/services", label: "Services" },
     ],
   },

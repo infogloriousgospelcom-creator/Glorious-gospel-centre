@@ -214,9 +214,10 @@ export function getFeaturedMinistries(limit = 6): Promise<MinistryItem[]> {
       const { data, error } = await supabase
         .from("ministries")
         .select(
-          "id,slug,name,short_description,description,hero_image,meeting_info,contact_email,contact_phone,sort_order,published_at",
+          "id,slug,name,short_description,description,hero_image,meeting_info,contact_email,contact_phone,parent_id,sort_order,published_at",
         )
         .eq("status", "PUBLISHED")
+        .is("parent_id", null)
         .order("sort_order", { ascending: true })
         .limit(limit);
       if (error) return [];
@@ -227,14 +228,15 @@ export function getFeaturedMinistries(limit = 6): Promise<MinistryItem[]> {
   });
 }
 
+const MINISTRY_PUBLIC_SELECT =
+  "id,slug,name,short_description,description,hero_image,meeting_info,contact_email,contact_phone,parent_id,sort_order,published_at";
+
 export async function getAllPublishedMinistries(): Promise<MinistryItem[]> {
   try {
     const supabase = createClient();
     const { data, error } = await supabase
       .from("ministries")
-      .select(
-        "id,slug,name,short_description,description,hero_image,meeting_info,contact_email,contact_phone,sort_order,published_at",
-      )
+      .select(MINISTRY_PUBLIC_SELECT)
       .eq("status", "PUBLISHED")
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true });
@@ -250,9 +252,7 @@ export async function getMinistryBySlug(slug: string): Promise<MinistryItem | nu
     const supabase = createClient();
     const { data, error } = await supabase
       .from("ministries")
-      .select(
-        "id,slug,name,short_description,description,hero_image,meeting_info,contact_email,contact_phone,sort_order,published_at",
-      )
+      .select(MINISTRY_PUBLIC_SELECT)
       .eq("slug", slug)
       .eq("status", "PUBLISHED")
       .maybeSingle();
