@@ -6,7 +6,7 @@ Member authentication and Connect Group membership live on the public site.
 |-------|---------|
 | `/login` | Congregant sign-in |
 | `/register` | Congregant registration |
-| `/account` | Congregant Account Hub (profile, security, Connect Groups, next steps) |
+| `/account` | Congregant Account Hub (profile, security, Connect Groups, My Giving, next steps) |
 | `/forgot-password` / `/reset-password` | Member password recovery |
 | `/auth/callback` | Email confirm / recovery code exchange |
 | `/connect` | Public Connect Group discovery |
@@ -36,6 +36,7 @@ The Account Hub includes:
 | Profile | Edit own `full_name` and `phone` (RLS own-row). Soft profile completeness display (verified email, name, phone) — reminder only, not a gate. |
 | Account security | Email verified / not verified badge. Unverified users can **resend verification** for the **current session email only** (no client-supplied email). Signed-in **change password** via session-bound Auth update (`audience=member` → stay on `/account`). |
 | Connect Groups | Active / Pending / History. Active rows can **Leave** via the existing I-B3 `leave_connect_group` action. History shows re-request when `group_status === "OPEN"`. |
+| My Giving | Self-serve history of gifts made while signed in (`giving_transactions.created_by = auth.uid()`). Safe columns only — never `admin_notes` or `raw_callback`. Legacy rows without `created_by` are not shown. |
 | Your next steps | Deterministic CTAs from email verification + membership state (not a recommendation engine or CRM). |
 
 Sign out remains available from the account header. Global nav shows **Account** when signed in (no separate member portal).
@@ -69,6 +70,20 @@ Notes:
 - Staff do not have a direct reinstate path (terminal → ACTIVE). Members re-request to PENDING; staff approve or decline via the existing moderation UI.
 - Notifications / email delivery are not part of the current membership system. Members learn status through `/account` and the group page.
 
+## My Giving (`/account`)
+
+Read-only history of the signed-in member’s own `giving_transactions` rows where `created_by = auth.uid()`.
+
+| Rule | Detail |
+|------|--------|
+| Ownership | Set by M-Pesa STK push as `created_by = auth.users.id`. Not inferred or backfilled. |
+| Legacy rows | `created_by IS NULL` remain invisible to congregants. |
+| Columns | Safe fields only (amount, category label, status, date, reference). Never `phone`, `admin_notes`, or `raw_callback`. |
+| Client | Authenticated session Supabase client + RLS. No service-role for congregant reads. |
+| Writes | I-B7 does not enable member INSERT/UPDATE/DELETE. Payment flows unchanged. |
+
+Staff CMS giving still uses `giving.manage`; after column grants, admin private reads/writes of sensitive columns use service-role **after** the permission check.
+
 ## Staff moderation
 
 | Route | Permission |
@@ -81,7 +96,7 @@ Staff can Approve, Decline, and Remove using the I-B4 moderation RPCs. Re-reques
 ## Deferred
 
 - Guest (anonymous) giving
-- Self-serve “My Giving” history
+- Giving receipts by email / notification delivery
 - Bible study
 - Notifications / email delivery for membership status
 - Pastoral CRM / attendance / volunteering applications

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { requireUser } from "@/services/auth";
 import { memberSignOutAction } from "@/services/auth.actions";
 import { listOwnMembershipsWithGroups } from "@/services/connect-group-membership";
+import { listOwnGivingHistory } from "@/services/member-giving";
 import {
   computeProfileCompleteness,
   selectAccountNextSteps,
@@ -18,6 +19,7 @@ import { AccountMembershipSections } from "./_components/AccountMembershipSectio
 import { AccountSecuritySection } from "./_components/AccountSecuritySection";
 import { AccountNextStepsPanel } from "./_components/AccountNextStepsPanel";
 import { ProfileCompletenessIndicator } from "./_components/ProfileCompletenessIndicator";
+import { AccountGivingSection } from "./_components/AccountGivingSection";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +35,10 @@ export default async function MemberAccountPage({
   searchParams: { password?: string };
 }) {
   const session = await requireUser("/login");
-  const memberships = await listOwnMembershipsWithGroups();
+  const [memberships, giving] = await Promise.all([
+    listOwnMembershipsWithGroups(),
+    listOwnGivingHistory(),
+  ]);
   const completeness = computeProfileCompleteness({
     fullName: session.fullName,
     phone: session.phone,
@@ -129,6 +134,18 @@ export default async function MemberAccountPage({
                 </CardHeader>
                 <CardBody>
                   <AccountMembershipSections memberships={memberships} />
+                </CardBody>
+              </Card>
+
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>My Giving</CardTitle>
+                  <CardDescription>
+                    Your recent gifts while signed in (visible only to you).
+                  </CardDescription>
+                </CardHeader>
+                <CardBody>
+                  <AccountGivingSection items={giving.items} loadOk={giving.ok} />
                 </CardBody>
               </Card>
 

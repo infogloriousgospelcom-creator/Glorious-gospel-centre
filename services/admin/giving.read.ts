@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/supabase/server";
+import { createServiceRoleClient, isServiceRoleConfigured } from "@/supabase/admin";
 import { writeAuditLog } from "@/lib/audit";
 import { getClientIpHash } from "@/lib/ip-hash";
 
@@ -19,13 +20,33 @@ export interface AdminTransactionDetail {
   category_label?: string;
 }
 
+async function assertGivingManagerForRead(): Promise<boolean> {
+  try {
+    const supabase = createClient();
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) return false;
+    const { data: allowed } = await supabase.rpc("has_permission", {
+      permission_key: "giving.manage",
+    });
+    return Boolean(allowed);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Staff private reads (includes admin_notes / raw_callback) use service-role
+ * AFTER giving.manage is confirmed — same pattern as connect-group membership
+ * private admin reads. Required once member column grants exclude sensitive fields.
+ */
 export async function listAllGivingFiltered(input: {
   status?: string;
   search?: string;
   actorId: string;
 }): Promise<Array<AdminTransactionDetail & { category_label?: string }>> {
   try {
-    const supabase = createClient();
+    if (!(await assertGivingManagerForRead()) || !isServiceRoleConfigured()) return [];
+    const supabase = createServiceRoleClient();
     let q = supabase
       .from("giving_transactions")
       .select(
@@ -45,7 +66,9 @@ export async function listAllGivingFiltered(input: {
       const cat = Array.isArray(r.category) ? r.category[0] : r.category;
       return { ...(r as AdminTransactionDetail), category_label: (cat as { label?: string } | null)?.label };
     });
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
 export async function getTransactionForAdmin(input: {
@@ -53,7 +76,8 @@ export async function getTransactionForAdmin(input: {
   actorId: string;
 }): Promise<AdminTransactionDetail | null> {
   try {
-    const supabase = createClient();
+    if (!(await assertGivingManagerForRead()) || !isServiceRoleConfigured()) return null;
+    const supabase = createServiceRoleClient();
     const { data, error } = await supabase
       .from("giving_transactions")
       .select(
@@ -72,6 +96,11 @@ export async function getTransactionForAdmin(input: {
     });
     if (!data) return null;
     const cat = Array.isArray(data.category) ? data.category[0] : data.category;
-    return { ...(data as AdminTransactionDetail), category_label: (cat as { label?: string } | null)?.label };
-  } catch { return null; }
+    return {
+      ...(data as AdminTransactionDetail),
+      category_label: (cat as { label?: string } | null)?.label,
+    };
+  } catch {
+    return null;
+  }
 }

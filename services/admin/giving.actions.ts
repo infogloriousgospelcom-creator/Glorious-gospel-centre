@@ -3,6 +3,7 @@ import "server-only";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/supabase/server";
+import { createServiceRoleClient, isServiceRoleConfigured } from "@/supabase/admin";
 import { writeAuditLog } from "@/lib/audit";
 import { getClientIpHash } from "@/lib/ip-hash";
 import type { AdminActionState } from "./sermons";
@@ -18,11 +19,21 @@ async function assertGivingManager() {
   const supabase = createClient();
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) return { ok: false as const, error: "Not authenticated." };
-  const { data: allowed } = await supabase.rpc("has_permission", { permission_key: "giving.manage" });
+  const { data: allowed } = await supabase.rpc("has_permission", {
+    permission_key: "giving.manage",
+  });
   if (!allowed) return { ok: false as const, error: "Insufficient permissions." };
-  return { ok: true as const, supabase, userId: user.user.id };
+  if (!isServiceRoleConfigured()) {
+    return { ok: false as const, error: "Giving administration is temporarily unavailable." };
+  }
+  return { ok: true as const, userId: user.user.id };
 }
 
+/**
+ * Staff status override. Permission-checked, then service-role write so
+ * admin_notes remains writable after member column grants exclude it from JWT.
+ * Status transition rules / UI are unchanged.
+ */
 export async function overrideTransactionStatus(
   id: string,
   status: string,
@@ -33,18 +44,21 @@ export async function overrideTransactionStatus(
   const parsed = OverrideSchema.safeParse({ id, status, reason });
   if (!parsed.success) {
     const errors: Record<string, string> = {};
-    for (const i of parsed.error.issues) { errors[i.path[0]?.toString() ?? "form"] = i.message; }
+    for (const i of parsed.error.issues) {
+      errors[i.path[0]?.toString() ?? "form"] = i.message;
+    }
     return { ok: false, message: "Please correct the highlighted fields.", errors };
   }
   try {
-    const { data: prior } = await auth.supabase
+    const supabase = createServiceRoleClient();
+    const { data: prior } = await supabase
       .from("giving_transactions")
       .select("status,admin_notes")
       .eq("id", parsed.data.id)
       .maybeSingle();
     if (!prior) return { ok: false, message: "Transaction not found." };
 
-    const { error } = await auth.supabase
+    const { error } = await supabase
       .from("giving_transactions")
       .update({
         status: parsed.data.status,
@@ -65,5 +79,7 @@ export async function overrideTransactionStatus(
     revalidatePath("/admin/giving");
     revalidatePath(`/admin/giving/${parsed.data.id}`);
     return { ok: true, message: "Status updated." };
-  } catch { return { ok: false, message: "Could not update status." }; }
+  } catch {
+    return { ok: false, message: "Could not update status." };
+  }
 }

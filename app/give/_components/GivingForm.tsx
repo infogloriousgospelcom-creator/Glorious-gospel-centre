@@ -63,6 +63,11 @@ function PaymentStatusDisplay({ status, transaction, error }: {
           {transaction?.categoryLabel && (
             <p className="mt-1 text-sm text-ink-muted">Purpose: {transaction.categoryLabel}</p>
           )}
+          <p className="mt-3 text-sm">
+            <a href="/account" className="font-medium text-brand-700 hover:underline">
+              View your giving history
+            </a>
+          </p>
         </Alert>
       );
     case "FAILED":
