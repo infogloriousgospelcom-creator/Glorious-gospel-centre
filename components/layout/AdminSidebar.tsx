@@ -28,6 +28,7 @@ const groups: { title: string; items: { href: string; label: string }[] }[] = [
     title: "Engage",
     items: [
       { href: "/admin/prayer-requests", label: "Prayer" },
+      { href: "/admin/testimonies", label: "Testimonies" },
       { href: "/admin/messages", label: "Messages" },
       { href: "/admin/giving", label: "Giving" },
     ],

@@ -196,3 +196,38 @@ export const DAYS_OF_WEEK = [
 export function dayName(dayOfWeek: number): string {
   return DAYS_OF_WEEK[dayOfWeek] ?? "";
 }
+
+export type TestimonyStatus = "PENDING" | "APPROVED" | "REJECTED" | "ARCHIVED";
+
+/** Safe public fields only — never includes email, phone, notes, or IP. */
+export interface TestimonyPublic {
+  id: string;
+  slug: string;
+  title: string;
+  story: string;
+  display_name: string | null;
+  anonymous: boolean;
+  published_at: string | null;
+  created_at: string;
+}
+
+export interface TestimonyAdminRow {
+  id: string;
+  slug: string | null;
+  title: string;
+  story: string;
+  display_name: string | null;
+  anonymous: boolean;
+  submitter_email: string | null;
+  submitter_phone: string | null;
+  consent_to_publish: boolean;
+  consent_at: string;
+  status: TestimonyStatus;
+  internal_notes: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+

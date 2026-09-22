@@ -19,6 +19,7 @@ const groups = [
     heading: "Connect",
     links: [
       { href: "/prayer", label: "Prayer" },
+      { href: "/testimonies", label: "Stories of Grace" },
       { href: "/contact", label: "Contact" },
       { href: "/events", label: "Events" },
       { href: "/livestream", label: "Watch Online" },

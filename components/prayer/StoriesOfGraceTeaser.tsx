@@ -4,7 +4,7 @@ import { LinkButton } from "@/components/ui/LinkButton";
 import { SectionReveal } from "@/components/motion/SectionReveal";
 
 /**
- * Conceptual encouragement only — no testimony database or fabricated stories.
+ * Encouragement teaser — links to moderated Stories of Grace when available.
  */
 export function StoriesOfGraceTeaser() {
   return (
@@ -14,13 +14,13 @@ export function StoriesOfGraceTeaser() {
           <SectionEyebrow>Encourage</SectionEyebrow>
           <SectionTitle>God is still working</SectionTitle>
           <SectionLead className="mx-auto">
-            Across GGCC, people continue to trust God in every season. Strengthen your faith
-            through the Word, worship, and community — and know that prayer is never wasted.
+            Across GGCC, people continue to trust God in every season. Read approved Stories
+            of Grace, or share how God has been faithful in your life for review.
           </SectionLead>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <LinkButton href="/sermons">Explore Sermons</LinkButton>
-            <LinkButton href="/visit" variant="secondary">
-              Plan Your Visit
+            <LinkButton href="/testimonies">Stories of Grace</LinkButton>
+            <LinkButton href="/testimonies/share" variant="secondary">
+              Share Your Story
             </LinkButton>
           </div>
         </SectionReveal>

@@ -10,6 +10,7 @@ import { MinistriesSection } from "@/components/home/MinistriesSection";
 import { LatestSermonSection } from "@/components/home/LatestSermonSection";
 import { UpcomingEventsSection } from "@/components/home/UpcomingEventsSection";
 import { PrayerCtaSection } from "@/components/home/PrayerCtaSection";
+import { StoriesOfGraceHomeSection } from "@/components/home/StoriesOfGraceHomeSection";
 import { ScriptureBandSection } from "@/components/home/ScriptureBandSection";
 import { GivingCtaSection } from "@/components/home/GivingCtaSection";
 import { ThisWeekSection } from "@/components/church/ThisWeekSection";
@@ -52,6 +53,7 @@ export default async function HomePage() {
         <LatestSermonSection />
         <UpcomingEventsSection />
         <PrayerCtaSection />
+        <StoriesOfGraceHomeSection />
         <ScriptureBandSection />
         <GivingCtaSection />
       </main>

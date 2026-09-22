@@ -36,6 +36,7 @@ export default async function AdminDashboardPage({
     { label: "Upcoming events",     value: counts.upcomingEvents,    href: "/admin/events",            description: "Published events scheduled in the future." },
     { label: "Published sermons",   value: counts.publishedSermons,  href: "/admin/sermons",           description: "Live in the sermon library." },
     { label: "New prayer requests", value: counts.newPrayerRequests,  href: "/admin/prayer-requests",   description: "Untriaged submissions waiting for the prayer team." },
+    { label: "Pending testimonies", value: counts.pendingTestimonies, href: "/admin/testimonies",       description: "Stories of Grace awaiting moderation." },
     { label: "Gallery albums",      value: counts.galleryAlbums,      href: "/admin/gallery",           description: "Albums visible to the public." },
     { label: "Unread messages",     value: counts.unreadMessages,    href: "/admin/messages",          description: "Contact form submissions not yet read." },
     { label: "Awaiting approval",   value: counts.pendingContent,    href: "/admin/approvals",         description: "Items in PENDING_APPROVAL across content types." },

@@ -31,6 +31,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/gallery",
     "/give",
     "/prayer",
+    "/testimonies",
     "/contact",
     "/livestream",
     "/visit",
@@ -47,7 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const supabase = createClient();
 
-    const [events, sermons, ministries, albums, series] = await Promise.all([
+    const [events, sermons, ministries, albums, series, testimonies] = await Promise.all([
       supabase
         .from("events")
         .select("slug, updated_at, published_at")
@@ -72,6 +73,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .from("sermon_series")
         .select("slug, updated_at, published_at")
         .eq("status", "PUBLISHED")
+        .then((r) => r.data ?? []),
+      supabase
+        .from("testimonies")
+        .select("slug, updated_at, published_at")
+        .eq("status", "APPROVED")
+        .not("slug", "is", null)
+        .not("published_at", "is", null)
         .then((r) => r.data ?? []),
     ]);
 
@@ -130,6 +138,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: parseDate(sr.updated_at ?? sr.published_at) ?? now,
         changeFrequency: "monthly",
         priority: 0.5,
+      });
+    }
+
+    for (const t of testimonies) {
+      if (!t?.slug) continue;
+      dynamicEntries.push({
+        url: siteUrl(`/testimonies/${t.slug}`),
+        lastModified: parseDate(t.updated_at ?? t.published_at) ?? now,
+        changeFrequency: "monthly",
+        priority: 0.55,
       });
     }
   } catch {
