@@ -345,6 +345,7 @@ export async function memberRequestPasswordResetAction(
 /**
  * Update password for the current recovery/authenticated session.
  * `audience=member` → /account; default/admin → /admin/account.
+ * Session-bound only — never service-role; never accepts a target user id.
  */
 export async function updatePasswordAction(
   _prev: AuthState | null,
@@ -358,14 +359,39 @@ export async function updatePasswordAction(
       errors: zodFieldErrors(parsed.error),
     };
   }
+
+  const audience = parsed.data.audience === "member" ? "member" : "admin";
+
   try {
     const supabase = createClient();
+    const {
+      data: { user },
+      error: userErr,
+    } = await supabase.auth.getUser();
+    if (userErr || !user) {
+      return {
+        ok: false,
+        message:
+          audience === "member"
+            ? "Please sign in to update your password."
+            : "Please sign in to update your password.",
+      };
+    }
+
+    const ipHash = getClientIpHash() ?? "anon";
+    const rate = await consumeAsync(`password-update:${ipHash}:${user.id}`, {
+      capacity: 5,
+      windowMs: 15 * 60 * 1000,
+    });
+    if (!rate.ok) {
+      return { ok: false, message: "Too many password attempts. Please try again later." };
+    }
+
     const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
     if (error) {
       return { ok: false, message: "We couldn't update your password. Please try again." };
     }
     revalidatePath("/", "layout");
-    const audience = parsed.data.audience === "member" ? "member" : "admin";
     if (audience === "member") {
       redirect("/account?password=updated");
     }
@@ -373,6 +399,63 @@ export async function updatePasswordAction(
   } catch (err) {
     if (isNextRedirect(err)) throw err;
     return { ok: false, message: "We couldn't update your password. Please try again." };
+  }
+}
+
+/**
+ * Resend signup confirmation for the currently authenticated user only.
+ * Never accepts a client-supplied email address.
+ */
+export async function resendMemberEmailVerificationAction(
+  _prev: AuthState | null,
+  _formData: FormData,
+): Promise<AuthState> {
+  const genericOk =
+    "If your email still needs confirmation, a verification message has been sent. Check your inbox.";
+
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+      error: userErr,
+    } = await supabase.auth.getUser();
+    if (userErr || !user) {
+      return { ok: false, message: "Please sign in to resend a verification email." };
+    }
+
+    if (user.email_confirmed_at) {
+      return { ok: true, message: "Your email is already verified." };
+    }
+
+    const email = user.email?.trim();
+    if (!email) {
+      return { ok: false, message: "We couldn't send a verification email. Please try again." };
+    }
+
+    const ipHash = getClientIpHash() ?? "anon";
+    const rate = await consumeAsync(`verify-resend:${ipHash}:${user.id}`, {
+      capacity: 3,
+      windowMs: 60 * 60 * 1000,
+    });
+    if (!rate.ok) {
+      return { ok: true, message: genericOk };
+    }
+
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: {
+        emailRedirectTo: `${siteOrigin()}/auth/callback?next=${encodeURIComponent("/account")}`,
+      },
+    });
+
+    if (error) {
+      return { ok: true, message: genericOk };
+    }
+
+    return { ok: true, message: genericOk };
+  } catch {
+    return { ok: false, message: "We couldn't send a verification email. Please try again." };
   }
 }
 

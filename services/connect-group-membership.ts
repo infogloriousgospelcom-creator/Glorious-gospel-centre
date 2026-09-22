@@ -54,6 +54,9 @@ export interface OwnMembershipWithGroup extends ConnectGroupMembershipOwn {
   group_name: string | null;
   group_slug: string | null;
   group_status: string | null;
+  group_meeting_day: number | null;
+  group_meeting_time: string | null;
+  group_location_note: string | null;
 }
 
 /** List the caller's own memberships with public group labels (RLS-scoped). */
@@ -68,7 +71,7 @@ export async function listOwnMembershipsWithGroups(): Promise<OwnMembershipWithG
     const { data, error } = await supabase
       .from("connect_group_members")
       .select(
-        `${OWN_SELECT}, connect_groups ( name, slug, status )`,
+        `${OWN_SELECT}, connect_groups ( name, slug, status, meeting_day, meeting_time, location_note )`,
       )
       .eq("profile_id", user.id)
       .order("requested_at", { ascending: false });
@@ -79,8 +82,22 @@ export async function listOwnMembershipsWithGroups(): Promise<OwnMembershipWithG
         const base = mapOwn(row);
         if (!base) return null;
         const g = row.connect_groups as
-          | { name?: string; slug?: string; status?: string }
-          | { name?: string; slug?: string; status?: string }[]
+          | {
+              name?: string;
+              slug?: string;
+              status?: string;
+              meeting_day?: number | null;
+              meeting_time?: string | null;
+              location_note?: string | null;
+            }
+          | {
+              name?: string;
+              slug?: string;
+              status?: string;
+              meeting_day?: number | null;
+              meeting_time?: string | null;
+              location_note?: string | null;
+            }[]
           | null;
         const group = Array.isArray(g) ? g[0] : g;
         return {
@@ -88,6 +105,10 @@ export async function listOwnMembershipsWithGroups(): Promise<OwnMembershipWithG
           group_name: group?.name ?? null,
           group_slug: group?.slug ?? null,
           group_status: group?.status ?? null,
+          group_meeting_day:
+            typeof group?.meeting_day === "number" ? group.meeting_day : null,
+          group_meeting_time: group?.meeting_time ?? null,
+          group_location_note: group?.location_note ?? null,
         } satisfies OwnMembershipWithGroup;
       })
       .filter((m): m is OwnMembershipWithGroup => m !== null);

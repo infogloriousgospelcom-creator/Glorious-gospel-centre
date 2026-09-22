@@ -6,7 +6,7 @@ Member authentication and Connect Group membership live on the public site.
 |-------|---------|
 | `/login` | Congregant sign-in |
 | `/register` | Congregant registration |
-| `/account` | Member account (profile + Connect Group memberships) |
+| `/account` | Congregant Account Hub (profile, security, Connect Groups, next steps) |
 | `/forgot-password` / `/reset-password` | Member password recovery |
 | `/auth/callback` | Email confirm / recovery code exchange |
 | `/connect` | Public Connect Group discovery |
@@ -26,6 +26,19 @@ Staff CMS auth remains separate under `/admin/*`.
 - Staff sign-in remains at `/admin/login`.
 - Congregants are never added to `admins`.
 - Join and re-request require a verified email address.
+
+## Account Hub (`/account`)
+
+The Account Hub includes:
+
+| Section | What it does |
+|---------|----------------|
+| Profile | Edit own `full_name` and `phone` (RLS own-row). Soft profile completeness display (verified email, name, phone) — reminder only, not a gate. |
+| Account security | Email verified / not verified badge. Unverified users can **resend verification** for the **current session email only** (no client-supplied email). Signed-in **change password** via session-bound Auth update (`audience=member` → stay on `/account`). |
+| Connect Groups | Active / Pending / History. Active rows can **Leave** via the existing I-B3 `leave_connect_group` action. History shows re-request when `group_status === "OPEN"`. |
+| Your next steps | Deterministic CTAs from email verification + membership state (not a recommendation engine or CRM). |
+
+Sign out remains available from the account header. Global nav shows **Account** when signed in (no separate member portal).
 
 ## Connect Group membership lifecycle
 
@@ -75,3 +88,5 @@ Staff can Approve, Decline, and Remove using the I-B4 moderation RPCs. Re-reques
 - Connect Group leader roles
 - PENDING withdrawal
 - Staff direct reinstate (terminal → ACTIVE)
+- Avatar upload
+- Prayer / event / testimony personal history on `/account`
