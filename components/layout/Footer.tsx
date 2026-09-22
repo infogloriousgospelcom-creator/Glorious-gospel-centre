@@ -159,6 +159,12 @@ export async function Footer() {
               </ul>
             ) : null}
             <Link
+              href="/login"
+              className="inline-flex min-h-touch items-center transition-colors duration-ui ease-smooth hover:text-white sm:min-h-0"
+            >
+              Sign in
+            </Link>
+            <Link
               href="/admin/login"
               className="inline-flex min-h-touch items-center transition-colors duration-ui ease-smooth hover:text-white sm:min-h-0"
             >

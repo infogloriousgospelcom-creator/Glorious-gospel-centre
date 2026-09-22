@@ -272,3 +272,9 @@ export interface ConnectGroupAdminRow {
   updated_at: string;
 }
 
+export type {
+  ConnectGroupMemberStatus,
+  ConnectGroupMembershipOwn,
+} from "@/lib/connect-group-members";
+
+

@@ -44,7 +44,13 @@ function isMoreActive(pathname: string) {
   });
 }
 
-export function Navbar() {
+export function Navbar({
+  accountHref = "/login",
+  accountLabel = "Sign in",
+}: {
+  accountHref?: string;
+  accountLabel?: string;
+} = {}) {
   const [open, setOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -212,6 +218,12 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <Link
+            href={accountHref}
+            className="hidden text-sm font-medium text-brand-800 transition-colors duration-ui ease-smooth hover:text-brand-600 sm:inline-flex"
+          >
+            {accountLabel}
+          </Link>
           <LinkButton
             href="/visit"
             size="sm"
@@ -266,6 +278,8 @@ export function Navbar() {
         open={open}
         pathname={pathname}
         onClose={() => setOpen(false)}
+        accountHref={accountHref}
+        accountLabel={accountLabel}
       />
     </header>
   );
@@ -276,11 +290,15 @@ function MobileMenu({
   open,
   pathname,
   onClose,
+  accountHref,
+  accountLabel,
 }: {
   id: string;
   open: boolean;
   pathname: string;
   onClose: () => void;
+  accountHref: string;
+  accountLabel: string;
 }) {
   const ref = useRef<HTMLElement>(null);
   const [moreExpanded, setMoreExpanded] = useState(false);
@@ -307,6 +325,9 @@ function MobileMenu({
     >
       <div className="container-page space-y-4 py-4">
         <div className="grid gap-2">
+          <LinkButton href={accountHref} variant="secondary" onClick={onClose} className="w-full">
+            {accountLabel}
+          </LinkButton>
           <LinkButton href="/visit" onClick={onClose} className="w-full">
             Plan Your Visit
           </LinkButton>

@@ -1,54 +1,60 @@
 "use server";
 
 import "server-only";
-import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createHash } from "node:crypto";
 import { createClient } from "@/supabase/server";
 import { consumeAsync } from "@/lib/rate-limit";
 import { getClientIpHash } from "@/lib/ip-hash";
-import { getCurrentAdmin } from "@/services/auth";
+import { getCurrentAdmin, getCurrentUser } from "@/services/auth";
+import {
+  ForgotPasswordSchema,
+  LoginSchema,
+  ProfileUpdateSchema,
+  RegisterSchema,
+  UpdatePasswordSchema,
+} from "@/lib/auth-schemas";
+import {
+  resolveMemberNext,
+  safeAdminRedirect,
+  safeLegacyMemberRedirect,
+  safeMemberRedirect,
+} from "@/lib/auth-redirects";
+import { publicEnv } from "@/lib/env";
 
-const LoginSchema = z.object({
-  email: z.string().trim().email("Enter a valid email.").max(254),
-  password: z.string().min(1, "Password is required.").max(200),
-  redirect_to: z.string().optional().or(z.literal("")),
-});
-
-export type AuthState = { ok: boolean; message: string; errors?: Record<string, string> };
+export type AuthState = {
+  ok: boolean;
+  message: string;
+  errors?: Record<string, string>;
+  /** Set after signup when email confirmation is required. */
+  needsEmailConfirmation?: boolean;
+};
 
 function emailHash(email: string): string {
   return createHash("sha256").update(email.trim().toLowerCase()).digest("hex").slice(0, 32);
 }
 
-function isSafeInternalPath(path: string): boolean {
-  return (
-    path.startsWith("/") &&
-    !path.startsWith("//") &&
-    !path.includes("\\") &&
-    !path.includes("@") &&
-    !path.includes("://")
-  );
+function siteOrigin(): string {
+  return publicEnv.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
 }
 
-/** Safe post-login destinations for non-admin sessions (e.g. give). */
-function safeMemberRedirect(redirect_to: string | undefined): string | null {
-  if (!redirect_to || !isSafeInternalPath(redirect_to)) return null;
-  if (redirect_to === "/give" || redirect_to.startsWith("/give?")) return redirect_to;
-  return null;
+function zodFieldErrors(error: { issues: { path: (string | number)[]; message: string }[] }) {
+  const errors: Record<string, string> = {};
+  for (const issue of error.issues) {
+    const k = issue.path[0]?.toString() ?? "form";
+    if (!errors[k]) errors[k] = issue.message;
+  }
+  return errors;
 }
 
-function safeAdminRedirect(redirect_to: string | undefined): string | null {
-  if (!redirect_to || !isSafeInternalPath(redirect_to)) return null;
-  if (redirect_to.startsWith("/admin/")) return redirect_to;
-  return null;
+function isNextRedirect(err: unknown): boolean {
+  return err instanceof Error && err.message === "NEXT_REDIRECT";
 }
 
 /**
- * After password sign-in:
- * - Admins may go to /admin/* (default dashboard)
- * - Everyone else goes home or an allowlisted redirect (/give)
+ * Admin login form (`/admin/login`).
+ * Admins → /admin/*; non-admins → allowlisted /give or home (unchanged).
  */
 export async function signInAction(
   _prev: AuthState | null,
@@ -56,12 +62,11 @@ export async function signInAction(
 ): Promise<AuthState> {
   const parsed = LoginSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
-    const errors: Record<string, string> = {};
-    for (const issue of parsed.error.issues) {
-      const k = issue.path[0]?.toString() ?? "form";
-      if (!errors[k]) errors[k] = issue.message;
-    }
-    return { ok: false, message: "Please correct the highlighted fields.", errors };
+    return {
+      ok: false,
+      message: "Please correct the highlighted fields.",
+      errors: zodFieldErrors(parsed.error),
+    };
   }
   const { email, password, redirect_to } = parsed.data;
 
@@ -96,9 +101,72 @@ export async function signInAction(
       redirect(safeAdminRedirect(redirect_to) ?? "/admin/dashboard");
     }
 
-    redirect(safeMemberRedirect(redirect_to) ?? "/");
+    redirect(safeLegacyMemberRedirect(redirect_to) ?? "/");
   } catch (err) {
-    if (err instanceof Error && err.message === "NEXT_REDIRECT") throw err;
+    if (isNextRedirect(err)) throw err;
+    return { ok: false, message: "Sign-in failed. Please try again." };
+  }
+}
+
+/**
+ * Member login (`/login`).
+ * Admins still go to the admin dashboard; congregants go to /account (or safe next).
+ */
+export async function memberSignInAction(
+  _prev: AuthState | null,
+  formData: FormData,
+): Promise<AuthState> {
+  const parsed = LoginSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: "Please correct the highlighted fields.",
+      errors: zodFieldErrors(parsed.error),
+    };
+  }
+  const { email, password, redirect_to } = parsed.data;
+
+  const ipHash = getClientIpHash() ?? "anon";
+  const rate = await consumeAsync(`member-login:${ipHash}:${emailHash(email)}`, {
+    capacity: 5,
+    windowMs: 15 * 60 * 1000,
+  });
+  if (!rate.ok) {
+    return {
+      ok: false,
+      message: "Too many sign-in attempts. Please try again later.",
+    };
+  }
+
+  try {
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes("email not confirmed") || msg.includes("not confirmed")) {
+        return {
+          ok: false,
+          message: "Please confirm your email before signing in. Check your inbox for a link.",
+        };
+      }
+      return {
+        ok: false,
+        message: msg.includes("invalid")
+          ? "Invalid email or password."
+          : "Sign-in failed. Please try again.",
+      };
+    }
+
+    revalidatePath("/", "layout");
+
+    const admin = await getCurrentAdmin();
+    if (admin) {
+      redirect(safeAdminRedirect(redirect_to) ?? "/admin/dashboard");
+    }
+
+    redirect(safeMemberRedirect(redirect_to) ?? "/account");
+  } catch (err) {
+    if (isNextRedirect(err)) throw err;
     return { ok: false, message: "Sign-in failed. Please try again." };
   }
 }
@@ -115,13 +183,106 @@ export async function signOutAction(): Promise<void> {
   redirect("/admin/login");
 }
 
-const ForgotSchema = z.object({ email: z.string().trim().email("Enter a valid email.").max(254) });
+/** Member sign-out — returns to the public homepage. */
+export async function memberSignOutAction(): Promise<void> {
+  try {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+  } catch {
+    // ignore
+  }
+  revalidatePath("/", "layout");
+  redirect("/");
+}
 
+/** Congregant registration via Supabase Auth (no service role, no admins row). */
+export async function memberSignUpAction(
+  _prev: AuthState | null,
+  formData: FormData,
+): Promise<AuthState> {
+  const parsed = RegisterSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: "Please correct the highlighted fields.",
+      errors: zodFieldErrors(parsed.error),
+    };
+  }
+
+  const { email, password, full_name } = parsed.data;
+  const ipHash = getClientIpHash() ?? "anon";
+  const rate = await consumeAsync(`register:${ipHash}:${emailHash(email)}`, {
+    capacity: 3,
+    windowMs: 60 * 60 * 1000,
+  });
+  if (!rate.ok) {
+    return {
+      ok: false,
+      message: "Too many registration attempts. Please try again later.",
+    };
+  }
+
+  const genericSuccess =
+    "If this email can be registered, you will receive a confirmation message shortly. Check your inbox to continue.";
+
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name },
+        emailRedirectTo: `${siteOrigin()}/auth/callback?next=${encodeURIComponent("/account")}`,
+      },
+    });
+
+    if (error) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes("already") || msg.includes("registered") || msg.includes("exists")) {
+        return { ok: true, message: genericSuccess, needsEmailConfirmation: true };
+      }
+      if (msg.includes("signups not allowed") || msg.includes("signup is disabled")) {
+        return {
+          ok: false,
+          message:
+            "Account registration is not available yet. Please try again later or contact the church office.",
+        };
+      }
+      return {
+        ok: false,
+        message: "We couldn't create your account. Please try again.",
+      };
+    }
+
+    // Identities empty often means "user already exists" when confirmations are on.
+    if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      return { ok: true, message: genericSuccess, needsEmailConfirmation: true };
+    }
+
+    const sessionCreated = Boolean(data.session);
+    if (sessionCreated) {
+      revalidatePath("/", "layout");
+      redirect("/account");
+    }
+
+    return {
+      ok: true,
+      message:
+        "Check your email to confirm your account. After you confirm, you can sign in.",
+      needsEmailConfirmation: true,
+    };
+  } catch (err) {
+    if (isNextRedirect(err)) throw err;
+    return { ok: false, message: "We couldn't create your account. Please try again." };
+  }
+}
+
+/** Admin password-reset request → /admin/reset-password. */
 export async function requestPasswordResetAction(
   _prev: AuthState | null,
   formData: FormData,
 ): Promise<AuthState> {
-  const parsed = ForgotSchema.safeParse(Object.fromEntries(formData));
+  const parsed = ForgotPasswordSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
     return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid email." };
   }
@@ -139,9 +300,8 @@ export async function requestPasswordResetAction(
 
   try {
     const supabase = createClient();
-    const site = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
     await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-      redirectTo: `${site}/admin/reset-password`,
+      redirectTo: `${siteOrigin()}/admin/reset-password`,
     });
     return { ok: true, message: antiEnumMessage };
   } catch {
@@ -149,37 +309,114 @@ export async function requestPasswordResetAction(
   }
 }
 
-const UpdatePasswordSchema = z
-  .object({
-    password: z.string().min(8, "Password must be at least 8 characters.").max(200),
-    confirm_password: z.string(),
-  })
-  .refine((d) => d.password === d.confirm_password, {
-    message: "Passwords do not match.",
-    path: ["confirm_password"],
-  });
+/** Member password-reset request → callback then /reset-password. */
+export async function memberRequestPasswordResetAction(
+  _prev: AuthState | null,
+  formData: FormData,
+): Promise<AuthState> {
+  const parsed = ForgotPasswordSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid email." };
+  }
 
+  const ipHash = getClientIpHash() ?? "anon";
+  const rate = await consumeAsync(`member-reset:${ipHash}:${emailHash(parsed.data.email)}`, {
+    capacity: 3,
+    windowMs: 60 * 60 * 1000,
+  });
+  const antiEnumMessage =
+    "If an account exists for that email, a reset link has been sent.";
+  if (!rate.ok) {
+    return { ok: true, message: antiEnumMessage };
+  }
+
+  try {
+    const supabase = createClient();
+    const next = encodeURIComponent("/reset-password");
+    await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+      redirectTo: `${siteOrigin()}/auth/callback?next=${next}`,
+    });
+    return { ok: true, message: antiEnumMessage };
+  } catch {
+    return { ok: true, message: antiEnumMessage };
+  }
+}
+
+/**
+ * Update password for the current recovery/authenticated session.
+ * `audience=member` → /account; default/admin → /admin/account.
+ */
 export async function updatePasswordAction(
   _prev: AuthState | null,
   formData: FormData,
 ): Promise<AuthState> {
   const parsed = UpdatePasswordSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
-    const errors: Record<string, string> = {};
-    for (const issue of parsed.error.issues) {
-      const k = issue.path[0]?.toString() ?? "form";
-      if (!errors[k]) errors[k] = issue.message;
-    }
-    return { ok: false, message: "Please correct the highlighted fields.", errors };
+    return {
+      ok: false,
+      message: "Please correct the highlighted fields.",
+      errors: zodFieldErrors(parsed.error),
+    };
   }
   try {
     const supabase = createClient();
     const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
-    if (error) return { ok: false, message: "We couldn't update your password. Please try again." };
+    if (error) {
+      return { ok: false, message: "We couldn't update your password. Please try again." };
+    }
     revalidatePath("/", "layout");
+    const audience = parsed.data.audience === "member" ? "member" : "admin";
+    if (audience === "member") {
+      redirect("/account?password=updated");
+    }
     redirect("/admin/account?password=updated");
   } catch (err) {
-    if (err instanceof Error && err.message === "NEXT_REDIRECT") throw err;
+    if (isNextRedirect(err)) throw err;
     return { ok: false, message: "We couldn't update your password. Please try again." };
   }
 }
+
+/** Self-service profile update (full_name, phone) — RLS enforces own row only. */
+export async function updateMemberProfileAction(
+  _prev: AuthState | null,
+  formData: FormData,
+): Promise<AuthState> {
+  const user = await getCurrentUser();
+  if (!user) {
+    return { ok: false, message: "Please sign in to update your profile." };
+  }
+
+  const parsed = ProfileUpdateSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: "Please correct the highlighted fields.",
+      errors: zodFieldErrors(parsed.error),
+    };
+  }
+
+  try {
+    const supabase = createClient();
+    const phone = parsed.data.phone?.trim() ? parsed.data.phone.trim() : null;
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        full_name: parsed.data.full_name,
+        phone,
+      })
+      .eq("id", user.userId);
+
+    if (error) {
+      return { ok: false, message: "We couldn't save your profile. Please try again." };
+    }
+
+    revalidatePath("/account");
+    revalidatePath("/", "layout");
+    return { ok: true, message: "Your profile has been updated." };
+  } catch {
+    return { ok: false, message: "We couldn't save your profile. Please try again." };
+  }
+}
+
+/** Exported for tests / callback helpers — re-export resolve. */
+export { resolveMemberNext };

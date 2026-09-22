@@ -5,8 +5,10 @@ import { createClient } from "@/supabase/server";
 export interface UserSession {
   userId: string;
   email: string;
+  emailConfirmed: boolean;
   fullName: string | null;
   avatarUrl: string | null;
+  phone: string | null;
 }
 
 export interface AdminSession extends UserSession {
@@ -16,7 +18,7 @@ export interface AdminSession extends UserSession {
 
 /**
  * Any authenticated Supabase user (not necessarily an admin).
- * Used for session checks such as online giving — not a public member portal.
+ * Used for member account pages and session checks such as online giving.
  */
 export async function getCurrentUser(): Promise<UserSession | null> {
   try {
@@ -27,22 +29,25 @@ export async function getCurrentUser(): Promise<UserSession | null> {
     const userId = userData.user.id;
     const { data: profile } = await supabase
       .from("profiles")
-      .select("full_name,avatar_url")
+      .select("full_name,avatar_url,phone")
       .eq("id", userId)
       .maybeSingle();
 
     return {
       userId,
       email: userData.user.email ?? "",
+      emailConfirmed: Boolean(userData.user.email_confirmed_at),
       fullName: profile?.full_name ?? null,
       avatarUrl: profile?.avatar_url ?? null,
+      phone: profile?.phone ?? null,
     };
   } catch {
     return null;
   }
 }
 
-export async function requireUser(redirectTo = "/"): Promise<UserSession> {
+/** Require any authenticated user; default redirect to member login. */
+export async function requireUser(redirectTo = "/login"): Promise<UserSession> {
   const session = await getCurrentUser();
   if (!session) redirect(redirectTo);
   return session;
@@ -59,7 +64,7 @@ export async function getCurrentAdmin(): Promise<AdminSession | null> {
     const [{ data: profile }, { data: roles }, { data: perms }] = await Promise.all([
       supabase
         .from("profiles")
-        .select("full_name,avatar_url")
+        .select("full_name,avatar_url,phone")
         .eq("id", userId)
         .maybeSingle(),
       supabase
@@ -84,8 +89,10 @@ export async function getCurrentAdmin(): Promise<AdminSession | null> {
     return {
       userId,
       email: userData.user.email ?? "",
+      emailConfirmed: Boolean(userData.user.email_confirmed_at),
       fullName: profile?.full_name ?? null,
       avatarUrl: profile?.avatar_url ?? null,
+      phone: profile?.phone ?? null,
       roleKeys,
       permissionKeys,
     };
