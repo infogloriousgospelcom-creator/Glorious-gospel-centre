@@ -6,7 +6,7 @@ Member authentication and Connect Group membership live on the public site.
 |-------|---------|
 | `/login` | Congregant sign-in |
 | `/register` | Congregant registration |
-| `/account` | Congregant Account Hub (profile, security, Connect Groups, My Giving, next steps) |
+| `/account` | Congregant Account Hub (profile, security, Connect Groups, My Giving, Activity, next steps) |
 | `/forgot-password` / `/reset-password` | Member password recovery |
 | `/auth/callback` | Email confirm / recovery code exchange |
 | `/connect` | Public Connect Group discovery |
@@ -37,6 +37,7 @@ The Account Hub includes:
 | Account security | Email verified / not verified badge. Unverified users can **resend verification** for the **current session email only** (no client-supplied email). Signed-in **change password** via session-bound Auth update (`audience=member` → stay on `/account`). |
 | Connect Groups | Active / Pending / History. Active rows can **Leave** via the existing I-B3 `leave_connect_group` action. History shows re-request when `group_status === "OPEN"`. |
 | My Giving | Self-serve history of gifts made while signed in (`giving_transactions.created_by = auth.uid()`). Safe columns only — never `admin_notes` or `raw_callback`. Legacy rows without `created_by` are not shown. |
+| Activity | In-app notifications for the signed-in member only (`member_notifications.recipient_id = auth.uid()`). Currently Connect Group approve / decline / remove. |
 | Your next steps | Deterministic CTAs from email verification + membership state (not a recommendation engine or CRM). |
 
 Sign out remains available from the account header. Global nav shows **Account** when signed in (no separate member portal).
@@ -68,7 +69,23 @@ Notes:
 - Congregants never see `admin_note` or `decided_by`.
 - Online PENDING withdrawal is not available; contact the church if needed.
 - Staff do not have a direct reinstate path (terminal → ACTIVE). Members re-request to PENDING; staff approve or decline via the existing moderation UI.
-- Notifications / email delivery are not part of the current membership system. Members learn status through `/account` and the group page.
+- Membership status is also surfaced as in-app Activity notifications for approve / decline / remove (see below). Leave and re-request do not emit notifications yet.
+
+## Activity / Notifications (`/account`)
+
+In-app inbox only (`public.member_notifications`). No email, WhatsApp, or Realtime in the current phase.
+
+| Rule | Detail |
+|------|--------|
+| Ownership | `recipient_id = auth.uid()`. Recipient is derived from `connect_group_members.profile_id` at emit time — never from browser input. |
+| Supported kinds | `connect_group.approved`, `connect_group.declined`, `connect_group.removed` |
+| Mark read | `mark_member_notification_read(uuid)` — updates `read_at` only after ownership check. |
+| Emit | Trusted `emit_member_notification` from moderation RPCs. `INSERT … ON CONFLICT (dedupe_key) DO NOTHING`. |
+| Dedupe key | `{recipient_id}:connect_group_member:{membership_id}:{event_key}` |
+| Links | Safe relative paths only (`/connect/[slug]` or `/account`). Never `/admin`, absolute, or scheme URLs. |
+| Content | No `admin_note`, staff IDs, or private moderation details. |
+
+Deferred: email/WhatsApp delivery, Realtime badges, giving payment notifications, leave / re-request events, unread nav badge.
 
 ## My Giving (`/account`)
 
@@ -91,14 +108,16 @@ Staff CMS giving still uses `giving.manage`; after column grants, admin private 
 | `/admin/connect-groups` | `connect_groups.manage` (group CMS) |
 | `/admin/connect-groups/[id]/members` | `connect_groups.members.manage` |
 
-Staff can Approve, Decline, and Remove using the I-B4 moderation RPCs. Re-requested memberships appear as PENDING in the same list.
+Staff can Approve, Decline, and Remove using the I-B4 moderation RPCs. Re-requested memberships appear as PENDING in the same list. Approve / decline / remove also emit member Activity notifications.
 
 ## Deferred
 
 - Guest (anonymous) giving
-- Giving receipts by email / notification delivery
+- Giving receipts by email / in-app giving notifications
+- Email / WhatsApp / Realtime notification delivery
+- Leave / re-request Activity events
+- Unread badge on Account nav
 - Bible study
-- Notifications / email delivery for membership status
 - Pastoral CRM / attendance / volunteering applications
 - Connect Group leader roles
 - PENDING withdrawal

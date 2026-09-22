@@ -10,6 +10,7 @@ import { requireUser } from "@/services/auth";
 import { memberSignOutAction } from "@/services/auth.actions";
 import { listOwnMembershipsWithGroups } from "@/services/connect-group-membership";
 import { listOwnGivingHistory } from "@/services/member-giving";
+import { listOwnNotifications } from "@/services/member-notifications";
 import {
   computeProfileCompleteness,
   selectAccountNextSteps,
@@ -20,6 +21,7 @@ import { AccountSecuritySection } from "./_components/AccountSecuritySection";
 import { AccountNextStepsPanel } from "./_components/AccountNextStepsPanel";
 import { ProfileCompletenessIndicator } from "./_components/ProfileCompletenessIndicator";
 import { AccountGivingSection } from "./_components/AccountGivingSection";
+import { AccountNotificationsSection } from "./_components/AccountNotificationsSection";
 
 export const dynamic = "force-dynamic";
 
@@ -35,9 +37,10 @@ export default async function MemberAccountPage({
   searchParams: { password?: string };
 }) {
   const session = await requireUser("/login");
-  const [memberships, giving] = await Promise.all([
+  const [memberships, giving, notifications] = await Promise.all([
     listOwnMembershipsWithGroups(),
     listOwnGivingHistory(),
+    listOwnNotifications(),
   ]);
   const completeness = computeProfileCompleteness({
     fullName: session.fullName,
@@ -146,6 +149,21 @@ export default async function MemberAccountPage({
                 </CardHeader>
                 <CardBody>
                   <AccountGivingSection items={giving.items} loadOk={giving.ok} />
+                </CardBody>
+              </Card>
+
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Activity</CardTitle>
+                  <CardDescription>
+                    Updates about your Connect Group requests (visible only to you).
+                  </CardDescription>
+                </CardHeader>
+                <CardBody>
+                  <AccountNotificationsSection
+                    items={notifications.items}
+                    loadOk={notifications.ok}
+                  />
                 </CardBody>
               </Card>
 
