@@ -20,6 +20,7 @@ const groups = [
     links: [
       { href: "/prayer", label: "Prayer" },
       { href: "/testimonies", label: "Stories of Grace" },
+      { href: "/connect", label: "Connect Groups" },
       { href: "/contact", label: "Contact" },
       { href: "/events", label: "Events" },
       { href: "/livestream", label: "Watch Online" },

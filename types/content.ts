@@ -231,3 +231,44 @@ export interface TestimonyAdminRow {
   updated_at: string;
 }
 
+export type ConnectGroupStatus = "DRAFT" | "OPEN" | "FULL" | "CLOSED" | "ARCHIVED";
+
+/** Public Connect Group fields — no membership or private profile data. */
+export interface ConnectGroupPublic {
+  id: string;
+  slug: string;
+  name: string;
+  short_description: string | null;
+  description: string | null;
+  meeting_day: number | null;
+  meeting_time: string | null;
+  meeting_frequency: string | null;
+  location_note: string | null;
+  capacity: number | null;
+  leader_display_name: string | null;
+  ministry_id: string | null;
+  status: "OPEN" | "FULL" | "CLOSED";
+  sort_order: number;
+  published_at: string | null;
+}
+
+export interface ConnectGroupAdminRow {
+  id: string;
+  slug: string;
+  name: string;
+  short_description: string | null;
+  description: string | null;
+  meeting_day: number | null;
+  meeting_time: string | null;
+  meeting_frequency: string | null;
+  location_note: string | null;
+  capacity: number | null;
+  leader_display_name: string | null;
+  ministry_id: string | null;
+  status: ConnectGroupStatus;
+  sort_order: number;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+

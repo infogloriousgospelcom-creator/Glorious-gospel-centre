@@ -14,7 +14,7 @@ const journey = [
     key: "CONNECT",
     title: "Connect",
     body: "Find a ministry or reach out — we would love to walk with you.",
-    href: "/ministries",
+    href: "/connect",
   },
   {
     key: "GROW",
