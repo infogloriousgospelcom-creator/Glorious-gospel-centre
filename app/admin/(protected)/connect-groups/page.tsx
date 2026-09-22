@@ -56,8 +56,8 @@ export default async function AdminConnectGroupsPage({
           <div>
             <h1 className="heading-1">Connect Groups</h1>
             <p className="text-sm text-ink-muted">
-              Publish discovery information for fellowship groups. Membership joining is not
-              enabled yet — use Contact for interest.
+              Publish discovery information and moderate membership requests for fellowship
+              groups.
             </p>
           </div>
           <LinkButton href="/admin/connect-groups/new">New group</LinkButton>

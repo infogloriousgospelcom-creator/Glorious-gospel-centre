@@ -32,6 +32,14 @@ export default async function EditConnectGroupPage({
           initial={row}
           ministries={ministries.map((m) => ({ id: m.id, name: m.name }))}
         />
+        <p className="mt-6 text-sm text-ink-muted">
+          <a
+            href={`/admin/connect-groups/${row.id}/members`}
+            className="font-semibold text-brand-700 hover:underline"
+          >
+            Moderate memberships →
+          </a>
+        </p>
       </Container>
     </Section>
   );

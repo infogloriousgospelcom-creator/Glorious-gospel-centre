@@ -32,6 +32,12 @@ export function ConnectGroupRow({ row }: { row: ConnectGroupAdminRow }) {
       </div>
       <div className="flex flex-wrap gap-2">
         <Link
+          href={`/admin/connect-groups/${row.id}/members`}
+          className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-sm font-medium text-brand-800 hover:bg-brand-50"
+        >
+          Members
+        </Link>
+        <Link
           href={`/admin/connect-groups/${row.id}`}
           className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-sm font-medium text-brand-800 hover:bg-brand-50"
         >
