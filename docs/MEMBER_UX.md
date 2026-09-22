@@ -25,7 +25,7 @@ Staff CMS auth remains separate under `/admin/*`.
 
 - Staff sign-in remains at `/admin/login`.
 - Congregants are never added to `admins`.
-- Join and re-request require a verified email address.
+- Join and re-request require a verified email address at **both** the application action and the **database** boundary (insert trigger + re-request RPC). Unverified JWTs cannot create or re-request membership via PostgREST.
 
 ## Account Hub (`/account`)
 
@@ -38,6 +38,7 @@ The Account Hub includes:
 | Connect Groups | Active / Pending / History. Active rows can **Leave** via the existing I-B3 `leave_connect_group` action. History shows re-request when `group_status === "OPEN"`. |
 | My Giving | Self-serve history of gifts made while signed in (`giving_transactions.created_by = auth.uid()`). Safe columns only — never `admin_notes` or `raw_callback`. Legacy rows without `created_by` are not shown. |
 | Activity | In-app notifications for the signed-in member only (`member_notifications.recipient_id = auth.uid()`). Currently Connect Group approve / decline / remove. |
+| Church Notices | Read-only published church announcements (same public source as the homepage). Not a personal inbox. |
 | Your next steps | Deterministic CTAs from email verification + membership state (not a recommendation engine or CRM). |
 
 Sign out remains available from the account header. Global nav shows **Account** when signed in (no separate member portal).
@@ -65,6 +66,7 @@ REMOVED → PENDING
 Notes:
 
 - Re-request reuses the existing `(connect_group_id, profile_id)` membership row. A second row is never created.
+- Re-request increments `membership_generation` on that row (starts at 1). Each new PENDING cycle gets a new lifecycle identity.
 - Prior staff decisions remain in `audit_logs`; the membership row holds the current state only (`decided_*` / `admin_note` clear on re-request).
 - Congregants never see `admin_note` or `decided_by`.
 - Online PENDING withdrawal is not available; contact the church if needed.
@@ -81,7 +83,8 @@ In-app inbox only (`public.member_notifications`). No email, WhatsApp, or Realti
 | Supported kinds | `connect_group.approved`, `connect_group.declined`, `connect_group.removed` |
 | Mark read | `mark_member_notification_read(uuid)` — updates `read_at` only after ownership check. |
 | Emit | Trusted `emit_member_notification` from moderation RPCs. `INSERT … ON CONFLICT (dedupe_key) DO NOTHING`. |
-| Dedupe key | `{recipient_id}:connect_group_member:{membership_id}:{event_key}` |
+| Dedupe key | `{recipient_id}:connect_group_member:{membership_id}:g{membership_generation}:{event_key}` |
+| Lifecycle | Re-request increments `membership_generation`, so a later approve/decline/remove creates a **new** Activity row. Retrying the **same** moderation call in the same cycle remains idempotent (status guard + dedupe). |
 | Links | Safe relative paths only (`/connect/[slug]` or `/account`). Never `/admin`, absolute, or scheme URLs. |
 | Content | No `admin_note`, staff IDs, or private moderation details. |
 
