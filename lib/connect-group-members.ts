@@ -64,6 +64,23 @@ export function isOccupyingMembershipStatus(status: string): boolean {
   return OCCUPYING_MEMBERSHIP_STATUSES.includes(status as ConnectGroupMemberStatus);
 }
 
+export function membershipStatusLabel(status: ConnectGroupMemberStatus): string {
+  switch (status) {
+    case "PENDING":
+      return "Request pending";
+    case "ACTIVE":
+      return "Member";
+    case "DECLINED":
+      return "Request declined";
+    case "LEFT":
+      return "Left group";
+    case "REMOVED":
+      return "Membership ended";
+    default:
+      return status;
+  }
+}
+
 /** Member-visible membership row (no admin_note / decided_by). */
 export interface ConnectGroupMembershipOwn {
   id: string;

@@ -6,9 +6,10 @@ import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
 import { SectionEyebrow } from "@/components/ui/Section";
 import { Badge } from "@/components/ui/Badge";
-import { LinkButton } from "@/components/ui/LinkButton";
 import { ContextualNextSteps } from "@/components/church/ContextualNextSteps";
 import { getPublicConnectGroupBySlug } from "@/services/connect-groups";
+import { getOwnMembershipForGroup } from "@/services/connect-group-membership";
+import { getCurrentUser } from "@/services/auth";
 import {
   buildPageMetadata,
   buildBreadcrumbSchema,
@@ -18,6 +19,7 @@ import {
 import { JsonLd } from "@/components/seo/JsonLd";
 import { connectGroupAvailabilityLabel } from "@/lib/connect-groups";
 import { dayName } from "@/types/content";
+import { ConnectGroupMembershipPanel } from "./_components/ConnectGroupMembershipPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -60,6 +62,9 @@ export default async function ConnectGroupDetailPage({
 }) {
   const group = await getPublicConnectGroupBySlug(params.slug);
   if (!group) notFound();
+
+  const user = await getCurrentUser();
+  const membership = user ? await getOwnMembershipForGroup(group.id) : null;
 
   const tone =
     group.status === "OPEN" ? "success" : group.status === "FULL" ? "warning" : "neutral";
@@ -161,18 +166,20 @@ export default async function ConnectGroupDetailPage({
                 ) : null}
 
                 <div className="border-t border-border pt-5">
-                  <p className="eyebrow">How to connect</p>
-                  <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-                    Online membership requests are not available yet. Contact GGCC and we will
-                    help you take the next step. We do not publish member lists or private
-                    contact details on this page.
-                  </p>
-                  <div className="mt-4 flex flex-col gap-2">
-                    <LinkButton href="/contact">Contact GGCC</LinkButton>
-                    <LinkButton href="/visit" variant="secondary">
-                      Plan Your Visit
-                    </LinkButton>
+                  <p className="eyebrow">Membership</p>
+                  <div className="mt-3">
+                    <ConnectGroupMembershipPanel
+                      groupId={group.id}
+                      groupSlug={group.slug}
+                      groupStatus={group.status}
+                      isAuthenticated={Boolean(user)}
+                      emailConfirmed={Boolean(user?.emailConfirmed)}
+                      membership={membership}
+                    />
                   </div>
+                  <p className="mt-4 text-xs leading-relaxed text-ink-muted">
+                    We do not publish member lists or private contact details on this page.
+                  </p>
                 </div>
               </aside>
             </div>

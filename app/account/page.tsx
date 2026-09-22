@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { requireUser } from "@/services/auth";
 import { memberSignOutAction } from "@/services/auth.actions";
+import { listOwnMembershipsWithGroups } from "@/services/connect-group-membership";
+import { membershipStatusLabel } from "@/lib/connect-group-members";
 import { MemberProfileForm } from "./_components/MemberProfileForm";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +28,7 @@ export default async function MemberAccountPage({
   searchParams: { password?: string };
 }) {
   const session = await requireUser("/login");
+  const memberships = await listOwnMembershipsWithGroups();
 
   return (
     <>
@@ -36,8 +39,7 @@ export default async function MemberAccountPage({
             <p className="eyebrow mb-2">Your account</p>
             <h1 className="heading-1 mb-3">Welcome{session.fullName ? `, ${session.fullName}` : ""}</h1>
             <p className="lead mb-6 max-w-2xl">
-              This is your church account. Connect Group membership will be available
-              in a future update.
+              Manage your profile and see your Connect Group membership requests.
             </p>
             <div className="flex flex-wrap items-center gap-2">
               <Badge tone={session.emailConfirmed ? "success" : "warning"}>
@@ -83,31 +85,61 @@ export default async function MemberAccountPage({
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Coming next</CardTitle>
+                  <CardTitle>Connect Groups</CardTitle>
                   <CardDescription>
-                    Connect Groups membership is planned for a later phase.
+                    Your membership requests and active groups (your records only).
                   </CardDescription>
                 </CardHeader>
                 <CardBody className="space-y-4">
-                  <p className="text-sm text-ink-muted">
-                    You can already browse Connect Groups on the public site. Requesting
-                    to join a group will open once membership is enabled.
-                  </p>
-                  <div className="flex flex-wrap gap-3">
+                  {memberships.length === 0 ? (
+                    <p className="text-sm text-ink-muted">
+                      You have not requested membership in a Connect Group yet.
+                    </p>
+                  ) : (
+                    <ul className="space-y-3">
+                      {memberships.map((m) => (
+                        <li
+                          key={m.id}
+                          className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3 last:border-0 last:pb-0"
+                        >
+                          <div>
+                            {m.group_slug ? (
+                              <Link
+                                href={`/connect/${m.group_slug}`}
+                                className="font-medium text-brand-800 hover:text-brand-700"
+                              >
+                                {m.group_name ?? "Connect Group"}
+                              </Link>
+                            ) : (
+                              <span className="font-medium text-ink">
+                                {m.group_name ?? "Connect Group"}
+                              </span>
+                            )}
+                            <p className="text-xs text-ink-muted">
+                              {membershipStatusLabel(m.status)}
+                            </p>
+                          </div>
+                          <Badge
+                            tone={
+                              m.status === "ACTIVE"
+                                ? "success"
+                                : m.status === "PENDING"
+                                  ? "warning"
+                                  : "neutral"
+                            }
+                          >
+                            {m.status}
+                          </Badge>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <div className="flex flex-wrap gap-3 pt-2">
                     <LinkButton href="/connect">Browse Connect Groups</LinkButton>
-                    <LinkButton href="/visit" variant="secondary">
-                      Plan a visit
+                    <LinkButton href="/contact" variant="secondary">
+                      Contact the church
                     </LinkButton>
                   </div>
-                  <p className="text-sm text-ink-muted">
-                    Need help?{" "}
-                    <Link
-                      href="/contact"
-                      className="font-semibold text-brand-700 hover:text-brand-800"
-                    >
-                      Contact the church
-                    </Link>
-                  </p>
                 </CardBody>
               </Card>
             </div>
