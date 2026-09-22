@@ -45,8 +45,8 @@ export function computeProfileCompleteness(input: {
   return { completed, total: 3, hasName, hasPhone, emailConfirmed };
 }
 
-function softChurchLinks(): AccountNextStepAction[] {
-  return [
+function softChurchLinks(hasActiveAnnouncements = false): AccountNextStepAction[] {
+  const links: AccountNextStepAction[] = [
     {
       href: "/visit",
       label: "Plan Your Visit",
@@ -66,6 +66,15 @@ function softChurchLinks(): AccountNextStepAction[] {
       variant: "secondary",
     },
   ];
+  if (hasActiveAnnouncements) {
+    links.unshift({
+      href: "#church-notices",
+      label: "Church Notices",
+      description: "Read current church announcements.",
+      variant: "secondary",
+    });
+  }
+  return links;
 }
 
 function firstJoinableTerminal(
@@ -84,12 +93,16 @@ function firstJoinableTerminal(
 /**
  * Deterministic account next-step selector.
  * Priority: unverified → PENDING → ACTIVE → joinable terminal → browse Connect Groups.
+ * Active church notices only add a secondary discovery link (never override primary).
  */
 export function selectAccountNextSteps(input: {
   emailConfirmed: boolean;
   memberships: AccountMembershipSnapshot[];
+  /** When true, adds a secondary link to #church-notices (I-B9). */
+  hasActiveAnnouncements?: boolean;
 }): AccountNextStepsResult {
-  const { emailConfirmed, memberships } = input;
+  const { emailConfirmed, memberships, hasActiveAnnouncements = false } = input;
+  const soft = () => softChurchLinks(hasActiveAnnouncements);
 
   if (!emailConfirmed) {
     return {
@@ -102,7 +115,7 @@ export function selectAccountNextSteps(input: {
         description: "Resend the verification email if you need a new link.",
         variant: "primary",
       },
-      secondary: softChurchLinks(),
+      secondary: soft(),
     };
   }
 
@@ -127,7 +140,7 @@ export function selectAccountNextSteps(input: {
       },
       secondary: [
         { href: "/connect", label: "Browse Connect Groups", variant: "secondary" },
-        ...softChurchLinks(),
+        ...soft(),
       ],
     };
   }
@@ -143,7 +156,7 @@ export function selectAccountNextSteps(input: {
         label: first.group_name ? `Open ${first.group_name}` : "Open your Connect Group",
         variant: "primary",
       },
-      secondary: softChurchLinks(),
+      secondary: soft(),
     };
   }
 
@@ -161,7 +174,7 @@ export function selectAccountNextSteps(input: {
       },
       secondary: [
         { href: "/connect", label: "Find another Connect Group", variant: "secondary" },
-        ...softChurchLinks(),
+        ...soft(),
       ],
     };
   }
@@ -176,7 +189,7 @@ export function selectAccountNextSteps(input: {
         label: "Browse Connect Groups",
         variant: "primary",
       },
-      secondary: softChurchLinks(),
+      secondary: soft(),
     };
   }
 
@@ -189,6 +202,6 @@ export function selectAccountNextSteps(input: {
       label: "Find a Connect Group",
       variant: "primary",
     },
-    secondary: softChurchLinks(),
+    secondary: soft(),
   };
 }

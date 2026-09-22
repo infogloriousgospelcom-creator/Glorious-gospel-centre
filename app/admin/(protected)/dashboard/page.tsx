@@ -45,7 +45,7 @@ export default async function AdminDashboardPage({
   const quickActions: Array<{ label: string; href: string; description: string }> = [
     { label: "New event",         href: "/admin/events/new",         description: "Create a church event." },
     { label: "New sermon",        href: "/admin/sermons/new",        description: "Publish a new sermon." },
-    { label: "New announcement",  href: "/admin/announcements/new",  description: "Post to the homepage." },
+    { label: "New announcement",  href: "/admin/announcements/new",  description: "Publish church notices for the homepage and member account." },
     { label: "Edit services",     href: "/admin/services",           description: "Update weekly schedule." },
     { label: "Site settings",     href: "/admin/settings",           description: "Phone, email, M-Pesa, socials." },
   ];

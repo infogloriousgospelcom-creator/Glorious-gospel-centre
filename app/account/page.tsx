@@ -11,6 +11,7 @@ import { memberSignOutAction } from "@/services/auth.actions";
 import { listOwnMembershipsWithGroups } from "@/services/connect-group-membership";
 import { listOwnGivingHistory } from "@/services/member-giving";
 import { listOwnNotifications } from "@/services/member-notifications";
+import { getActiveAnnouncements } from "@/services/content";
 import {
   computeProfileCompleteness,
   selectAccountNextSteps,
@@ -22,6 +23,7 @@ import { AccountNextStepsPanel } from "./_components/AccountNextStepsPanel";
 import { ProfileCompletenessIndicator } from "./_components/ProfileCompletenessIndicator";
 import { AccountGivingSection } from "./_components/AccountGivingSection";
 import { AccountNotificationsSection } from "./_components/AccountNotificationsSection";
+import { AccountChurchNotices } from "./_components/AccountChurchNotices";
 
 export const dynamic = "force-dynamic";
 
@@ -37,10 +39,11 @@ export default async function MemberAccountPage({
   searchParams: { password?: string };
 }) {
   const session = await requireUser("/login");
-  const [memberships, giving, notifications] = await Promise.all([
+  const [memberships, giving, notifications, announcements] = await Promise.all([
     listOwnMembershipsWithGroups(),
     listOwnGivingHistory(),
     listOwnNotifications(),
+    getActiveAnnouncements(),
   ]);
   const completeness = computeProfileCompleteness({
     fullName: session.fullName,
@@ -55,6 +58,7 @@ export default async function MemberAccountPage({
       group_slug: m.group_slug,
       group_status: m.group_status,
     })),
+    hasActiveAnnouncements: announcements.length > 0,
   });
 
   return (
@@ -164,6 +168,18 @@ export default async function MemberAccountPage({
                     items={notifications.items}
                     loadOk={notifications.ok}
                   />
+                </CardBody>
+              </Card>
+
+              <Card className="lg:col-span-2" id="church-notices">
+                <CardHeader>
+                  <CardTitle>Church Notices</CardTitle>
+                  <CardDescription>
+                    Current published church announcements (same notices shown on the homepage).
+                  </CardDescription>
+                </CardHeader>
+                <CardBody>
+                  <AccountChurchNotices items={announcements} />
                 </CardBody>
               </Card>
 

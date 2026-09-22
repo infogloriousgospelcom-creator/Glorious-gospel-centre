@@ -2,11 +2,14 @@ import Link from "next/link";
 import { Container, Section } from "@/components/ui/Container";
 import { SectionEyebrow, SectionTitle, SectionLead, EmptyState } from "@/components/ui/Section";
 import { LinkButton } from "@/components/ui/LinkButton";
+import { Badge } from "@/components/ui/Badge";
 import {
+  getActiveAnnouncements,
   getPublishedServices,
   getUpcomingEvents,
   groupServicesByDay,
 } from "@/services/content";
+import { announcementExcerpt } from "@/lib/announcements";
 import { dayName } from "@/types/content";
 import { SectionReveal } from "@/components/motion/SectionReveal";
 
@@ -27,14 +30,39 @@ function formatEventDate(iso: string): string {
 }
 
 /**
- * Weekly rhythm from existing services + upcoming events — no new calendar DB.
+ * Weekly rhythm from existing services + upcoming events + active church notices.
  */
 export async function ThisWeekSection() {
-  const [services, events] = await Promise.all([
+  const [services, events, announcements] = await Promise.all([
     getPublishedServices(),
     getUpcomingEvents(3),
+    getActiveAnnouncements(),
   ]);
   const byDay = groupServicesByDay(services);
+  const hasSchedule = services.length > 0 || events.length > 0;
+  const hasNotices = announcements.length > 0;
+
+  if (!hasSchedule && !hasNotices) {
+    return (
+      <Section className="bg-surface-muted">
+        <Container>
+          <SectionReveal>
+            <div className="mx-auto mb-10 max-w-2xl text-center">
+              <SectionEyebrow>This week</SectionEyebrow>
+              <SectionTitle>This week at GGCC</SectionTitle>
+              <SectionLead>
+                Here is what is happening at Glorious Gospel Centre Church this week.
+              </SectionLead>
+            </div>
+          </SectionReveal>
+          <EmptyState
+            title="Schedule coming soon"
+            description="Weekly services and events will appear here once published."
+          />
+        </Container>
+      </Section>
+    );
+  }
 
   return (
     <Section className="bg-surface-muted">
@@ -49,12 +77,30 @@ export async function ThisWeekSection() {
           </div>
         </SectionReveal>
 
-        {services.length === 0 && events.length === 0 ? (
-          <EmptyState
-            title="Schedule coming soon"
-            description="Weekly services and events will appear here once published."
-          />
-        ) : (
+        {hasNotices ? (
+          <SectionReveal delay={0.04}>
+            <div className="mb-10" id="home-church-notices">
+              <h3 className="heading-3 mb-4">Church Notices</h3>
+              <ul className="divide-y divide-border border-y border-border">
+                {announcements.map((a) => (
+                  <li key={a.id} className="py-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {a.is_pinned ? <Badge tone="brand">Pinned</Badge> : null}
+                      <p className="font-display text-base font-semibold text-brand-900">
+                        {a.title}
+                      </p>
+                    </div>
+                    <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">
+                      {announcementExcerpt(a.body)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </SectionReveal>
+        ) : null}
+
+        {hasSchedule ? (
           <div className="grid gap-10 lg:grid-cols-2">
             <SectionReveal delay={0.08}>
               <div>
@@ -138,7 +184,7 @@ export async function ThisWeekSection() {
               </div>
             </SectionReveal>
           </div>
-        )}
+        ) : null}
       </Container>
     </Section>
   );

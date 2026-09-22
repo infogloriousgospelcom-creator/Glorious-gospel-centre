@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@/supabase/server";
 import { cached } from "@/lib/cache";
+import { filterActiveAnnouncements } from "@/lib/announcements";
 import { dayName } from "@/types/content";
 import type {
   Announcement,
@@ -84,16 +85,19 @@ export function getActiveSocialLinks(): Promise<SocialLink[]> {
 export async function getActiveAnnouncements(): Promise<Announcement[]> {
   try {
     const supabase = createClient();
+    const nowIso = new Date().toISOString();
     const { data, error } = await supabase
       .from("announcements")
       .select("id,title,body,starts_at,ends_at,is_pinned,published_at")
       .eq("status", "PUBLISHED")
-      .or(`ends_at.is.null,ends_at.gt.${new Date().toISOString()}`)
+      .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
+      .or(`ends_at.is.null,ends_at.gt.${nowIso}`)
       .order("is_pinned", { ascending: false })
       .order("starts_at", { ascending: false })
       .limit(5);
     if (error) return [];
-    return (data ?? []) as Announcement[];
+    // Defense in depth: re-apply active window in memory (safe public fields only).
+    return filterActiveAnnouncements((data ?? []) as Announcement[]);
   } catch {
     return [];
   }

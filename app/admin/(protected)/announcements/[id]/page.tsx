@@ -76,7 +76,7 @@ export default async function EditAnnouncementPage({
                   <form action={deleteAction}>
                     <Alert tone="warning" title="Danger zone">
                       Deleting an announcement is permanent. The homepage and
-                      dashboard will stop showing it immediately.
+                      member account notices will stop showing it immediately.
                     </Alert>
                     <div className="mt-3 flex justify-end">
                       <Button type="submit" variant="danger">
