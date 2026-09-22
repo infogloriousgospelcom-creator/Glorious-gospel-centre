@@ -10,9 +10,11 @@ import { getClientIpHash } from "@/lib/ip-hash";
 import {
   JoinConnectGroupSchema,
   LeaveConnectGroupSchema,
+  RerequestConnectGroupSchema,
   membershipJoinBlockedMessage,
 } from "@/lib/connect-group-membership-schema";
 import { isConnectGroupMemberStatus } from "@/lib/connect-group-members";
+import { writeAuditLog } from "@/lib/audit";
 
 export type MembershipActionState = {
   ok: boolean;
@@ -277,5 +279,151 @@ export async function leaveConnectGroupAction(
     };
   } catch {
     return { ok: false, message: "We couldn't update your membership. Please try again." };
+  }
+}
+
+function mapDbRerequestError(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes("authentication required")) {
+    return "Please sign in to request membership again.";
+  }
+  if (m.includes("another member")) {
+    return "You can only re-request your own Connect Group membership.";
+  }
+  if (m.includes("not found")) {
+    return "That membership could not be found.";
+  }
+  if (m.includes("only declined") || m.includes("not eligible") || m.includes("re-requested")) {
+    return "Only declined, left, or removed memberships can be requested again.";
+  }
+  if (m.includes("not open for membership")) {
+    return "This Connect Group is not currently accepting membership requests.";
+  }
+  if (m.includes("at capacity") || m.includes("full")) {
+    return "This Connect Group is currently full.";
+  }
+  if (m.includes("member note too long")) {
+    return "Your note is too long.";
+  }
+  return "We couldn't submit your request. Please try again.";
+}
+
+/**
+ * Congregant re-request: DECLINED | LEFT | REMOVED → PENDING on the same row.
+ * Staff reinstate is intentionally not implemented in I-B5.
+ */
+export async function rerequestConnectGroupMembershipAction(
+  _prev: MembershipActionState | null,
+  formData: FormData,
+): Promise<MembershipActionState> {
+  const parsed = RerequestConnectGroupSchema.safeParse({
+    membership_id: formData.get("membership_id"),
+    member_note: formData.get("member_note") ?? "",
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: "Please correct the highlighted fields.",
+      errors: zodFieldErrors(parsed.error),
+    };
+  }
+
+  const user = await getCurrentUser();
+  if (!user) {
+    return { ok: false, message: "Please sign in to request membership again." };
+  }
+  if (!user.emailConfirmed) {
+    return {
+      ok: false,
+      message: "Please verify your email address before requesting membership again.",
+    };
+  }
+
+  const ipHash = getClientIpHash() ?? "anon";
+  const rate = await consumeAsync(
+    `cg-rerequest:${ipHash}:${emailHash(user.email)}:${parsed.data.membership_id}`,
+    { capacity: 5, windowMs: 15 * 60 * 1000 },
+  );
+  if (!rate.ok) {
+    return { ok: false, message: "Too many attempts. Please try again later." };
+  }
+
+  try {
+    const supabase = createClient();
+
+    const { data: membership, error: loadErr } = await supabase
+      .from("connect_group_members")
+      .select("id,status,profile_id,connect_group_id")
+      .eq("id", parsed.data.membership_id)
+      .maybeSingle();
+
+    if (loadErr || !membership) {
+      return { ok: false, message: "That membership could not be found." };
+    }
+    if (membership.profile_id !== user.userId) {
+      return {
+        ok: false,
+        message: "You can only re-request your own Connect Group membership.",
+      };
+    }
+    if (
+      membership.status !== "DECLINED" &&
+      membership.status !== "LEFT" &&
+      membership.status !== "REMOVED"
+    ) {
+      return {
+        ok: false,
+        message: "Only declined, left, or removed memberships can be requested again.",
+        status: membership.status,
+      };
+    }
+
+    const note =
+      parsed.data.member_note && parsed.data.member_note.trim().length > 0
+        ? parsed.data.member_note.trim()
+        : null;
+
+    const fromStatus = membership.status;
+
+    const { error: rpcErr } = await supabase.rpc("rerequest_connect_group_membership", {
+      p_membership_id: parsed.data.membership_id,
+      p_member_note: note,
+    });
+
+    if (rpcErr) {
+      return { ok: false, message: mapDbRerequestError(rpcErr.message) };
+    }
+
+    await writeAuditLog({
+      actorId: user.userId,
+      action: "connect_group_member.rerequest",
+      entityType: "connect_group_member",
+      entityId: parsed.data.membership_id,
+      metadata: {
+        connect_group_id: membership.connect_group_id,
+        from_status: fromStatus,
+        to_status: "PENDING",
+      },
+      ipHash: getClientIpHash(),
+    });
+
+    const { data: group } = await supabase
+      .from("connect_groups")
+      .select("slug")
+      .eq("id", membership.connect_group_id)
+      .maybeSingle();
+
+    if (group?.slug) revalidatePath(`/connect/${group.slug}`);
+    revalidatePath("/connect");
+    revalidatePath("/account");
+    revalidatePath(`/admin/connect-groups/${membership.connect_group_id}/members`);
+
+    return {
+      ok: true,
+      message: "Your request to join again has been submitted and is pending review.",
+      status: "PENDING",
+    };
+  } catch {
+    return { ok: false, message: "We couldn't submit your request. Please try again." };
   }
 }

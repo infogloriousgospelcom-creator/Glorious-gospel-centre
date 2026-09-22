@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
@@ -7,12 +6,11 @@ import { Card, CardBody, CardHeader, CardTitle, CardDescription } from "@/compon
 import { Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
-import { LinkButton } from "@/components/ui/LinkButton";
 import { requireUser } from "@/services/auth";
 import { memberSignOutAction } from "@/services/auth.actions";
 import { listOwnMembershipsWithGroups } from "@/services/connect-group-membership";
-import { membershipStatusLabel } from "@/lib/connect-group-members";
 import { MemberProfileForm } from "./_components/MemberProfileForm";
+import { AccountMembershipSections } from "./_components/AccountMembershipSections";
 
 export const dynamic = "force-dynamic";
 
@@ -91,55 +89,7 @@ export default async function MemberAccountPage({
                   </CardDescription>
                 </CardHeader>
                 <CardBody className="space-y-4">
-                  {memberships.length === 0 ? (
-                    <p className="text-sm text-ink-muted">
-                      You have not requested membership in a Connect Group yet.
-                    </p>
-                  ) : (
-                    <ul className="space-y-3">
-                      {memberships.map((m) => (
-                        <li
-                          key={m.id}
-                          className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3 last:border-0 last:pb-0"
-                        >
-                          <div>
-                            {m.group_slug ? (
-                              <Link
-                                href={`/connect/${m.group_slug}`}
-                                className="font-medium text-brand-800 hover:text-brand-700"
-                              >
-                                {m.group_name ?? "Connect Group"}
-                              </Link>
-                            ) : (
-                              <span className="font-medium text-ink">
-                                {m.group_name ?? "Connect Group"}
-                              </span>
-                            )}
-                            <p className="text-xs text-ink-muted">
-                              {membershipStatusLabel(m.status)}
-                            </p>
-                          </div>
-                          <Badge
-                            tone={
-                              m.status === "ACTIVE"
-                                ? "success"
-                                : m.status === "PENDING"
-                                  ? "warning"
-                                  : "neutral"
-                            }
-                          >
-                            {m.status}
-                          </Badge>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  <div className="flex flex-wrap gap-3 pt-2">
-                    <LinkButton href="/connect">Browse Connect Groups</LinkButton>
-                    <LinkButton href="/contact" variant="secondary">
-                      Contact the church
-                    </LinkButton>
-                  </div>
+                  <AccountMembershipSections memberships={memberships} />
                 </CardBody>
               </Card>
             </div>
