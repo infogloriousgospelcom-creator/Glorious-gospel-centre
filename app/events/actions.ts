@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createServiceRoleClient, isServiceRoleConfigured } from "@/supabase/admin";
 import { consumeAsync } from "@/lib/rate-limit";
 import { getClientIpHash } from "@/lib/ip-hash";
+import { eventRegistrationBlockReason } from "@/lib/event-registration";
 
 const RegistrationSchema = z.object({
   event_id: z.string().uuid("Invalid event id."),
@@ -78,6 +79,20 @@ export async function registerForEvent(
 
   try {
     const supabase = createServiceRoleClient();
+
+    const { data: event, error: eventErr } = await supabase
+      .from("events")
+      .select("id,status,registration_required,starts_at,ends_at")
+      .eq("id", parsed.data.event_id)
+      .maybeSingle();
+    if (eventErr) {
+      return { ok: false, message: "We couldn't save your registration. Please try again." };
+    }
+    const blocked = eventRegistrationBlockReason(event);
+    if (blocked) return { ok: false, message: blocked };
+
+    // Capacity: deferred. A SELECT-count-then-INSERT is not race-safe.
+    // registration_capacity remains unused until a lock/RPC exists.
 
     // Soft duplicate protection: same email+event within 24h.
     if (parsed.data.email) {

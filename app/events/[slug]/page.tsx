@@ -18,6 +18,7 @@ import {
   siteUrl,
 } from "@/lib/seo";
 import { EventRegistrationForm } from "@/app/events/_components/EventRegistrationForm";
+import { eventHasEnded } from "@/lib/event-registration";
 
 export const dynamic = "force-dynamic";
 
@@ -154,13 +155,24 @@ export default async function EventDetailPage({
               </div>
 
               <aside>
-                {event.registration_required ? (
+                {event.registration_required && !eventHasEnded(event) ? (
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-base">Register</CardTitle>
                     </CardHeader>
                     <div className="px-6 pb-6">
                       <EventRegistrationForm eventId={event.id} />
+                    </div>
+                  </Card>
+                ) : event.registration_required && eventHasEnded(event) ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Registration closed</CardTitle>
+                    </CardHeader>
+                    <div className="px-6 pb-6">
+                      <p className="text-sm text-ink-muted">
+                        Registration for this event has closed.
+                      </p>
                     </div>
                   </Card>
                 ) : (

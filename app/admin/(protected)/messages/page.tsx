@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import { Container, Section } from "@/components/ui/Container";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/Section";
-import { requireAdmin } from "@/services/auth";
+import { requirePermission } from "@/services/auth";
 import { listAllMessages } from "@/services/admin/messages.read";
 import { MessageRow } from "./_components/MessageRow";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Messages · Admin", robots: { index: false, follow: false } };
 export default async function AdminMessagesPage() {
-  await requireAdmin();
+  await requirePermission("contact.manage");
   const rows = await listAllMessages();
   return (
     <>

@@ -2,6 +2,8 @@
 import "server-only";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/supabase/server";
+import { writeAuditLog } from "@/lib/audit";
+import { getClientIpHash } from "@/lib/ip-hash";
 import type { AdminActionState } from "./sermons";
 
 async function assertContactManager() {
@@ -18,11 +20,27 @@ export async function markMessageRead(id: string, is_read: boolean): Promise<Adm
   if (!auth.ok) return { ok: false, message: auth.error };
   if (!/^[0-9a-f-]{36}$/i.test(id)) return { ok: false, message: "Invalid id." };
   try {
-    const { error } = await auth.supabase.from("contact_messages").update({ is_read }).eq("id", id);
-    if (error) return { ok: false, message: "Could not update." };
+    const { data, error } = await auth.supabase
+      .from("contact_messages")
+      .update({ is_read })
+      .eq("id", id)
+      .select("id");
+    if (error || !data?.length) return { ok: false, message: "Could not update." };
+
+    await writeAuditLog({
+      actorId: auth.userId,
+      action: "contact.mark_read",
+      entityType: "contact_message",
+      entityId: id,
+      metadata: { is_read },
+      ipHash: getClientIpHash(),
+    });
+
     revalidatePath("/admin/messages");
     return { ok: true, message: is_read ? "Marked as read." : "Marked as unread." };
-  } catch { return { ok: false, message: "Could not update." }; }
+  } catch {
+    return { ok: false, message: "Could not update." };
+  }
 }
 
 export async function deleteMessage(id: string): Promise<AdminActionState> {
@@ -30,9 +48,25 @@ export async function deleteMessage(id: string): Promise<AdminActionState> {
   if (!auth.ok) return { ok: false, message: auth.error };
   if (!/^[0-9a-f-]{36}$/i.test(id)) return { ok: false, message: "Invalid id." };
   try {
-    const { error } = await auth.supabase.from("contact_messages").delete().eq("id", id);
-    if (error) return { ok: false, message: "Could not delete." };
+    const { data, error } = await auth.supabase
+      .from("contact_messages")
+      .delete()
+      .eq("id", id)
+      .select("id");
+    if (error || !data?.length) return { ok: false, message: "Could not delete." };
+
+    await writeAuditLog({
+      actorId: auth.userId,
+      action: "contact.delete",
+      entityType: "contact_message",
+      entityId: id,
+      metadata: {},
+      ipHash: getClientIpHash(),
+    });
+
     revalidatePath("/admin/messages");
     return { ok: true, message: "Message deleted." };
-  } catch { return { ok: false, message: "Could not delete." }; }
+  } catch {
+    return { ok: false, message: "Could not delete." };
+  }
 }

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Container, Section } from "@/components/ui/Container";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/Section";
-import { requireAdmin } from "@/services/auth";
+import { requirePermission } from "@/services/auth";
 import { listPrayerRequestsAudited } from "@/services/admin/prayer.audited";
 import { PrayerFilters } from "./_components/PrayerFilters";
 import { PrayerRow } from "./_components/PrayerRow";
@@ -16,7 +16,7 @@ export default async function AdminPrayerRequestsPage({
 }: {
   searchParams: { status?: string; q?: string };
 }) {
-  const session = await requireAdmin();
+  const session = await requirePermission("prayer.manage");
   const current = STATUSES.includes((searchParams.status ?? "all") as typeof STATUSES[number])
     ? (searchParams.status ?? "all")
     : "all";

@@ -159,6 +159,8 @@ Staff can Approve, Decline, and Remove using the I-B4 moderation RPCs. Re-reques
 - Bible study
 - Pastoral CRM / attendance / volunteer roster, scheduling, skills matrix, ministry assignments, or ministry-leader accounts
 - Guest (anonymous) serve-interest applications
+- Event registration capacity (count-then-insert is not race-safe; `registration_capacity` unused)
+- Unique event-registration constraint (24-hour email soft-check remains)
 - Serve-interest email / WhatsApp / Realtime / Activity notifications
 - Connect Group leader roles
 - PENDING withdrawal
