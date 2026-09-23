@@ -40,6 +40,10 @@ describe("auth redirects", () => {
     expect(safeMemberRedirect("/connect/youth")).toBe("/connect/youth");
     expect(safeMemberRedirect("/give")).toBe("/give");
     expect(safeMemberRedirect("/reset-password")).toBe("/reset-password");
+    expect(safeMemberRedirect("/serve")).toBe("/serve");
+    expect(safeMemberRedirect("/serve?ministry=hospitality")).toBe("/serve?ministry=hospitality");
+    expect(safeMemberRedirect("/ministries")).toBe("/ministries");
+    expect(safeMemberRedirect("/ministries/hospitality")).toBe("/ministries/hospitality");
   });
 
   it("defaults callback next to /account", () => {

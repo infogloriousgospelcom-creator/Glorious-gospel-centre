@@ -17,13 +17,13 @@ const steps = [
     body: "Join an existing ministry team and grow alongside others who love Jesus.",
   },
   {
-    title: "Start a conversation",
-    body: "Not sure where to begin? Reach out — we would love to help you take a first step.",
+    title: "Express interest",
+    body: "Tell the church where you would like to serve. A leader will review your interest and follow up.",
   },
 ] as const;
 
 /**
- * Public, non-persistent serve invitation — no volunteer applications or CRM.
+ * Public serve invitation. Phase K adds a structured interest form on /serve.
  */
 export function ServeAtGgcc({
   variant = "section",
@@ -71,12 +71,12 @@ export function ServeAtGgcc({
               isPage ? "" : "justify-center"
             }`}
           >
-            <LinkButton href="/ministries">Explore Ministries</LinkButton>
-            <LinkButton href="/contact" variant="secondary">
-              Contact GGCC
+            <LinkButton href="/serve#express-interest">Express Interest</LinkButton>
+            <LinkButton href="/ministries" variant="secondary">
+              Explore Ministries
             </LinkButton>
-            <LinkButton href="/visit" variant="ghost">
-              Plan Your Visit
+            <LinkButton href="/contact" variant="ghost">
+              Contact GGCC
             </LinkButton>
           </div>
         </SectionReveal>

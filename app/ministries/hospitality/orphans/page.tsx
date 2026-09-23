@@ -109,7 +109,7 @@ export default async function OrphansVulnerablesPage() {
           description="Learn about the Feeding Programme, serve with Hospitality, or plan a visit."
           actions={[
             { href: "/ministries/hospitality/feeding", label: "Feeding Programme" },
-            { href: "/serve", label: "Serve at GGCC", variant: "secondary" },
+            { href: "/serve?ministry=orphans-vulnerables", label: "Express Interest", variant: "secondary" },
             { href: "/visit", label: "Plan Your Visit", variant: "ghost" },
           ]}
         />

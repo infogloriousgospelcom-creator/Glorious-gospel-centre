@@ -22,6 +22,8 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { getMinistryImages } from "@/lib/ministry-images";
 import { MinistryHeroSlideshow } from "@/components/ministries/MinistryHeroSlideshow";
 import { ContextualNextSteps } from "@/components/church/ContextualNextSteps";
+import { ServeInterestPanel } from "@/app/serve/_components/ServeInterestPanel";
+import { Card, CardBody, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import {
   HOSPITALITY_PUBLIC_PATHS,
   isPublicFacingText,
@@ -343,9 +345,28 @@ export default async function MinistryDetailPage({
           </Section>
         ) : null}
 
+        <Section>
+          <Container>
+            <div className="mx-auto max-w-2xl">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Express interest</CardTitle>
+                  <CardDescription>
+                    Tell the church you would like to serve in this ministry. Staff will review
+                    your interest — this is not an automatic placement.
+                  </CardDescription>
+                </CardHeader>
+                <CardBody>
+                  <ServeInterestPanel ministrySlug={ministry.slug} />
+                </CardBody>
+              </Card>
+            </div>
+          </Container>
+        </Section>
+
         <ContextualNextSteps
           title="Want to get involved?"
-          description="Explore more ministries, plan a visit, or reach out — we would love to walk with you."
+          description="Explore more ministries, plan a visit, or send a general question."
           actions={[
             { href: "/serve", label: "Serve at GGCC" },
             { href: "/visit", label: "Plan Your Visit", variant: "secondary" },

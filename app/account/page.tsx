@@ -24,6 +24,8 @@ import { ProfileCompletenessIndicator } from "./_components/ProfileCompletenessI
 import { AccountGivingSection } from "./_components/AccountGivingSection";
 import { AccountNotificationsSection } from "./_components/AccountNotificationsSection";
 import { AccountChurchNotices } from "./_components/AccountChurchNotices";
+import { AccountServeInterests } from "./_components/AccountServeInterests";
+import { listOwnServeInterests } from "@/services/ministry-serve-interest";
 
 export const dynamic = "force-dynamic";
 
@@ -39,11 +41,12 @@ export default async function MemberAccountPage({
   searchParams: { password?: string };
 }) {
   const session = await requireUser("/login");
-  const [memberships, giving, notifications, announcements] = await Promise.all([
+  const [memberships, giving, notifications, announcements, serveInterests] = await Promise.all([
     listOwnMembershipsWithGroups(),
     listOwnGivingHistory(),
     listOwnNotifications(),
     getActiveAnnouncements(),
+    listOwnServeInterests(),
   ]);
   const completeness = computeProfileCompleteness({
     fullName: session.fullName,
@@ -180,6 +183,18 @@ export default async function MemberAccountPage({
                 </CardHeader>
                 <CardBody>
                   <AccountChurchNotices items={announcements} />
+                </CardBody>
+              </Card>
+
+              <Card className="lg:col-span-2" id="serving-interests">
+                <CardHeader>
+                  <CardTitle>Serving Interests</CardTitle>
+                  <CardDescription>
+                    Ministries you have asked to serve in (visible only to you).
+                  </CardDescription>
+                </CardHeader>
+                <CardBody>
+                  <AccountServeInterests items={serveInterests.items} loadOk={serveInterests.ok} />
                 </CardBody>
               </Card>
 

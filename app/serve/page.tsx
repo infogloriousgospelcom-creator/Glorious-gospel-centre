@@ -13,6 +13,7 @@ import { SectionReveal } from "@/components/motion/SectionReveal";
 import Link from "next/link";
 import { getAllPublishedMinistries } from "@/services/content";
 import { publicMinistryHref, topLevelMinistries, isPublicFacingText } from "@/lib/ministries";
+import { ServeInterestPanel } from "./_components/ServeInterestPanel";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
@@ -26,8 +27,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const dynamic = "force-dynamic";
 
-export default async function ServePage() {
+export default async function ServePage({
+  searchParams,
+}: {
+  searchParams: { ministry?: string };
+}) {
   const ministries = topLevelMinistries(await getAllPublishedMinistries()).slice(0, 8);
+  const preselectSlug = searchParams.ministry?.trim() || undefined;
 
   return (
     <>
@@ -38,8 +44,11 @@ export default async function ServePage() {
           title="Serve at GGCC"
           description="Participate in the life of the church — explore ministries, discover where you can contribute, and start a conversation with us."
         >
-          <LinkButton href="/ministries">Explore Ministries</LinkButton>
-          <LinkButton href="/contact" variant="secondary">
+          <LinkButton href="#express-interest">Express Interest</LinkButton>
+          <LinkButton href="/ministries" variant="secondary">
+            Explore Ministries
+          </LinkButton>
+          <LinkButton href="/contact" variant="ghost">
             Contact GGCC
           </LinkButton>
         </PageHeader>
@@ -53,7 +62,7 @@ export default async function ServePage() {
                 <SectionEyebrow>Areas of ministry</SectionEyebrow>
                 <SectionTitle>Start with a ministry</SectionTitle>
                 <SectionLead>
-                  Browse the ministries below, then reach out when you are ready to learn more.
+                  Browse the ministries below, then express interest when you are ready.
                 </SectionLead>
               </div>
             </SectionReveal>
@@ -89,11 +98,27 @@ export default async function ServePage() {
           </Container>
         </Section>
 
+        <Section id="express-interest">
+          <Container>
+            <div className="mx-auto max-w-2xl">
+              <SectionEyebrow>Next step</SectionEyebrow>
+              <SectionTitle>Express your interest</SectionTitle>
+              <SectionLead className="mx-0">
+                Tell the church where you would like to serve. A leader will review your
+                interest and follow up. This is not an automatic placement.
+              </SectionLead>
+              <div className="mt-6">
+                <ServeInterestPanel ministrySlug={preselectSlug} />
+              </div>
+            </div>
+          </Container>
+        </Section>
+
         <ConnectAtGgcc />
 
         <ContextualNextSteps
           title="Not sure where to begin?"
-          description="Plan a visit, explore ministries, or send us a message — we will walk with you."
+          description="Plan a visit, explore ministries, or send a general message — serving interest is a separate, structured request."
           actions={[
             { href: "/visit", label: "Plan Your Visit" },
             { href: "/ministries", label: "Explore Ministries", variant: "secondary" },

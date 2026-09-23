@@ -29,7 +29,10 @@ export default async function HospitalityMinistryPage() {
           title="Hospitality Ministry"
           description="The Hospitality Ministry of Glorious Gospel Centre Church exists to show the love of Christ through practical care. We support orphans, vulnerable children, families, and those experiencing food insecurity."
         >
-          <LinkButton href="/serve">Serve at GGCC</LinkButton>
+          <LinkButton href="/serve?ministry=hospitality">Express Interest</LinkButton>
+          <LinkButton href="/serve" variant="ghost">
+            Serve at GGCC
+          </LinkButton>
           <LinkButton href="/give" variant="secondary">
             Give
           </LinkButton>
@@ -98,7 +101,7 @@ export default async function HospitalityMinistryPage() {
           title="How can I participate?"
           description="Support Hospitality through prayer, giving, or by starting a conversation about serving."
           actions={[
-            { href: "/serve", label: "Serve at GGCC" },
+            { href: "/serve?ministry=hospitality", label: "Express Interest" },
             { href: "/give", label: "Give", variant: "secondary" },
             { href: "/contact", label: "Contact Us", variant: "ghost" },
           ]}

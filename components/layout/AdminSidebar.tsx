@@ -30,6 +30,7 @@ const groups: { title: string; items: { href: string; label: string }[] }[] = [
       { href: "/admin/prayer-requests", label: "Prayer" },
       { href: "/admin/testimonies", label: "Testimonies" },
       { href: "/admin/connect-groups", label: "Connect Groups" },
+      { href: "/admin/serve-interests", label: "Serve Interests" },
       { href: "/admin/messages", label: "Messages" },
       { href: "/admin/giving", label: "Giving" },
     ],

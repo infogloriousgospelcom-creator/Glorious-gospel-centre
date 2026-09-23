@@ -13,6 +13,8 @@ const MEMBER_EXACT = new Set([
   "/visit",
   "/prayer",
   "/testimonies",
+  "/serve",
+  "/ministries",
   "/reset-password",
   "/login",
   "/register",
@@ -28,6 +30,8 @@ const MEMBER_PREFIXES = [
   "/login?",
   "/visit?",
   "/prayer?",
+  "/serve?",
+  "/ministries/",
 ];
 
 export function isSafeInternalPath(path: string): boolean {

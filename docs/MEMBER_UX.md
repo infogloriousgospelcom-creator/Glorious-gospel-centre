@@ -6,7 +6,8 @@ Member authentication and Connect Group membership live on the public site.
 |-------|---------|
 | `/login` | Congregant sign-in |
 | `/register` | Congregant registration |
-| `/account` | Congregant Account Hub (profile, security, Connect Groups, My Giving, Activity, next steps) |
+| `/account` | Congregant Account Hub (profile, security, Connect Groups, My Giving, Activity, Church Notices, Serving Interests, next steps) |
+| `/serve` | Public serve page + verified-member ministry serve-interest form |
 | `/forgot-password` / `/reset-password` | Member password recovery |
 | `/auth/callback` | Email confirm / recovery code exchange |
 | `/connect` | Public Connect Group discovery |
@@ -39,6 +40,7 @@ The Account Hub includes:
 | My Giving | Self-serve history of gifts made while signed in (`giving_transactions.created_by = auth.uid()`). Safe columns only — never `admin_notes` or `raw_callback`. Legacy rows without `created_by` are not shown. |
 | Activity | In-app notifications for the signed-in member only (`member_notifications.recipient_id = auth.uid()`). Currently Connect Group approve / decline / remove. |
 | Church Notices | Read-only published church announcements (same public source as the homepage). Not a personal inbox. |
+| Serving Interests | Compact list of the member’s own ministry serve-interest submissions (ministry, status, submitted date). Staff notes and reviewer identity are never shown. |
 | Your next steps | Deterministic CTAs from email verification + membership state (not a recommendation engine or CRM). |
 
 Sign out remains available from the account header. Global nav shows **Account** when signed in (no separate member portal).
@@ -104,12 +106,46 @@ Read-only history of the signed-in member’s own `giving_transactions` rows whe
 
 Staff CMS giving still uses `giving.manage`; after column grants, admin private reads/writes of sensitive columns use service-role **after** the permission check.
 
+## Ministry Serve Interest (Phase K)
+
+Owned congregant workflow — not a volunteer roster, scheduling, or guest application system.
+
+```text
+Serve / Ministry page
+    ↓
+Express Interest (login with safe redirect_to / next if needed)
+    ↓
+Verified member submits ministry or general interest
+    ↓
+Staff review on /admin/serve-interests
+    ↓
+Member sees status on /account (Serving Interests)
+```
+
+| Rule | Detail |
+|------|--------|
+| Ownership | `ministry_serve_interests.profile_id = auth.uid()`. The browser cannot choose another profile. |
+| Verified email | Application check plus the existing I-B10 `require_verified_email_for_membership()` helper on INSERT. Unverified JWTs cannot insert via PostgREST. |
+| Congregant fields | `ministry_id` (nullable for general serving), `member_note` (optional, ≤500), identity, timestamps. |
+| Staff fields | `status`, `staff_note`, `reviewed_by`, `reviewed_at`. Members cannot SELECT or write these private columns. |
+| Statuses | `NEW` Received · `CONTACTED` We are in touch · `ACCEPTED` Accepted · `DECLINED` Not moving forward · `CLOSED` Closed. |
+| Duplicate policy | One **open** interest (`NEW` / `CONTACTED` / `ACCEPTED`) per member + ministry, or per member when ministry is null. `DECLINED` / `CLOSED` history does not block a later submission. Existing open rows are not overwritten. |
+| Client | Member INSERT/SELECT uses the authenticated session client + RLS. No service-role for ordinary congregant submission or read. |
+| Staff | Permission `serve_interests.manage` (SUPER_ADMIN + ADMIN). List/detail private reads use service-role **after** the permission check. Status updates go through `update_ministry_serve_interest`; reviewer identity and timestamp are server-derived. |
+| Audit | Staff status changes write `serve_interest.status_change` (interest id, previous/new status, ministry). Audit failures do not break the update. |
+| Rate limit | Member submit: existing `consumeAsync` limiter (5 / 15 minutes per IP hash + email hash + ministry). |
+| Privacy | Interests are not in the sitemap, public ministry queries, or anonymous APIs. Contact remains a separate unstructured inquiry. |
+| Notifications | None in Phase K. No email, WhatsApp, Realtime, or Activity fan-out. |
+
+Staff CMS: `/admin/serve-interests` and `/admin/serve-interests/[id]`.
+
 ## Staff moderation
 
 | Route | Permission |
 |-------|------------|
 | `/admin/connect-groups` | `connect_groups.manage` (group CMS) |
 | `/admin/connect-groups/[id]/members` | `connect_groups.members.manage` |
+| `/admin/serve-interests` | `serve_interests.manage` |
 
 Staff can Approve, Decline, and Remove using the I-B4 moderation RPCs. Re-requested memberships appear as PENDING in the same list. Approve / decline / remove also emit member Activity notifications.
 
@@ -121,7 +157,9 @@ Staff can Approve, Decline, and Remove using the I-B4 moderation RPCs. Re-reques
 - Leave / re-request Activity events
 - Unread badge on Account nav
 - Bible study
-- Pastoral CRM / attendance / volunteering applications
+- Pastoral CRM / attendance / volunteer roster, scheduling, skills matrix, ministry assignments, or ministry-leader accounts
+- Guest (anonymous) serve-interest applications
+- Serve-interest email / WhatsApp / Realtime / Activity notifications
 - Connect Group leader roles
 - PENDING withdrawal
 - Staff direct reinstate (terminal → ACTIVE)
