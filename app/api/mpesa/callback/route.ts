@@ -3,7 +3,6 @@ import { applyCallback } from "@/services/giving";
 import { getPaymentProvider } from "@/services/payment";
 import { getServerEnv } from "@/lib/env";
 import { verifyCallbackToken } from "@/lib/callback-auth";
-import { MpesaDarajaProvider } from "@/services/payment/mpesa";
 
 /**
  * Secondary M-Pesa callback receiver (Next.js).
@@ -48,22 +47,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, ignored: true });
   }
 
-  // Prefer confirming SUCCESS via Daraja Query when live.
-  const status = payload.status;
-  if (status === "SUCCESS" && provider instanceof MpesaDarajaProvider) {
-    const confirmed = await provider.confirmStkSuccess(payload.externalReference);
-    if (!confirmed) {
-      return NextResponse.json({
-        ok: true,
-        updated: false,
-        reason: "query_unconfirmed",
-      });
-    }
-  }
-
   const result = await applyCallback({
     externalReference: payload.externalReference,
-    status,
+    status: payload.status,
     raw: payload.raw,
     transactionId: txId ?? undefined,
   });

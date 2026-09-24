@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { createClient } from "@/supabase/client";
+import { isSupabaseConfigured, publicEnv } from "@/lib/env";
 
 export type PaymentStatus =
   | "IDLE"
@@ -59,9 +61,18 @@ function mapStatus(dbStatus: string): PaymentStatus {
   }
 }
 
-function getSupabaseAnonKey(): string {
-  if (typeof window === "undefined") return "";
-  return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+function getFunctionsUrl(): string {
+  const base = publicEnv.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "") ?? "";
+  return base ? `${base}/functions/v1` : "";
+}
+
+async function getUserAccessToken(): Promise<string | null> {
+  if (!isSupabaseConfigured()) return null;
+  const supabase = createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  return session?.access_token ?? null;
 }
 
 export function usePaymentStatus({
@@ -75,18 +86,16 @@ export function usePaymentStatus({
   const [transaction, setTransaction] = useState<TransactionStatus | null>(null);
   const [isPolling, setIsPolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [attempts, setAttempts] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const functionsUrl = typeof window !== "undefined" 
-    ? `${window.location.origin}/functions/v1` 
-    : "";
+  const attemptsRef = useRef(0);
+  const isPollingRef = useRef(false);
 
   const stopPolling = useCallback(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+    isPollingRef.current = false;
     setIsPolling(false);
   }, []);
 
@@ -94,13 +103,27 @@ export function usePaymentStatus({
     if (!transactionId && !externalReference) return;
 
     try {
+      const functionsUrl = getFunctionsUrl();
+      if (!functionsUrl) {
+        setError("Payment status is not configured");
+        stopPolling();
+        return;
+      }
+
+      const accessToken = await getUserAccessToken();
+      if (!accessToken) {
+        setError("Authentication required");
+        stopPolling();
+        return;
+      }
+
       const params = new URLSearchParams();
       if (transactionId) params.set("transactionId", transactionId);
       if (externalReference) params.set("externalReference", externalReference);
 
       const res = await fetch(`${functionsUrl}/mpesa-payment-status?${params.toString()}`, {
         headers: {
-          "Authorization": `Bearer ${getSupabaseAnonKey()}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
 
@@ -133,18 +156,19 @@ export function usePaymentStatus({
       console.error("Payment status poll error:", e);
       setError("Failed to check payment status");
     }
-  }, [transactionId, externalReference, functionsUrl, stopPolling]);
+  }, [transactionId, externalReference, stopPolling]);
 
   const startPolling = useCallback(() => {
-    if (isPolling || (!transactionId && !externalReference)) return;
+    if (isPollingRef.current || (!transactionId && !externalReference)) return;
+    isPollingRef.current = true;
+    attemptsRef.current = 0;
     setIsPolling(true);
     setStatus("PROCESSING");
     setError(null);
-    setAttempts(0);
     fetchStatus();
     const interval = setInterval(() => {
-      setAttempts((a) => a + 1);
-      if (attempts >= maxAttempts - 1) {
+      attemptsRef.current += 1;
+      if (attemptsRef.current >= maxAttempts) {
         stopPolling();
         setStatus("TIMEOUT");
         setError("Payment timed out. Please try again.");
@@ -153,7 +177,7 @@ export function usePaymentStatus({
       fetchStatus();
     }, intervalMs);
     intervalRef.current = interval;
-  }, [isPolling, transactionId, externalReference, intervalMs, maxAttempts, attempts, fetchStatus, stopPolling]);
+  }, [transactionId, externalReference, intervalMs, maxAttempts, fetchStatus, stopPolling]);
 
   useEffect(() => {
     if (enabled && (transactionId || externalReference)) {

@@ -41,3 +41,8 @@ redirect_to = "/admin/reset-password"
 [storage]
 enabled = true
 file_size_limit = "50MiB"
+
+# Daraja POSTs have no Supabase user JWT. Authenticity is the signed
+# CallBackURL query (?tx=&sig= HMAC), enforced inside the function.
+[functions.mpesa-callback]
+verify_jwt = false

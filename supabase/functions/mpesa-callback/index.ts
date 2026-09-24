@@ -316,30 +316,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    let finalStatus = payload.status;
-
-    // Never mark SUCCESS from the callback alone — confirm with Daraja Query.
-    if (finalStatus === "SUCCESS") {
-      const confirmed = await confirmWithDarajaQuery(payload.externalReference);
-      if (!confirmed) {
-        console.error("Daraja Query did not confirm SUCCESS:", {
-          checkoutRequestId: payload.externalReference,
-        });
-        return jsonResponse({
-          ok: true,
-          updated: false,
-          reason: "query_unconfirmed",
-        });
-      }
-    }
-
-    if (!canTransition(transaction.status, finalStatus)) {
-      return jsonResponse({
-        ok: true,
-        updated: false,
-        reason: "forbidden_transition",
-      });
-    }
+    const finalStatus = payload.status;
 
     const { error: updateError } = await supabase
       .from("giving_transactions")
@@ -354,6 +331,11 @@ Deno.serve(async (req: Request) => {
     if (updateError) {
       console.error("Transaction update failed:", updateError);
       return jsonResponse({ ok: false, error: "Transaction update failed" }, 500);
+    }
+
+    // Reconciliation only: never gate SUCCESS and never write status from query.
+    if (finalStatus === "SUCCESS") {
+      void confirmWithDarajaQuery(payload.externalReference).catch(() => undefined);
     }
 
     return jsonResponse({
