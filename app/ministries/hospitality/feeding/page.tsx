@@ -35,42 +35,46 @@ export default async function FeedingProgrammePage() {
 
         <Section>
           <Container>
-            <div className="mx-auto max-w-3xl space-y-8">
-              <article className="prose prose-brand max-w-none">
-                <p className="lead">
+            <div className="mx-auto max-w-3xl space-y-12">
+              <article className="space-y-12 text-base leading-8 tracking-normal text-ink sm:text-lg sm:leading-9">
+                <p className="text-lg leading-9 text-ink-muted sm:text-xl sm:leading-10">
                   A meal can meet an immediate need, but it can also create an opportunity to show
                   someone that they are seen, valued and cared for.
                 </p>
 
-                <h2 className="heading-3">What We Do</h2>
-                <p>The programme focuses on:</p>
-                <ul className="list-disc list-inside space-y-2 text-ink">
-                  <li>Providing meals and food support to people in need.</li>
-                  <li>Reaching individuals and families experiencing hardship.</li>
-                  <li>Supporting community outreach activities.</li>
-                  <li>Mobilising church members to share what they have.</li>
-                  <li>Encouraging generosity and practical service.</li>
-                  <li>Showing the compassion of Christ through acts of care.</li>
-                </ul>
+                <div className="space-y-5">
+                  <h2 className="heading-3">What We Do</h2>
+                  <p className="text-ink-muted">The programme focuses on:</p>
+                  <ul className="list-disc space-y-3 pl-6 text-ink">
+                    <li>Providing meals and food support to people in need.</li>
+                    <li>Reaching individuals and families experiencing hardship.</li>
+                    <li>Supporting community outreach activities.</li>
+                    <li>Mobilising church members to share what they have.</li>
+                    <li>Encouraging generosity and practical service.</li>
+                    <li>Showing the compassion of Christ through acts of care.</li>
+                  </ul>
+                </div>
 
-                <h2 className="heading-3">Serving Our Community</h2>
-                <p>
-                  The Feeding Programme gives members of the church an opportunity to serve in a
-                  practical way.
-                </p>
-                <p>
-                  Some may contribute food or financial support. Others may volunteer their time during
-                  preparation, distribution or outreach activities.
-                </p>
-                <p>
-                  The goal is simple: to help meet practical needs while demonstrating the love of
-                  Christ.
-                </p>
+                <div className="space-y-5">
+                  <h2 className="heading-3">Serving Our Community</h2>
+                  <p className="text-ink-muted">
+                    The Feeding Programme gives members of the church an opportunity to serve in a
+                    practical way.
+                  </p>
+                  <p className="text-ink-muted">
+                    Some may contribute food or financial support. Others may volunteer their time during
+                    preparation, distribution or outreach activities.
+                  </p>
+                  <p className="text-ink-muted">
+                    The goal is simple: to help meet practical needs while demonstrating the love of
+                    Christ.
+                  </p>
+                </div>
               </article>
 
-              <div className="border-t border-border pt-6">
+              <div className="border-t border-border pt-8">
                 <h3 className="heading-4 mb-4">Get Involved</h3>
-                <p className="mb-6 text-ink-muted">
+                <p className="mb-6 leading-8 text-ink-muted">
                   You can support the Feeding Programme through giving, volunteering, and prayer.
                 </p>
                 <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
