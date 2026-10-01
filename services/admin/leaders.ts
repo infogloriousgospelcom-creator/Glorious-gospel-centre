@@ -12,6 +12,7 @@ const BUCKET = "leader-images";
 const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
 
 const STATUS = ["DRAFT", "PENDING_APPROVAL", "APPROVED", "PUBLISHED", "REJECTED", "ARCHIVED"] as const;
+const CATEGORIES = ["PASTOR", "LEADERSHIP"] as const;
 const LeaderSchema = z.object({
   full_name: z.string().trim().min(2, "Name is required.").max(120),
   title: z.string().trim().max(120).optional().or(z.literal("")),
@@ -26,6 +27,7 @@ const LeaderSchema = z.object({
   phone: z.string().trim().max(40).optional().or(z.literal("")),
   sort_order: z.coerce.number().int().min(0).max(10000).optional(),
   is_featured: z.literal("on").optional().or(z.literal("")),
+  category: z.enum(CATEGORIES).default("LEADERSHIP"),
   status: z.enum(STATUS).default("DRAFT"),
 });
 function flattenZod(err: z.ZodError): Record<string, string> {
@@ -100,15 +102,18 @@ export async function createLeader(_p: AdminActionState | null, fd: FormData): P
     const { data, error } = await auth.supabase.from("leaders").insert({
       full_name: d.full_name, title: d.title || null, bio: d.bio || null,
       image_url: d.image_url || null, email: d.email || null, phone: d.phone || null,
-      sort_order: d.sort_order ?? 0, is_featured: d.is_featured === "on", status: d.status,
+      sort_order: d.sort_order ?? 0, is_featured: d.is_featured === "on",
+      category: d.category, status: d.status,
       created_by: auth.userId, updated_by: auth.userId,
       published_at: d.status === "PUBLISHED" ? new Date().toISOString() : null,
     }).select("id").single();
     if (error || !data) return { ok: false, message: "Could not create leader." };
     revalidatePath("/admin/leadership");
+    revalidatePath("/admin/pastors");
     revalidatePath("/about/leadership");
+    revalidatePath("/about/pastors");
     invalidateCache("featured-leaders");
-    redirect(`/admin/leadership/${data.id}`);
+    redirect(d.category === "PASTOR" ? `/admin/pastors/${data.id}` : `/admin/leadership/${data.id}`);
   } catch (e) { if (e instanceof Error && e.message === "NEXT_REDIRECT") throw e; return { ok: false, message: "Could not create leader." }; }
 }
 
@@ -124,7 +129,8 @@ export async function updateLeader(id: string, _p: AdminActionState | null, fd: 
     const { error } = await auth.supabase.from("leaders").update({
       full_name: d.full_name, title: d.title || null, bio: d.bio || null,
       image_url: d.image_url || null, email: d.email || null, phone: d.phone || null,
-      sort_order: d.sort_order ?? 0, is_featured: d.is_featured === "on", status: d.status,
+      sort_order: d.sort_order ?? 0, is_featured: d.is_featured === "on",
+      category: d.category, status: d.status,
       updated_by: auth.userId, published_at: d.status === "PUBLISHED" ? new Date().toISOString() : null,
     }).eq("id", id);
     if (error) return { ok: false, message: "Could not update leader." };
@@ -136,7 +142,10 @@ export async function updateLeader(id: string, _p: AdminActionState | null, fd: 
 
     revalidatePath("/admin/leadership");
     revalidatePath(`/admin/leadership/${id}`);
+    revalidatePath("/admin/pastors");
+    revalidatePath(`/admin/pastors/${id}`);
     revalidatePath("/about/leadership");
+    revalidatePath("/about/pastors");
     invalidateCache("featured-leaders");
     return { ok: true, message: "Leader updated.", id };
   } catch { return { ok: false, message: "Could not update leader." }; }
@@ -150,7 +159,9 @@ export async function deleteLeader(id: string): Promise<AdminActionState> {
     const { error } = await auth.supabase.from("leaders").delete().eq("id", id);
     if (error) return { ok: false, message: "Could not delete leader." };
     revalidatePath("/admin/leadership");
+    revalidatePath("/admin/pastors");
     revalidatePath("/about/leadership");
+    revalidatePath("/about/pastors");
     invalidateCache("featured-leaders");
     return { ok: true, message: "Leader deleted." };
   } catch { return { ok: false, message: "Could not delete leader." }; }

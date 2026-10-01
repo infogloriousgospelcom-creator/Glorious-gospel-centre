@@ -10,6 +10,7 @@ const groups = [
     links: [
       { href: "/about", label: "About" },
       { href: "/about/leadership", label: "Leadership" },
+      { href: "/about/pastors", label: "Pastors" },
       { href: "/ministries", label: "Ministries" },
       { href: "/serve", label: "Serve" },
       { href: "/services", label: "Services" },
@@ -104,12 +105,9 @@ export async function Footer() {
               ) : null}
             </div>
 
-            <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="mt-6">
               <LinkButton href="/visit" size="sm">
                 Plan Your Visit
-              </LinkButton>
-              <LinkButton href="/give" variant="secondary" size="sm" className="border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white">
-                Give
               </LinkButton>
             </div>
           </div>

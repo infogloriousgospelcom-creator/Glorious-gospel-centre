@@ -25,12 +25,6 @@ export function PrayerWays({
     cta: string;
   }> = [
     {
-      title: "Submit a prayer request",
-      body: "Share a confidential need with our prayer team. Your request is not published publicly.",
-      href: "#prayer-request",
-      cta: "Go to the form",
-    },
-    {
       title: "Pray with the church",
       body: "Join us in Sunday worship and gather with the church family as we seek God together.",
       href: "/services",

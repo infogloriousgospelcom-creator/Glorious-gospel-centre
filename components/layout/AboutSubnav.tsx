@@ -7,6 +7,7 @@ const links = [
   { href: "/about/vision-mission", label: "Vision & Mission" },
   { href: "/about/statement-of-faith", label: "Statement of Faith" },
   { href: "/about/leadership", label: "Leadership" },
+  { href: "/about/pastors", label: "Pastors" },
 ];
 
 export function AboutSubnav({ active }: { active: string }) {

@@ -3,17 +3,16 @@ import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { HeroSection } from "@/components/home/HeroSection";
 import { SundayServicesSection } from "@/components/home/SundayServicesSection";
+import { ChurchNoticesSection } from "@/components/home/ChurchNoticesSection";
 import { AttendWatchSection } from "@/components/home/AttendWatchSection";
 import { WelcomeSection } from "@/components/home/WelcomeSection";
 import { NextStepSection } from "@/components/home/NextStepSection";
 import { MinistriesSection } from "@/components/home/MinistriesSection";
 import { LatestSermonSection } from "@/components/home/LatestSermonSection";
-import { UpcomingEventsSection } from "@/components/home/UpcomingEventsSection";
 import { PrayerCtaSection } from "@/components/home/PrayerCtaSection";
 import { StoriesOfGraceHomeSection } from "@/components/home/StoriesOfGraceHomeSection";
 import { ScriptureBandSection } from "@/components/home/ScriptureBandSection";
 import { GivingCtaSection } from "@/components/home/GivingCtaSection";
-import { ThisWeekSection } from "@/components/church/ThisWeekSection";
 import { InviteSomeone } from "@/components/church/InviteSomeone";
 import { getSiteSettings } from "@/services/content";
 import { buildPageMetadata, siteUrl } from "@/lib/seo";
@@ -44,14 +43,13 @@ export default async function HomePage() {
       <main id="main">
         <HeroSection />
         <SundayServicesSection />
+        <ChurchNoticesSection />
         <AttendWatchSection />
-        <ThisWeekSection />
         <WelcomeSection />
         <NextStepSection />
         <InviteSomeone inviteUrl={siteUrl("/visit")} churchName={churchName} />
         <MinistriesSection />
         <LatestSermonSection />
-        <UpcomingEventsSection />
         <PrayerCtaSection />
         <StoriesOfGraceHomeSection />
         <ScriptureBandSection />

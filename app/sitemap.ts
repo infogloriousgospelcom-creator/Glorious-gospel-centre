@@ -20,6 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/about/vision-mission",
     "/about/statement-of-faith",
     "/about/leadership",
+    "/about/pastors",
     "/ministries",
     "/ministries/hospitality",
     "/ministries/hospitality/orphans",

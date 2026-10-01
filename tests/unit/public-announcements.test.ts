@@ -12,11 +12,11 @@ const contentSrc = readFileSync(
   resolve(process.cwd(), "services/content.ts"),
   "utf8",
 );
-const thisWeekSrc = readFileSync(
-  resolve(process.cwd(), "components/church/ThisWeekSection.tsx"),
+const homePageSrc = readFileSync(resolve(process.cwd(), "app/page.tsx"), "utf8");
+const homeNoticesSrc = readFileSync(
+  resolve(process.cwd(), "components/home/ChurchNoticesSection.tsx"),
   "utf8",
 );
-const homePageSrc = readFileSync(resolve(process.cwd(), "app/page.tsx"), "utf8");
 const accountPageSrc = readFileSync(
   resolve(process.cwd(), "app/account/page.tsx"),
   "utf8",
@@ -153,14 +153,15 @@ describe("I-B9 getActiveAnnouncements helper (static)", () => {
   });
 });
 
-describe("I-B9 homepage wiring (static)", () => {
-  it("ThisWeekSection uses getActiveAnnouncements and hides empty notices", () => {
-    expect(homePageSrc).toMatch(/ThisWeekSection/);
-    expect(thisWeekSrc).toMatch(/getActiveAnnouncements/);
-    expect(thisWeekSrc).toMatch(/Church Notices/);
-    expect(thisWeekSrc).toMatch(/hasNotices/);
-    expect(thisWeekSrc).not.toMatch(/member_notifications/);
-    expect(thisWeekSrc).not.toMatch(/createServiceRoleClient/);
+describe("I-B9 homepage Church Notices (static)", () => {
+  it("homepage mounts ChurchNoticesSection using getActiveAnnouncements and hides when empty", () => {
+    expect(homePageSrc).toMatch(/ChurchNoticesSection/);
+    expect(homeNoticesSrc).toMatch(/getActiveAnnouncements/);
+    expect(homeNoticesSrc).toMatch(/announcements\.length === 0\) return null/);
+    expect(homeNoticesSrc).toMatch(/Church Notices/);
+    expect(homeNoticesSrc).not.toMatch(/member_notifications/);
+    expect(homeNoticesSrc).not.toMatch(/createServiceRoleClient/);
+    expect(homeNoticesSrc).not.toMatch(/getPublishedServices|getUpcomingEvents/);
   });
 });
 
@@ -190,7 +191,7 @@ describe("I-B9 Account Church Notices (static)", () => {
   });
 
   it("does not create notification rows from announcement rendering", () => {
-    expect(thisWeekSrc).not.toMatch(/\.from\(\s*["']member_notifications["']\)/);
+    expect(homeNoticesSrc).not.toMatch(/\.from\(\s*["']member_notifications["']\)/);
     expect(accountNoticesSrc).not.toMatch(/\.from\(\s*["']member_notifications["']\)/);
     expect(accountPageSrc).not.toMatch(
       /from\(\s*["']member_notifications["']\)\.insert/,

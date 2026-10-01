@@ -17,12 +17,9 @@ export function PrayerCtaSection() {
                 Share a confidential prayer request with our prayer team, or join us as we
                 seek God together.
               </p>
-              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <div>
                 <LinkButton href="/prayer" variant="accent">
                   Request Prayer
-                </LinkButton>
-                <LinkButton href="/prayer#prayer-request" variant="ghost">
-                  Go to the form
                 </LinkButton>
               </div>
             </div>

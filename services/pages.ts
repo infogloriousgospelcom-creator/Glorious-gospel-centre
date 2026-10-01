@@ -26,9 +26,28 @@ export async function getAllPublishedLeaders(): Promise<LeaderItem[]> {
     const { data, error } = await supabase
       .from("leaders")
       .select(
-        "id,full_name,title,bio,image_url,email,phone,sort_order,is_featured",
+        "id,full_name,title,bio,image_url,email,phone,sort_order,is_featured,category",
       )
       .eq("status", "PUBLISHED")
+      .order("sort_order", { ascending: true })
+      .order("full_name", { ascending: true });
+    if (error) return [];
+    return (data ?? []) as LeaderItem[];
+  } catch {
+    return [];
+  }
+}
+
+export async function getAllPublishedPastors(): Promise<LeaderItem[]> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("leaders")
+      .select(
+        "id,full_name,title,bio,image_url,email,phone,sort_order,is_featured,category",
+      )
+      .eq("status", "PUBLISHED")
+      .eq("category", "PASTOR")
       .order("sort_order", { ascending: true })
       .order("full_name", { ascending: true });
     if (error) return [];

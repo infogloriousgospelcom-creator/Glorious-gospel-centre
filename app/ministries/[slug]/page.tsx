@@ -23,6 +23,7 @@ import { getMinistryImages } from "@/lib/ministry-images";
 import { MinistryHeroSlideshow } from "@/components/ministries/MinistryHeroSlideshow";
 import { ContextualNextSteps } from "@/components/church/ContextualNextSteps";
 import { ServeInterestPanel } from "@/app/serve/_components/ServeInterestPanel";
+import { LeaderBio } from "@/components/about/LeaderBio";
 import { Card, CardBody, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import {
   HOSPITALITY_PUBLIC_PATHS,
@@ -299,9 +300,7 @@ export default async function MinistryDetailPage({
                         {role ?? leader.title ?? "Leader"}
                       </p>
                       {isPublicFacingText(leader.bio) ? (
-                        <p className="mt-2 line-clamp-3 text-sm text-ink-muted">
-                          {leader.bio}
-                        </p>
+                        <LeaderBio text={leader.bio} lines={3} className="mt-2" />
                       ) : null}
                     </div>
                   </div>

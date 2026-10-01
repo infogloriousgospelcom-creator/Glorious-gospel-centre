@@ -56,10 +56,6 @@ export function MinistryCard({
             {meeting ? (
               <p className="mt-2 text-xs text-ink-muted">{meeting}</p>
             ) : null}
-            <span className="mt-auto pt-3 text-sm font-semibold text-brand-700 transition-colors group-hover:text-brand-800">
-              Explore ministry
-              <span aria-hidden="true"> →</span>
-            </span>
           </div>
         </article>
       </Link>

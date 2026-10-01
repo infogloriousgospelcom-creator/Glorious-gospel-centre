@@ -33,6 +33,7 @@ const moreLinks = [
   { href: "/prayer", label: "Prayer" },
   { href: "/contact", label: "Contact" },
   { href: "/about/leadership", label: "Leadership" },
+  { href: "/about/pastors", label: "Pastors" },
   { href: "/livestream", label: "Watch Online" },
 ] as const;
 

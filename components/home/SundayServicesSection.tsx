@@ -19,14 +19,6 @@ export async function SundayServicesSection() {
   const sunday = all
     .filter((s) => s.day_of_week === 0)
     .sort((a, b) => a.start_time.localeCompare(b.start_time));
-  const midweek = all
-    .filter((s) => s.day_of_week !== 0)
-    .sort((a, b) => {
-      const da = a.day_of_week === 0 ? 7 : a.day_of_week;
-      const db = b.day_of_week === 0 ? 7 : b.day_of_week;
-      return da - db || a.start_time.localeCompare(b.start_time);
-    })
-    .slice(0, 4);
 
   return (
     <Section id="sunday-services" className="bg-surface-muted">
@@ -47,7 +39,7 @@ export async function SundayServicesSection() {
             description="Add weekly services in the admin to populate this section."
           />
         ) : (
-          <div className="grid gap-10 lg:grid-cols-[1.2fr_1fr] lg:items-start">
+          <div className="mx-auto max-w-2xl">
             <SectionReveal delay={0.08}>
               <div>
                 <h3 className="heading-3 mb-4">This Sunday</h3>
@@ -86,54 +78,11 @@ export async function SundayServicesSection() {
                     ))}
                   </ul>
                 )}
-                <div className="mt-6 flex flex-wrap gap-3">
+                <div className="mt-6">
                   <LinkButton href="/services" size="sm">
                     View Service Schedule
                   </LinkButton>
-                  <LinkButton href="/visit" variant="secondary" size="sm">
-                    Plan Your Visit
-                  </LinkButton>
                 </div>
-              </div>
-            </SectionReveal>
-
-            <SectionReveal delay={0.16}>
-              <div>
-                <h3 className="heading-3 mb-4">During the week</h3>
-                {midweek.length === 0 ? (
-                  <p className="text-sm text-ink-muted">
-                    Midweek gatherings are listed on our{" "}
-                    <Link href="/services" className="brand-link">
-                      services page
-                    </Link>
-                    .
-                  </p>
-                ) : (
-                  <ul className="space-y-3">
-                    {midweek.map((s) => (
-                      <li key={s.id} className="flex justify-between gap-3 text-sm">
-                        <span className="text-ink">
-                          <span className="font-medium text-brand-800">
-                            {dayName(s.day_of_week)}
-                          </span>
-                          {" · "}
-                          {s.name}
-                        </span>
-                        <span className="shrink-0 text-ink-muted">
-                          {formatTime(s.start_time)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <p className="mt-5">
-                  <Link
-                    href="/services"
-                    className="text-sm font-semibold text-brand-700 transition-colors duration-ui ease-smooth hover:text-brand-800"
-                  >
-                    Full weekly schedule →
-                  </Link>
-                </p>
               </div>
             </SectionReveal>
           </div>

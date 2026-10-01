@@ -4,6 +4,7 @@ import { Container, Section } from "@/components/ui/Container";
 import { EmptyState } from "@/components/ui/Section";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { LinkButton } from "@/components/ui/LinkButton";
+import { LeaderBio } from "@/components/about/LeaderBio";
 import type { PageItem } from "@/types/content";
 
 function slugifyHeading(text: string): string {
@@ -159,6 +160,8 @@ export function PageHero({
 
 export function LeaderGrid({
   leaders,
+  emptyTitle = "Leadership team coming soon",
+  emptyDescription = "Add leaders in the admin to introduce them here.",
 }: {
   leaders: {
     id: string;
@@ -167,13 +170,17 @@ export function LeaderGrid({
     bio: string | null;
     image_url: string | null;
     email: string | null;
+    phone?: string | null;
   }[];
+  /** Copy for the zero-state; defaults preserve the Leadership wording. */
+  emptyTitle?: string;
+  emptyDescription?: string;
 }) {
   if (leaders.length === 0) {
     return (
       <EmptyState
-        title="Leadership team coming soon"
-        description="Add leaders in the admin to introduce them here."
+        title={emptyTitle}
+        description={emptyDescription}
       />
     );
   }
@@ -196,13 +203,18 @@ export function LeaderGrid({
             <div className="border-t border-border pt-4">
               <p className="font-display text-lg font-semibold text-brand-900">{l.full_name}</p>
               {l.title ? <p className="mt-1 text-sm text-ink-muted">{l.title}</p> : null}
-              {l.bio ? (
-                <p className="mt-3 line-clamp-4 text-sm leading-relaxed text-ink-muted">{l.bio}</p>
-              ) : null}
+              {l.bio ? <LeaderBio text={l.bio} /> : null}
               {l.email ? (
                 <p className="mt-3 text-sm">
                   <Link href={`mailto:${l.email}`} className="brand-link">
                     {l.email}
+                  </Link>
+                </p>
+              ) : null}
+              {l.phone ? (
+                <p className="mt-1 text-sm">
+                  <Link href={`tel:${l.phone}`} className="brand-link">
+                    {l.phone}
                   </Link>
                 </p>
               ) : null}

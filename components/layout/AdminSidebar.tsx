@@ -19,6 +19,7 @@ const groups: { title: string; items: { href: string; label: string }[] }[] = [
       { href: "/admin/series", label: "Series" },
       { href: "/admin/ministries", label: "Ministries" },
       { href: "/admin/leadership", label: "Leadership" },
+      { href: "/admin/pastors", label: "Pastors" },
       { href: "/admin/services", label: "Services" },
       { href: "/admin/pages", label: "Pages" },
       { href: "/admin/gallery", label: "Gallery" },

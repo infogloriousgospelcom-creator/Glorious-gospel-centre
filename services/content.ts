@@ -279,7 +279,7 @@ export async function getMinistryLeaders(ministryId: string): Promise<MinistryLe
     const { data, error } = await supabase
       .from("ministry_leaders")
       .select(
-        "role,sort_order,leader:leaders(id,full_name,title,bio,image_url,email,phone,sort_order,is_featured)",
+        "role,sort_order,leader:leaders(id,full_name,title,bio,image_url,email,phone,sort_order,is_featured,category)",
       )
       .eq("ministry_id", ministryId)
       .order("sort_order", { ascending: true });
@@ -346,7 +346,7 @@ export function getFeaturedLeaders(limit = 4): Promise<LeaderItem[]> {
       const { data, error } = await supabase
         .from("leaders")
         .select(
-          "id,full_name,title,bio,image_url,email,phone,sort_order,is_featured",
+          "id,full_name,title,bio,image_url,email,phone,sort_order,is_featured,category",
         )
         .eq("status", "PUBLISHED")
         .eq("is_featured", true)

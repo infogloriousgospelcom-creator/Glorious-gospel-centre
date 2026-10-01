@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { requireAdmin } from "@/services/auth";
 import { getLeaderForAdmin } from "@/services/admin/leaders.read";
 import { deleteLeader } from "@/services/admin/leaders";
-import { LeaderForm } from "../_components/LeaderForm";
+import { LeaderForm } from "@/components/admin/LeaderForm";
 export const dynamic = "force-dynamic";
 export async function generateMetadata({ params: _ }: { params: { id: string } }): Promise<Metadata> {
   return { title: "Edit leader · Admin", robots: { index: false, follow: false } };
@@ -41,7 +41,8 @@ export default async function EditLeaderPage({ params }: { params: { id: string 
                 <LeaderForm initial={{
                   id: row.id, full_name: row.full_name, title: row.title, bio: row.bio,
                   image_url: row.image_url, email: row.email, phone: row.phone,
-                  sort_order: row.sort_order, is_featured: row.is_featured, status: row.status,
+                  sort_order: row.sort_order, is_featured: row.is_featured,
+                  category: row.category, status: row.status,
                 }} />
                 <div className="mt-8 border-t border-brand-100 pt-6">
                   <form action={deleteAction}>

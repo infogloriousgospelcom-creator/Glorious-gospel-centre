@@ -40,7 +40,7 @@ export default async function PrayerPage() {
           title="You're not alone. Bring your prayer to God."
           description="Share a confidential request with our prayer team, join the church in prayer, or reach out when you need pastoral support. Every need matters."
         >
-          <LinkButton href="#prayer-request">Submit a Prayer Request</LinkButton>
+          <LinkButton href="#prayer-request">Request Prayer</LinkButton>
           <LinkButton href="/visit" variant="secondary">
             Visit Us
           </LinkButton>

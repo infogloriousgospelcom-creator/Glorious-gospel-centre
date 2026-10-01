@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Container, Section } from "@/components/ui/Container";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { requireAdmin } from "@/services/auth";
-import { LeaderForm } from "../_components/LeaderForm";
+import { LeaderForm } from "@/components/admin/LeaderForm";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "New leader · Admin", robots: { index: false, follow: false } };
 export default async function NewLeaderPage() {

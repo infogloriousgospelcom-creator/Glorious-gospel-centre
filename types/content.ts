@@ -115,6 +115,10 @@ export interface ServiceItem {
   is_recurring: boolean;
 }
 
+/** Content category for a person in `leaders`. `PASTOR` rows are additionally
+ * served by the Pastors section; every published row stays on Leadership. */
+export type LeaderCategory = "PASTOR" | "LEADERSHIP";
+
 export interface LeaderItem {
   id: string;
   full_name: string;
@@ -125,6 +129,7 @@ export interface LeaderItem {
   phone: string | null;
   sort_order: number;
   is_featured: boolean;
+  category: LeaderCategory;
 }
 
 export interface GivingCategory {
