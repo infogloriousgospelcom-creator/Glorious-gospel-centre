@@ -29,5 +29,7 @@ describe("mpesa callback verification", () => {
   });
   it("normalises the amount to whole shillings before storing it", () => {
     expect(stk).toMatch(/Math\.round\(amountCents \/ 100\) \* 100/);
+    // The normalised value — not the raw request value — must be what is stored.
+    expect(stk).toMatch(/amount_cents: normalizedAmountCents/);
   });
 });

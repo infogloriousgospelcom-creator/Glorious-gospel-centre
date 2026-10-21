@@ -547,11 +547,11 @@ Deno.serve(async (req: Request) => {
 
     // Daraja charges whole shillings. Normalise once so the ledger and the
     // charge can never disagree by a fraction.
-    const amountCents = Math.round(amountCents / 100) * 100;
+    const normalizedAmountCents = Math.round(amountCents / 100) * 100;
 
     const idempotencyKey = generateIdempotencyKey(
       categoryId,
-      amountCents,
+      normalizedAmountCents,
       normalizedPhone,
     );
 
@@ -567,7 +567,7 @@ Deno.serve(async (req: Request) => {
         "id, external_reference, status, created_by",
       )
       .eq("category_id", categoryId)
-      .eq("amount_cents", amountCents)
+      .eq("amount_cents", normalizedAmountCents)
       .eq("phone", normalizedPhone)
       .eq("created_by", user.id)
       .eq("status", "PENDING")
@@ -584,7 +584,7 @@ Deno.serve(async (req: Request) => {
         .from("giving_transactions")
         .insert({
           category_id: categoryId,
-          amount_cents: amountCents,
+          amount_cents: normalizedAmountCents,
           currency,
           phone: normalizedPhone,
           status: "PENDING",
@@ -643,7 +643,7 @@ Deno.serve(async (req: Request) => {
 
     const request: StkPushRequest = {
       transactionId,
-      amountCents,
+      amountCents: normalizedAmountCents,
       currency,
       phone: normalizedPhone,
       description:
