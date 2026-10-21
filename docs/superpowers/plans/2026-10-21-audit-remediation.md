@@ -1528,12 +1528,16 @@ describe("page headings", () => {
     const src = readFileSync("components/ui/PageHeader.tsx", "utf8");
     expect(src).toMatch(/SectionTitle as="h1"/);
   });
-  it("pages that also render CmsPageView pass hideTitle", () => {
-    // CmsPageView renders its own <h1>; without hideTitle these pages would
-    // have two <h1> elements once PageHeader becomes one.
+  it("CmsPageView renders an h1 in its empty state too", () => {
+    // When the CMS row is missing the page would otherwise have no <h1> at all.
+    const src = readFileSync("components/about/CmsPageView.tsx", "utf8");
+    expect(src).toMatch(/<h1 className="heading-1 mb-4 text-balance">\{fallbackTitle\}<\/h1>/);
+  });
+  it("does not add hideTitle to the about pages", () => {
+    // These render LeaderGrid, which contains no heading — no double-up risk.
     for (const p of ["about", "about/leadership", "about/pastors"]) {
       const src = readFileSync(`app/${p}/page.tsx`, "utf8");
-      expect(src, p).toMatch(/hideTitle/);
+      expect(src, p).not.toMatch(/hideTitle/);
     }
   });
 });
@@ -1542,7 +1546,7 @@ describe("page headings", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/unit/page-headings.test.ts`
-Expected: FAIL — `PageHeader` has no `as="h1"`, and the three pages do not pass `hideTitle`.
+Expected: FAIL — `PageHeader` has no `as="h1"`, and `CmsPageView` has no empty-state heading.
 
 - [ ] **Step 3: Make PageHeader render an h1**
 
@@ -1558,30 +1562,43 @@ In `components/ui/PageHeader.tsx`:
 
 > **Do not change `components/ui/Section.tsx`.** Its `SectionTitle` default of `as="h2"` is correct for every other caller — changing the default would turn every section heading on the site into an `<h1>`.
 
-- [ ] **Step 4: Pass `hideTitle` on the three pages that render both**
+- [ ] **Step 4: Give CmsPageView's empty state a heading**
 
-`CmsPageView` renders its own `<h1 className="heading-1 mb-4 text-balance">{page.title}</h1>` (`components/about/CmsPageView.tsx:67`) unless `hideTitle` is set. Three pages render **both** `PageHeader` and `CmsPageView`, so after Step 3 they would have two `<h1>` elements:
+`CmsPageView` renders its `<h1>` only when the CMS row exists (`components/about/CmsPageView.tsx:64-67`). When the row is missing, it renders an `<EmptyState>` — whose `title` is a plain `<p>` (`components/ui/Section.tsx:89`), so the page ends up with **no `<h1>` at all**.
 
-- `app/about/page.tsx`
-- `app/about/leadership/page.tsx`
-- `app/about/pastors/page.tsx`
-
-On each, pass `hideTitle` to `CmsPageView`, exactly as `app/privacy/page.tsx:40` already does:
+In `components/about/CmsPageView.tsx`, the outer `else` branch currently reads:
 
 ```tsx
-<CmsPageView page={page} fallbackTitle="..." hideTitle />
+) : (
+  <EmptyState
+    title={`${fallbackTitle} coming soon`}
+    description="This page will populate once content is published through the admin."
+  />
+)}
 ```
 
-Read each file first — the `fallbackTitle` differs per page, so keep each file's existing props and **add** `hideTitle` rather than rewriting the call.
+Change it to render a heading first, so the empty state has the same document outline as the populated state:
 
-> **The three CMS-only pages need no change.** `app/about/story/page.tsx`, `app/about/vision-mission/page.tsx` and `app/about/statement-of-faith/page.tsx` render **only** `CmsPageView` and no `PageHeader` — they already have exactly one `<h1>` from `CmsPageView` itself. Do not touch them.
+```tsx
+) : (
+  <>
+    {!hideTitle ? (
+      <h1 className="heading-1 mb-4 text-balance">{fallbackTitle}</h1>
+    ) : null}
+    <EmptyState
+      title={`${fallbackTitle} coming soon`}
+      description="This page will populate once content is published through the admin."
+    />
+  </>
+)}
+```
 
-> **`app/design-system/page.tsx` is a deliberate exception — leave it alone.** It renders `<h1 className="heading-1">Heading 1 — Display</h1>` at line 160, but that is a **typography specimen** demonstrating the h1 style, not the page's own heading. Changing it would break the design system's purpose. It is an internal page and is not indexed.
+`hideTitle` is already a prop of `CmsPageView`, so honouring it here keeps `app/privacy/page.tsx` — which passes `hideTitle` because its `PageHeader` supplies the heading — from ending up with two `<h1>`s.
 
 - [ ] **Step 5: Run test to verify it passes**
 
 Run: `npx vitest run tests/unit/page-headings.test.ts`
-Expected: PASS (2 tests).
+Expected: PASS (3 tests).
 
 - [ ] **Step 6: Verify the heading count against a production build**
 
