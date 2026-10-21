@@ -216,7 +216,7 @@ async function stkPushLive(
     };
   }
 
-  const amount = Math.round(request.amountCents / 100);
+  const amount = request.amountCents / 100;
 
   if (amount <= 0) {
     return {
@@ -246,7 +246,7 @@ async function stkPushLive(
     shortcode: config.shortcode,
     amount,
     phone: `${phone.slice(0, 6)}******`,
-    callbackUrl,
+    transactionId: request.transactionId,
     timestamp,
   });
 
@@ -544,6 +544,10 @@ Deno.serve(async (req: Request) => {
         },
       );
     }
+
+    // Daraja charges whole shillings. Normalise once so the ledger and the
+    // charge can never disagree by a fraction.
+    const amountCents = Math.round(amountCents / 100) * 100;
 
     const idempotencyKey = generateIdempotencyKey(
       categoryId,

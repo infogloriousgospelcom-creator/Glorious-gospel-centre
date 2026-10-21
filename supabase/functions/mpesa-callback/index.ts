@@ -16,6 +16,10 @@ interface CallbackPayload {
   raw: unknown;
   resultCode: number;
   resultDescription: string;
+  /** Whole-keshi amount Daraja says it charged, or null when the body omits it. */
+  amountCents: number | null;
+  /** The AccountReference Daraja echoes back from the STK push. */
+  accountReference: string;
 }
 
 const ALLOWED_TRANSITIONS: Record<TxStatus, ReadonlySet<string>> = {
@@ -108,12 +112,24 @@ function parseCallback(rawBody: string): CallbackPayload {
     status = "FAILED";
   }
 
+  const amountRaw = stkCallback.Amount;
+  const amountNumber = typeof amountRaw === "number" ? amountRaw : Number(amountRaw);
+  const amountCents =
+    amountRaw === undefined || amountRaw === null || Number.isNaN(amountNumber)
+      ? null
+      : Math.round(amountNumber * 100);
+
+  const accountReference =
+    typeof stkCallback.AccountReference === "string" ? stkCallback.AccountReference : "";
+
   return {
     externalReference: checkoutRequestId,
     status,
     raw: parsed,
     resultCode,
     resultDescription,
+    amountCents,
+    accountReference,
   };
 }
 
@@ -267,7 +283,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: transaction, error: lookupError } = await supabase
       .from("giving_transactions")
-      .select("id, status, provider, external_reference")
+      .select("id, status, provider, external_reference, amount_cents")
       .eq("id", txId)
       .eq("provider", "mpesa-daraja")
       .maybeSingle();
@@ -296,6 +312,29 @@ Deno.serve(async (req: Request) => {
     ) {
       console.error("CheckoutRequestID mismatch for transaction", txId);
       return jsonResponse({ error: "Unauthorized" }, 401);
+    }
+
+    // A SUCCESS callback must prove what was actually charged and which
+    // account reference it was sent for. Without these two checks a leaked
+    // signed callback URL can mark an unpaid transaction as paid at any amount.
+    //
+    // Failures are deliberately NOT gated on these: Daraja omits Amount and
+    // AccountReference on some error responses, and refusing those would leave
+    // genuinely failed transactions stuck in PROCESSING.
+    if (payload.status === "SUCCESS") {
+      if (payload.amountCents === null) {
+        console.error("Callback missing Amount for transaction", txId);
+        return jsonResponse({ error: "Callback missing Amount" }, 400);
+      }
+      if (payload.amountCents !== Number(transaction.amount_cents)) {
+        console.error("Amount mismatch for transaction", txId);
+        return jsonResponse({ error: "Amount mismatch" }, 400);
+      }
+      const expectedReference = transaction.id.slice(0, 12);
+      if (!payload.accountReference || payload.accountReference !== expectedReference) {
+        console.error("Account reference mismatch for transaction", txId);
+        return jsonResponse({ error: "Account reference mismatch" }, 400);
+      }
     }
 
     if (transaction.status === "SUCCESS") {
