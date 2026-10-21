@@ -24,7 +24,7 @@ const GOLD = "#E5B400";
 const WHITE = "#FFFFFF";
 
 const escape = (value) =>
-  value.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">");
+  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 const churchName = process.env.OG_CHURCH_NAME ?? "Glorious Gospel Centre Church";
 const tagline =
