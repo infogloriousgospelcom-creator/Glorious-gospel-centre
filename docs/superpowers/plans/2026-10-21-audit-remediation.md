@@ -245,19 +245,30 @@ git commit -m "fix(gallery): add public select policy for gallery items"
 // tests/unit/giving-status-override.test.ts
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { canTransition, isTerminalSuccess } from "@/lib/payment-transitions";
+import { canStaffTransition, isTerminalSuccess } from "@/lib/payment-transitions";
 
 describe("giving status override", () => {
+  it("forbids staff from fabricating a successful payment", () => {
+    expect(canStaffTransition("PENDING", "SUCCESS")).toBe(false);
+    expect(canStaffTransition("PROCESSING", "SUCCESS")).toBe(false);
+  });
   it("forbids reopening a successful transaction", () => {
     expect(isTerminalSuccess("SUCCESS")).toBe(true);
-    expect(canTransition("SUCCESS", "PENDING")).toBe(false);
+    expect(canStaffTransition("SUCCESS", "PENDING")).toBe(false);
+    expect(canStaffTransition("SUCCESS", "PROCESSING")).toBe(false);
+    expect(canStaffTransition("SUCCESS", "CANCELLED")).toBe(false);
   });
-  it("forbids marking a pending transaction successful without the callback", () => {
-    expect(canTransition("PENDING", "SUCCESS")).toBe(false);
+  it("allows staff to cancel a pending or processing payment", () => {
+    expect(canStaffTransition("PENDING", "FAILED")).toBe(true);
+    expect(canStaffTransition("PROCESSING", "FAILED")).toBe(true);
+    expect(canStaffTransition("PENDING", "CANCELLED")).toBe(true);
   });
-  it("applies the transition check before the service-role update", () => {
+  it("allows staff to correct a successful payment", () => {
+    expect(canStaffTransition("SUCCESS", "FAILED")).toBe(true);
+  });
+  it("applies the staff transition check before the service-role update", () => {
     const src = readFileSync("services/admin/giving.actions.ts", "utf8");
-    const checkAt = src.indexOf("canTransition");
+    const checkAt = src.indexOf("canStaffTransition");
     const writeAt = src.indexOf('from("giving_transactions")');
     expect(checkAt).toBeGreaterThan(-1);
     expect(checkAt).toBeLessThan(writeAt);
@@ -265,30 +276,55 @@ describe("giving status override", () => {
 });
 ```
 
+> **Why a separate map and not `canTransition`:** `canTransition` in `lib/payment-transitions.ts` legitimately allows `PENDING → SUCCESS`, because the **verified M-Pesa callback** is what legitimately completes a payment. The staff override path is different — it is a human writing a status directly. Reusing `canTransition` there would let a staff member fabricate a receipt for an unpaid gift. `canStaffTransition` is a stricter map used only by the override path. **`canTransition` must not be changed** — the callback path depends on it.
+
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/unit/giving-status-override.test.ts`
-Expected: FAIL — `canTransition` guard absent from `giving.actions.ts` (the source assertion fails).
+Expected: FAIL — `canStaffTransition` is not exported from `lib/payment-transitions.ts`.
 
-- [ ] **Step 3: Implement the guard**
+- [ ] **Step 3a: Add the stricter staff transition map**
+
+In `lib/payment-transitions.ts`, append (do **not** modify the existing `ALLOWED` map or `canTransition`):
+
+```ts
+/**
+ * Transitions available to the audited staff override path.
+ *
+ * Deliberately stricter than `ALLOWED`: the provider callback is what
+ * legitimately completes a payment, so a human writing a status directly
+ * must never be able to mark an unpaid gift as paid. The one exception is
+ * SUCCESS -> FAILED, which is a correction of a genuine mistake and is
+ * recorded in the audit log with a mandatory reason.
+ */
+const STAFF_ALLOWED: Record<GivingTxStatus, ReadonlySet<GivingTxStatus>> = {
+  PENDING: new Set(["FAILED", "CANCELLED"]),
+  PROCESSING: new Set(["FAILED", "CANCELLED"]),
+  SUCCESS: new Set(["FAILED"]),
+  FAILED: new Set(),
+  CANCELLED: new Set(),
+};
+
+export function canStaffTransition(from: string, to: string): boolean {
+  const allowed = STAFF_ALLOWED[from as GivingTxStatus];
+  if (!allowed) return false;
+  return allowed.has(to as GivingTxStatus);
+}
+```
+
+- [ ] **Step 3b: Apply the guard in the staff override action**
 
 In `services/admin/giving.actions.ts`, add the import and insert the check between the `prior` lookup and the update:
 
 ```ts
-import { canTransition, isTerminalSuccess } from "@/lib/payment-transitions";
+import { canStaffTransition } from "@/lib/payment-transitions";
 ```
 
 ```ts
 if (prior.status === parsed.data.status) {
   return { ok: true, message: "Status unchanged." };
 }
-if (isTerminalSuccess(prior.status)) {
-  return {
-    ok: false,
-    message: "A completed payment cannot be changed. Record a correction instead.",
-  };
-}
-if (!canTransition(prior.status, parsed.data.status)) {
+if (!canStaffTransition(prior.status, parsed.data.status)) {
   return {
     ok: false,
     message: `Cannot move a ${prior.status} transaction to ${parsed.data.status}.`,
@@ -296,19 +332,30 @@ if (!canTransition(prior.status, parsed.data.status)) {
 }
 ```
 
+The `reason` field is already mandatory in `OverrideSchema` and is already written to `admin_notes` and `audit_logs.metadata` — the audit trail for a `SUCCESS → FAILED` correction therefore already exists and needs no new work.
+
 - [ ] **Step 4: Add the DB-level backstop**
 
 Create `supabase/migrations/0041_guard_success_transition.sql`:
 
 ```sql
--- 0041 — Defense in depth: block SUCCESS -> non-SUCCESS at the database level,
--- so a direct PostgREST write or a future code path cannot reopen a payment.
+-- 0041 — Defense in depth: a completed giving transaction must not be reopened.
+--
+-- The staff override path (services/admin/giving.actions.ts) runs as service_role
+-- and is permitted exactly one correction: SUCCESS -> FAILED, which is written
+-- to admin_notes and recorded in audit_logs with a mandatory reason.
+-- Every other SUCCESS -> X transition is rejected at the database level, which
+-- also blocks a direct PostgREST write made with an admin's own JWT.
 create or replace function public.guard_giving_success_transition()
 returns trigger
 language plpgsql
 as $$
 begin
   if old.status = 'SUCCESS' and new.status is distinct from 'SUCCESS' then
+    if current_setting('request.jwt.claim.role', true) = 'service_role'
+       and new.status = 'FAILED' then
+      return new;   -- audited correction path
+    end if;
     raise exception 'A completed giving transaction cannot be changed from SUCCESS to %', new.status
       using errcode = '42501';
   end if;
@@ -322,11 +369,7 @@ create trigger trg_guard_giving_success_transition
   for each row execute function public.guard_giving_success_transition();
 ```
 
-> **Note:** the staff override still needs to be able to correct a genuine error. If the church requires a `SUCCESS → FAILED` correction path, the trigger must permit it for `service_role` only:
-> ```sql
-> if old.status = 'SUCCESS' and new.status is distinct from 'SUCCESS'
->    and current_setting('request.jwt.claim.role', true) is distinct from 'service_role' then
-> ```
+> **Ruling (human partner, 2026-10-21):** staff **may** correct a `SUCCESS → FAILED` transaction, but only through the service-role path, with a mandatory reason and an audit entry. The database trigger encodes exactly that — service role gets `SUCCESS → FAILED` and nothing else; every other caller is rejected. The application-level `canStaffTransition` map independently prevents a staff member from marking an unpaid gift as `SUCCESS`.
 
 - [ ] **Step 5: Run test to verify it passes**
 
@@ -336,7 +379,7 @@ Expected: PASS.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add services/admin/giving.actions.ts supabase/migrations/0041_guard_success_transition.sql tests/unit/giving-status-override.test.ts
+git add lib/payment-transitions.ts services/admin/giving.actions.ts supabase/migrations/0041_guard_success_transition.sql tests/unit/giving-status-override.test.ts
 git commit -m "fix(giving): enforce payment transitions on staff status override"
 ```
 
@@ -616,9 +659,18 @@ describe("giving reaper", () => {
 Run: `npx vitest run tests/unit/giving-reaper.test.ts`
 Expected: FAIL.
 
-- [ ] **Step 3: Extend the transition map**
+- [ ] **Step 3: Verify the transition map already permits the expiry transition**
 
-In `lib/payment-transitions.ts`, add `FAILED` as a target from `PENDING` and `PROCESSING`.
+The existing `ALLOWED` map in `lib/payment-transitions.ts` already contains `FAILED` as a target from both `PENDING` and `PROCESSING`:
+
+```ts
+PENDING: new Set(["PROCESSING", "SUCCESS", "FAILED", "CANCELLED"]),
+PROCESSING: new Set(["SUCCESS", "FAILED", "CANCELLED"]),
+```
+
+**No change to `lib/payment-transitions.ts` is required.** The Step 1 assertions on `canTransition("PROCESSING", "FAILED")` and `canTransition("PENDING", "FAILED")` are therefore **regression guards that already pass** — they are not the failing part of the test. The failing assertion is the one that reads `supabase/migrations/0043_giving_reaper.sql`, which does not exist yet.
+
+Do **not** modify the `ALLOWED` map. Task 2.1 added a separate `STAFF_ALLOWED` map for the staff path; that is where the transition rules live.
 
 - [ ] **Step 4: Create the migration**
 
@@ -1191,13 +1243,15 @@ alter table public.site_settings
 
 - [ ] **Step 4: Extend `buildChurchSchema`**
 
-Add the fields to the input interface and the emitted object per the audit's exact shape — `sameAs` (array), `geo` (`GeoCoordinates`), `openingHoursSpecification` (array of `OpeningHoursSpecification`), and split `addressLocality`/`addressRegion`/`postalCode`.
+Add the fields to the `ChurchSchemaInput` interface and the emitted object per the audit's exact shape — `sameAs` (array), `geo` (`GeoCoordinates`), `openingHoursSpecification` (array of `OpeningHoursSpecification`), and split `addressLocality`/`addressRegion`/`postalCode`.
 
 **Delete** the latent bug at `lib/seo.ts:166`:
 ```ts
 ...(input.timezone ? { openingHoursSpecification: input.timezone } : {}),
 ```
-`openingHoursSpecification` must never receive a timezone string.
+`openingHoursSpecification` must never receive a timezone string. **Also remove the `timezone?: string` field from `ChurchSchemaInput`** — it exists only to feed that bug, and `app/layout.tsx` never passes it. Leaving it in place invites the bug to be reintroduced.
+
+**Keep** `buildChurchSchema`'s existing required fields (`name`, `description`, `url`) and all existing optional fields (`logoUrl`, `imageUrl`, `telephone`, `email`, `address`) unchanged — `app/layout.tsx:99-109` calls it with exactly those today and must keep compiling.
 
 - [ ] **Step 5: Wire the data in `app/layout.tsx`**
 
