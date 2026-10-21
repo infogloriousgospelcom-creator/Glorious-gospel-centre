@@ -1042,7 +1042,15 @@ amount: z.coerce.number()
 if (input.amountCents < MIN_GIFT_CENTS || input.amountCents > MAX_GIFT_CENTS) { ... }
 ```
 
-`app/give/_components/GivingForm.tsx` — add `max={MAX_GIFT_SHILLINGS}` to the amount `<Input>` and surface the error on the `amount` field rather than as a generic `<Alert>`.
+`app/give/_components/GivingForm.tsx` — add `max={MAX_GIFT_SHILLINGS}` to the amount `<Input>` (it currently has `min={1}` but no `max`). The field-level error plumbing **already exists** — the amount `<Field>` already renders `error={state.errors?.amount}` and the input already sets `aria-invalid={Boolean(state.errors?.amount)}` (`GivingForm.tsx:183,193`). Do not restructure that; only add the `max` attribute.
+
+**The Edge Function keeps its own literal.** `supabase/functions/mpesa-stk-push/index.ts:442` already caps at `amountCents > 10_000_000`, which equals `MAX_GIFT_CENTS`. It **cannot** import from `lib/giving-limits.ts` — a Supabase Edge Function bundles only its own directory, and `lib/` is outside it. Leave the literal in place, but add a comment naming the source of truth so the two cannot silently drift:
+
+```ts
+// Keep in sync with MAX_GIFT_CENTS in lib/giving-limits.ts — the Edge
+// Function bundle cannot import from the app's lib/ directory.
+amountCents > 10_000_000 ||
+```
 
 - [ ] **Step 5: Run test to verify it passes**
 
