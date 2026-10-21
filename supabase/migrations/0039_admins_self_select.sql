@@ -10,18 +10,20 @@ create policy admins_self_select on public.admins
   using (profile_id = auth.uid() and is_active = true);
 
 -- Defence in depth: resolve role keys without depending on RLS.
+-- Only returns the caller's own role keys unless the caller holds roles.manage.
 create or replace function public.roles_for_user(p_user_id uuid)
 returns table (key text)
 language sql
 stable
 security definer
 set search_path = public
-as $$
+as $$;
   select r.key
   from public.admins a
   join public.roles r on r.id = a.role_id
-  where a.profile_id = p_user_id and a.is_active = true;
-$$
+  where a.profile_id = p_user_id and a.is_active = true
+  and (p_user_id = auth.uid() or public.has_permission('roles.manage'));
+$$;
 
 revoke all on function public.roles_for_user(uuid) from public;
 grant execute on function public.roles_for_user(uuid) to authenticated;
