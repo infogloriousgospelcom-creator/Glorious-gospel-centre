@@ -159,13 +159,42 @@ describe("site url and absolute titles", () => {
     delete (process.env as Record<string, string | undefined>).VERCEL_URL;
     // @ts-expect-error - NODE_ENV is readonly in types but writable at runtime
     process.env.NODE_ENV = "production";
-    expect(() => resolveSiteUrl()).toThrow(/NEXT_PUBLIC_SITE_URL/);
-    if (prevUrl !== undefined) process.env.NEXT_PUBLIC_SITE_URL = prevUrl;
-    else delete (process.env as Record<string, string | undefined>).NEXT_PUBLIC_SITE_URL;
-    if (prevVercel !== undefined) process.env.VERCEL_URL = prevVercel;
-    else delete (process.env as Record<string, string | undefined>).VERCEL_URL;
-    // @ts-expect-error - NODE_ENV is readonly in types but writable at runtime
-    process.env.NODE_ENV = prevNode ?? "test";
+    try {
+      expect(() => resolveSiteUrl()).toThrow(/NEXT_PUBLIC_SITE_URL/);
+    } finally {
+      if (prevUrl !== undefined) process.env.NEXT_PUBLIC_SITE_URL = prevUrl;
+      else delete (process.env as Record<string, string | undefined>).NEXT_PUBLIC_SITE_URL;
+      if (prevVercel !== undefined) process.env.VERCEL_URL = prevVercel;
+      else delete (process.env as Record<string, string | undefined>).VERCEL_URL;
+      // @ts-expect-error - NODE_ENV is readonly in types but writable at runtime
+      process.env.NODE_ENV = prevNode ?? "test";
+    }
+  });
+  it("uses the configured site url", () => {
+    const prev = process.env.NEXT_PUBLIC_SITE_URL;
+    try {
+      process.env.NEXT_PUBLIC_SITE_URL = "https://example.org/";
+      expect(resolveSiteUrl()).toBe("https://example.org");
+    } finally {
+      if (prev === undefined) delete process.env.NEXT_PUBLIC_SITE_URL;
+      else process.env.NEXT_PUBLIC_SITE_URL = prev;
+    }
+  });
+
+
+  it("falls back to the vercel url", () => {
+    const prevUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    const prevVercel = process.env.VERCEL_URL;
+    try {
+      delete process.env.NEXT_PUBLIC_SITE_URL;
+      process.env.VERCEL_URL = "my-project.vercel.app";
+      expect(resolveSiteUrl()).toBe("https://my-project.vercel.app");
+    } finally {
+      if (prevUrl === undefined) delete process.env.NEXT_PUBLIC_SITE_URL;
+      else process.env.NEXT_PUBLIC_SITE_URL = prevUrl;
+      if (prevVercel === undefined) delete process.env.VERCEL_URL;
+      else process.env.VERCEL_URL = prevVercel;
+    }
   });
 
   it("produces an absolute title when asked", () => {

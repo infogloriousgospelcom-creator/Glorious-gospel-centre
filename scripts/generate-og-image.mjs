@@ -20,7 +20,6 @@ const HEIGHT = 630;
 
 // Brand palette — keep in sync with tailwind.config.ts
 const NAVY = "#062B87";
-const NAVY_DEEP = "#031B4E";
 const GOLD = "#E5B400";
 const WHITE = "#FFFFFF";
 
@@ -31,11 +30,13 @@ const churchName = process.env.OG_CHURCH_NAME ?? "Glorious Gospel Centre Church"
 const tagline =
   process.env.OG_TAGLINE ?? "Worship · Community · Teaching · Outreach";
 
+const headlineSize = churchName.length > 28 ? 46 : churchName.length > 22 ? 54 : 62;
+
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}">
   <rect width="${WIDTH}" height="${HEIGHT}" fill="${NAVY}"/>
   <rect x="0" y="${HEIGHT - 14}" width="${WIDTH}" height="14" fill="${GOLD}"/>
   <rect x="72" y="150" width="6" height="330" fill="${GOLD}"/>
-  <text x="120" y="248" font-family="DejaVu Sans, Liberation Sans, sans-serif" font-size="62" font-weight="bold" fill="${WHITE}">${escape(churchName)}</text>
+  <text x="120" y="248" font-family="DejaVu Sans, Liberation Sans, sans-serif" font-size="${headlineSize}" font-weight="bold" fill="${WHITE}">${escape(churchName)}</text>
   <text x="120" y="320" font-family="DejaVu Sans, Liberation Sans, sans-serif" font-size="32" fill="${GOLD}">${escape(tagline)}</text>
   <text x="120" y="392" font-family="DejaVu Sans, Liberation Sans, sans-serif" font-size="26" fill="#C9D6F2">Kitengela, Nairobi · Kenya</text>
 </svg>`;
