@@ -22,13 +22,16 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();
   return buildPageMetadata({
-    title: settings.seo_default_title ?? "Home",
+    title:
+      settings.seo_default_title ??
+      "Glorious Gospel Centre Church — Worship, Community, Teaching & Outreach",
+    absoluteTitle: true,
     description:
       settings.seo_default_description ??
       "Welcome to Glorious Gospel Centre Church — worship, community, teaching, and outreach.",
     path: "/",
     image: settings.seo_default_og_image ?? null,
-    imageAlt: `${settings.church_name} church`,
+    imageAlt: settings.church_name,
     keywords: ["church kenya", "worship", "sermons", "ministries", "prayer"],
   });
 }

@@ -1,7 +1,29 @@
 import type { Metadata } from "next";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-const DEFAULT_OG_IMAGE = "/og-default.svg";
+/**
+ * The canonical site origin.
+ *
+ * In production this MUST be set. Without it every canonical URL, Open Graph
+ * tag and sitemap entry would point at http://localhost:3000, which search
+ * engines treat as a different site — the failure is silent and total.
+ *
+ * CI sets NEXT_PUBLIC_SITE_URL for the build step, so this does not break CI.
+ */
+export function resolveSiteUrl(): string {
+  const raw =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined);
+  if (raw) return raw.replace(/\/+$/, "");
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "NEXT_PUBLIC_SITE_URL must be set in production — canonical URLs, Open Graph tags and the sitemap would otherwise point at localhost.",
+    );
+  }
+  return "http://localhost:3000";
+}
+
+const SITE_URL = resolveSiteUrl();
+const DEFAULT_OG_IMAGE = "/og-default.png";
 
 /**
  * Returns the absolute URL for the given path. Path should start with
@@ -62,6 +84,11 @@ export interface PageSeoInput {
   canonical?: string;
   /** Set `index: false` for non-indexable pages. */
   noindex?: boolean;
+  /**
+   * Use `title.absolute` — required for the root page, where the layout's
+   * title template is not applied by Next.js.
+   */
+  absoluteTitle?: boolean;
 }
 
 export function buildPageMetadata(input: PageSeoInput): Metadata {
@@ -69,9 +96,10 @@ export function buildPageMetadata(input: PageSeoInput): Metadata {
   const imageUrl = ogImageUrl(input.image ?? DEFAULT_OG_IMAGE);
   const canonical = absoluteUrl(canonicalPath);
   const ogType = input.type ?? "website";
+  const title = input.absoluteTitle ? { absolute: input.title } : input.title;
 
   return {
-    title: input.title,
+    title,
     description: input.description,
     keywords: input.keywords,
     alternates: { canonical },

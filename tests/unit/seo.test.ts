@@ -10,7 +10,9 @@ import {
   iso8601Duration,
   truncate,
   plainText,
+  resolveSiteUrl,
 } from "@/lib/seo";
+import { existsSync, statSync } from "node:fs";
 
 describe("seo helpers", () => {
   describe("siteUrl", () => {
@@ -32,8 +34,8 @@ describe("seo helpers", () => {
       );
     });
     it("falls back to default for null / undefined", () => {
-      expect(ogImageUrl(null)).toBe("http://localhost:3000/og-default.svg");
-      expect(ogImageUrl(undefined)).toBe("http://localhost:3000/og-default.svg");
+      expect(ogImageUrl(null)).toBe("http://localhost:3000/og-default.png");
+      expect(ogImageUrl(undefined)).toBe("http://localhost:3000/og-default.png");
     });
     it("resolves relative paths under the site", () => {
       expect(ogImageUrl("/poster.png")).toBe("http://localhost:3000/poster.png");
@@ -145,5 +147,41 @@ describe("seo helpers", () => {
       const out = plainText("<p>Hello <b>world</b></p>", 200);
       expect(out).toBe("Hello world");
     });
+  });
+});
+
+describe("site url and absolute titles", () => {
+  it("throws in production when the site url is missing", () => {
+    const prevUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    const prevVercel = process.env.VERCEL_URL;
+    const prevNode = process.env.NODE_ENV;
+    delete (process.env as Record<string, string | undefined>).NEXT_PUBLIC_SITE_URL;
+    delete (process.env as Record<string, string | undefined>).VERCEL_URL;
+    // @ts-expect-error - NODE_ENV is readonly in types but writable at runtime
+    process.env.NODE_ENV = "production";
+    expect(() => resolveSiteUrl()).toThrow(/NEXT_PUBLIC_SITE_URL/);
+    if (prevUrl !== undefined) process.env.NEXT_PUBLIC_SITE_URL = prevUrl;
+    else delete (process.env as Record<string, string | undefined>).NEXT_PUBLIC_SITE_URL;
+    if (prevVercel !== undefined) process.env.VERCEL_URL = prevVercel;
+    else delete (process.env as Record<string, string | undefined>).VERCEL_URL;
+    // @ts-expect-error - NODE_ENV is readonly in types but writable at runtime
+    process.env.NODE_ENV = prevNode ?? "test";
+  });
+
+  it("produces an absolute title when asked", () => {
+    const m = buildPageMetadata({
+      title: "Glorious Gospel Centre Church",
+      description: "Test description",
+      absoluteTitle: true,
+      path: "/",
+    });
+    expect(m.title).toEqual({ absolute: "Glorious Gospel Centre Church" });
+  });
+
+  it("points the default og image at a file that exists", () => {
+    expect(existsSync("public/og-default.png")).toBe(true);
+    const size = statSync("public/og-default.png").size;
+    expect(size).toBeGreaterThan(0);
+    expect(size).toBeLessThan(300 * 1024);
   });
 });
