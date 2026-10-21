@@ -258,8 +258,9 @@ grant select (id, album_id, storage_path, caption, alt_text, sort_order, created
 -- insert on profile_id and lets a BEFORE INSERT trigger overwrite it.
 -- No UPDATE grant: the app has no update path for gallery items (it inserts
 -- and deletes only). DELETE is granted because staff remove photos.
-grant insert (album_id, storage_path, caption, alt_text, sort_order, uploaded_by),
-      delete
+grant insert (album_id, storage_path, caption, alt_text, sort_order, uploaded_by)
+  on table public.gallery_items to authenticated;
+grant delete
   on table public.gallery_items to authenticated;
 
 -- uploaded_by is set by the database, never by the client. This mirrors the
@@ -344,10 +345,19 @@ describe("giving status override", () => {
   });
   it("applies the staff transition check before the service-role update", () => {
     const src = readFileSync("services/admin/giving.actions.ts", "utf8");
-    const checkAt = src.indexOf("canStaffTransition");
-    const writeAt = src.indexOf('from("giving_transactions")');
+    // Anchor on the guard call site, not the bare identifier — the import
+    // statement would match "canStaffTransition" and make this assertion
+    // pass even if the guard were moved after the write.
+    const checkAt = src.indexOf("!canStaffTransition(prior.status");
+    const writeAt = src.indexOf(".update({");
     expect(checkAt).toBeGreaterThan(-1);
     expect(checkAt).toBeLessThan(writeAt);
+  });
+  it("does not resurrect a failed or cancelled payment", () => {
+    expect(canStaffTransition("FAILED", "SUCCESS")).toBe(false);
+    expect(canStaffTransition("FAILED", "PENDING")).toBe(false);
+    expect(canStaffTransition("CANCELLED", "SUCCESS")).toBe(false);
+    expect(canStaffTransition("CANCELLED", "PENDING")).toBe(false);
   });
 });
 ```
