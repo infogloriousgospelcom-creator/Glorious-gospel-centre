@@ -5,6 +5,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { formatKenyaDateTime } from "@/lib/dates";
 import {
   markMemberNotificationReadAction,
   type MarkNotificationState,
@@ -44,11 +45,7 @@ function NotificationRow({ item }: { item: MemberNotificationItem }) {
         </div>
         {item.body ? <p className="text-xs text-ink-muted">{item.body}</p> : null}
         <p className="text-xs text-ink-muted">
-          {new Date(item.created_at).toLocaleDateString(undefined, {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          })}
+          {formatKenyaDateTime(item.created_at)}
           {" · "}
           <Link href={href} className="font-medium text-brand-700 hover:underline">
             View

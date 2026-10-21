@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/Badge";
 import { LinkButton } from "@/components/ui/LinkButton";
+import { formatKenyaDateTime } from "@/lib/dates";
 import {
   serveInterestStatusExplanation,
   serveInterestStatusLabel,
@@ -50,7 +51,7 @@ export function AccountServeInterests({
           </div>
           <p className="mt-1 text-sm text-ink-muted">{serveInterestStatusExplanation(item.status)}</p>
           <p className="mt-1 text-xs text-ink-muted">
-            Submitted {new Date(item.created_at).toLocaleDateString()}
+            Submitted {formatKenyaDateTime(item.created_at)}
           </p>
         </li>
       ))}

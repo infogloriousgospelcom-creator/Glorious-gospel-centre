@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/Section";
 import { requireAdmin } from "@/services/auth";
 import { listAllEvents } from "@/services/admin/events.read";
+import { formatKenyaDateTime } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -64,7 +65,7 @@ export default async function AdminEventsPage() {
                       {r.title}
                     </Link>
                     <p className="text-xs text-ink-muted">
-                      {new Date(r.starts_at).toLocaleString()}
+                      {formatKenyaDateTime(r.starts_at)}
                       {r.location ? ` · ${r.location}` : ""}
                     </p>
                   </div>

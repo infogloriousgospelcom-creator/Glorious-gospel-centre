@@ -6,6 +6,7 @@ import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/Section";
 import { requirePermission } from "@/services/auth";
 import { listRecentAuditLogs } from "@/services/admin/audit.read";
+import { formatKenyaDateTime } from "@/lib/dates";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Audit log · Admin", robots: { index: false, follow: false } };
 
@@ -40,7 +41,7 @@ export default async function AdminAuditLogPage() {
                       r.action.includes("status") ? "warning" : "neutral"
                     }>{r.action}</Badge>
                     {r.entity_type ? <Badge tone="neutral">{r.entity_type}</Badge> : null}
-                    <span className="text-xs text-ink-muted">{new Date(r.created_at).toLocaleString()}</span>
+                    <span className="text-xs text-ink-muted">{formatKenyaDateTime(r.created_at)}</span>
                   </div>
                   <p className="mt-1 text-xs text-ink-muted">
                     actor: {r.actor_email ?? "anonymous"} · ip: {r.ip_hash ? r.ip_hash.slice(0, 10) + "…" : "—"}

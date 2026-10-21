@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Textarea } from "@/components/ui/Form";
+import { formatKenyaDateTime } from "@/lib/dates";
 import {
   setTestimonyStatus,
   updateTestimonyNotes,
@@ -56,7 +57,7 @@ export function TestimonyRow({ row }: { row: TestimonyAdminRow }) {
           )}
         </div>
         <p className="text-xs text-ink-muted">
-          Submitted {new Date(row.created_at).toLocaleString()}
+          Submitted {formatKenyaDateTime(row.created_at)}
         </p>
       </div>
 
@@ -72,7 +73,7 @@ export function TestimonyRow({ row }: { row: TestimonyAdminRow }) {
       </div>
       <p className="text-xs text-ink-muted">
         Consent recorded: {row.consent_to_publish ? "yes" : "no"} ·{" "}
-        {new Date(row.consent_at).toLocaleString()}
+        {formatKenyaDateTime(row.consent_at)}
       </p>
 
       <details className="rounded-xl border border-brand-100 bg-surface p-3" open={status === "PENDING"}>

@@ -17,6 +17,7 @@ import {
   plainText,
   siteUrl,
 } from "@/lib/seo";
+import { formatKenyaDateWith } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -46,12 +47,7 @@ export async function generateMetadata({
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatKenyaDateWith(iso, { weekday: "short", month: "short", day: "numeric", year: "numeric" });
 }
 
 export default async function SeriesDetailPage({

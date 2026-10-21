@@ -13,6 +13,7 @@ import { GalleryPagination } from "./_components/GalleryPagination";
 import { GALLERY_PAGE_SIZE, listAlbumsPaged, listAllAlbumCategories } from "@/services/gallery";
 import { buildPageMetadata } from "@/lib/seo";
 import { SectionReveal } from "@/components/motion/SectionReveal";
+import { formatKenyaDateWith } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -26,10 +27,7 @@ export const metadata: Metadata = buildPageMetadata({
 
 function formatDate(iso: string | null): string | null {
   if (!iso) return null;
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "long",
-  });
+  return formatKenyaDateWith(iso, { year: "numeric", month: "long" });
 }
 
 export default async function GalleryPage({

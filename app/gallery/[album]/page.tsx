@@ -16,6 +16,7 @@ import {
   siteUrl,
 } from "@/lib/seo";
 import { AlbumItemGrid } from "../_components/AlbumItemGrid";
+import { formatKenyaDateWith } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -47,12 +48,7 @@ export async function generateMetadata({
 
 function formatDate(iso: string | null): string | null {
   if (!iso) return null;
-  return new Date(iso).toLocaleDateString(undefined, {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatKenyaDateWith(iso, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
 }
 
 export default async function AlbumDetailPage({

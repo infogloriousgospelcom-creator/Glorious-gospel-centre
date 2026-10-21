@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/Section";
 import { requireAdmin } from "@/services/auth";
 import { listAllGivingFiltered, type AdminTransactionDetail } from "@/services/admin/giving.read";
 import { GivingFilters } from "./_components/GivingFilters";
+import { formatKenyaDateTime } from "@/lib/dates";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Giving · Admin", robots: { index: false, follow: false } };
 
@@ -86,7 +87,7 @@ export default async function AdminGivingPage({
                           {t.admin_notes ? <Badge tone="warning">Overridden</Badge> : null}
                         </div>
                         <p className="text-xs text-ink-muted">
-                          {t.phone ?? "—"} · {new Date(t.created_at).toLocaleString()}
+                          {t.phone ?? "—"} · {formatKenyaDateTime(t.created_at)}
                         </p>
                       </div>
                       <p className="text-sm font-semibold text-ink">{formatKES(t.amount_cents, t.currency)}</p>

@@ -19,6 +19,7 @@ import {
   siteUrl,
 } from "@/lib/seo";
 import { SermonAudioPlayer } from "../_components/SermonAudioPlayer";
+import { formatKenyaDate } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +41,7 @@ export async function generateMetadata({
     title: sermon.title,
     description: sermon.description
       ? plainText(sermon.description, 200)
-      : `Sermon by ${sermon.speaker ?? "unknown"} — ${new Date(sermon.preached_on).toLocaleDateString()}.`,
+      : `Sermon by ${sermon.speaker ?? "unknown"} — ${formatKenyaDate(sermon.preached_on)}.`,
     path: `/sermons/${sermon.slug}`,
     image: sermon.thumbnail_url,
     imageAlt: `${sermon.title} sermon thumbnail`,
@@ -51,12 +52,7 @@ export async function generateMetadata({
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatKenyaDate(iso);
 }
 
 export default async function SermonDetailPage({

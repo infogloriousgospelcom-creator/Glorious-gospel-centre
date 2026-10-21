@@ -6,15 +6,12 @@ import { getLatestSermon } from "@/services/content";
 import { youtubeThumbnailUrl } from "@/lib/media";
 import { SectionReveal } from "@/components/motion/SectionReveal";
 import { ImageReveal } from "@/components/motion/ImageReveal";
+import { formatKenyaDateWith } from "@/lib/dates";
 
 function formatSermonDate(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  return formatKenyaDateWith(iso, { year: "numeric", month: "long", day: "numeric" });
 }
 
 export async function LatestSermonSection() {

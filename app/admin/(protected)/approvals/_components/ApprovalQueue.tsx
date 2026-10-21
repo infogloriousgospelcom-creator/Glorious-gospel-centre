@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
 import { Field, Textarea } from "@/components/ui/Form";
+import { formatKenyaDateTime } from "@/lib/dates";
 import { batchApproveAction, type BatchApprovalState } from "@/services/admin/approvals.actions";
 import type { PendingItem } from "@/services/admin/approvals.read";
 
@@ -125,7 +126,7 @@ export function ApprovalQueue({ items }: { items: PendingItem[] }) {
                     <Badge tone="warning">{r.table}</Badge>
                   </div>
                   <p className="mt-1 truncate text-base font-medium text-ink">{r.title}</p>
-                  <p className="text-xs text-ink-muted">Submitted {new Date(r.created_at).toLocaleString()}</p>
+                  <p className="text-xs text-ink-muted">Submitted {formatKenyaDateTime(r.created_at)}</p>
                 </div>
               </div>
             </li>

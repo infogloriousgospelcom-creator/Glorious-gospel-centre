@@ -12,6 +12,7 @@ import { getAllPublishedEvents } from "@/services/content";
 import { buildPageMetadata } from "@/lib/seo";
 import { SectionReveal } from "@/components/motion/SectionReveal";
 import { ContextualNextSteps } from "@/components/church/ContextualNextSteps";
+import { KENYA_TZ } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -23,16 +24,24 @@ export const metadata: Metadata = buildPageMetadata({
   keywords: ["church events", "conferences", "outreach", "fellowship"],
 });
 
+const dayFmt = new Intl.DateTimeFormat("en-KE", {
+  timeZone: KENYA_TZ,
+  weekday: "short",
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+const timeFmt = new Intl.DateTimeFormat("en-KE", {
+  timeZone: KENYA_TZ,
+  hour: "numeric",
+  minute: "2-digit",
+});
+
 function formatEventDateTime(iso: string): { day: string; time: string } {
   const d = new Date(iso);
   return {
-    day: d.toLocaleDateString(undefined, {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    }),
-    time: d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }),
+    day: dayFmt.format(d),
+    time: timeFmt.format(d),
   };
 }
 

@@ -16,6 +16,7 @@ import { listAllSermonSeries, listAllSermonCategories } from "@/services/sermons
 import { formatDuration, youtubeThumbnailUrl } from "@/lib/media";
 import { buildPageMetadata } from "@/lib/seo";
 import { SectionReveal } from "@/components/motion/SectionReveal";
+import { formatKenyaDateWith } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -28,12 +29,7 @@ export const metadata: Metadata = buildPageMetadata({
 });
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatKenyaDateWith(iso, { weekday: "short", month: "short", day: "numeric", year: "numeric" });
 }
 
 export default async function SermonsPage({

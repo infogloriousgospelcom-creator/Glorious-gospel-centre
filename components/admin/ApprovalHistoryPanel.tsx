@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Section";
 import { listApprovalHistory, type ApprovalHistoryRow } from "@/services/admin/approvals.history.read";
+import { formatKenyaDateTime } from "@/lib/dates";
 
 export async function ApprovalHistoryPanel({
   entityType,
@@ -31,7 +32,7 @@ export async function ApprovalHistoryPanel({
                   </>
                 ) : null}
                 <Badge tone="brand">{r.to_status}</Badge>
-                <span className="text-xs text-ink-muted">{new Date(r.created_at).toLocaleString()}</span>
+                <span className="text-xs text-ink-muted">{formatKenyaDateTime(r.created_at)}</span>
               </div>
               {r.note ? (
                 <p className="mt-1 text-sm text-ink">{r.note}</p>

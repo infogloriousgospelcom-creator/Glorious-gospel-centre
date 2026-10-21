@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
 import { LinkButton } from "@/components/ui/LinkButton";
+import { formatKenyaDateTime } from "@/lib/dates";
 import {
   formatGivingAmount,
   givingStatusLabel,
@@ -66,11 +67,7 @@ export function AccountGivingSection({
               <p className="text-xs text-ink-muted">
                 {tx.category_label ?? "Gift"}
                 {" · "}
-                {new Date(tx.created_at).toLocaleDateString(undefined, {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                })}
+                {formatKenyaDateTime(tx.created_at)}
               </p>
               {tx.external_reference ? (
                 <p className="mt-1 font-mono text-xs text-ink-muted">

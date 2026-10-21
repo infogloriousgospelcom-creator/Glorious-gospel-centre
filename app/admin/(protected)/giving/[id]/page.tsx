@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { requireAdmin } from "@/services/auth";
 import { getTransactionForAdmin } from "@/services/admin/giving.read";
 import { StatusOverride } from "../_components/StatusOverride";
+import { formatKenyaDateTime } from "@/lib/dates";
 export const dynamic = "force-dynamic";
 export async function generateMetadata({ params: _ }: { params: { id: string } }): Promise<Metadata> {
   return { title: "Transaction · Admin", robots: { index: false, follow: false } };
@@ -67,11 +68,11 @@ export default async function GivingTransactionPage({ params }: { params: { id: 
                   </div>
                   <div>
                     <dt className="text-ink-muted">Created</dt>
-                    <dd className="text-ink">{new Date(tx.created_at).toLocaleString()}</dd>
+                    <dd className="text-ink">{formatKenyaDateTime(tx.created_at)}</dd>
                   </div>
                   <div>
                     <dt className="text-ink-muted">Updated</dt>
-                    <dd className="text-ink">{new Date(tx.updated_at).toLocaleString()}</dd>
+                    <dd className="text-ink">{formatKenyaDateTime(tx.updated_at)}</dd>
                   </div>
                 </dl>
                 {tx.admin_notes ? (

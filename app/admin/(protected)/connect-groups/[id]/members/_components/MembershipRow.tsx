@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Field, Textarea } from "@/components/ui/Form";
+import { formatKenyaDateTime } from "@/lib/dates";
 import {
   approveConnectGroupMembership,
   declineConnectGroupMembership,
@@ -48,7 +49,7 @@ export function MembershipRow({ row }: { row: ConnectGroupMembershipAdminRow }) 
           <span className="text-xs text-ink-muted">{status}</span>
         </div>
         <p className="text-xs text-ink-muted">
-          Requested {new Date(row.requested_at).toLocaleString()}
+          Requested {formatKenyaDateTime(row.requested_at)}
         </p>
       </div>
 
@@ -61,9 +62,9 @@ export function MembershipRow({ row }: { row: ConnectGroupMembershipAdminRow }) 
 
       {row.decided_at ? (
         <p className="text-xs text-ink-muted">
-          Decided {new Date(row.decided_at).toLocaleString()}
+          Decided {formatKenyaDateTime(row.decided_at)}
           {row.decided_by_full_name ? ` · ${row.decided_by_full_name}` : ""}
-          {row.left_at ? ` · Left ${new Date(row.left_at).toLocaleString()}` : ""}
+          {row.left_at ? ` · Left ${formatKenyaDateTime(row.left_at)}` : ""}
         </p>
       ) : null}
 

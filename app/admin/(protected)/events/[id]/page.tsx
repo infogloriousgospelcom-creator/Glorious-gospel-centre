@@ -11,6 +11,7 @@ import { getEventForAdmin, listEventRegistrations } from "@/services/admin/event
 import { deleteEvent } from "@/services/admin/events";
 import { EventForm } from "../_components/EventForm";
 import { ApprovalHistoryPanel } from "@/components/admin/ApprovalHistoryPanel";
+import { formatKenyaDateTime } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -105,7 +106,7 @@ export default async function EditEventPage({
                         <li key={r.id} className="py-3 text-sm">
                           <p className="font-medium text-ink">{r.full_name}</p>
                           <p className="text-xs text-ink-muted">
-                            {r.email ?? "—"} · {r.phone ?? "—"} · {new Date(r.created_at).toLocaleString()}
+                            {r.email ?? "—"} · {r.phone ?? "—"} · {formatKenyaDateTime(r.created_at)}
                           </p>
                           {r.notes ? (
                             <p className="mt-1 text-xs text-ink-muted">{r.notes}</p>

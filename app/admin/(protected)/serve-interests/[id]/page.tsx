@@ -9,6 +9,7 @@ import { writeAuditLog } from "@/lib/audit";
 import { getClientIpHash } from "@/lib/ip-hash";
 import { getServeInterestForAdmin } from "@/services/admin/serve-interests.read";
 import { ServeInterestUpdateForm } from "../_components/ServeInterestUpdateForm";
+import { formatKenyaDateTime } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -59,7 +60,7 @@ export default async function AdminServeInterestDetailPage({
                 </div>
                 <div>
                   <dt className="text-ink-muted">Submitted</dt>
-                  <dd className="text-ink">{new Date(row.created_at).toLocaleString()}</dd>
+                  <dd className="text-ink">{formatKenyaDateTime(row.created_at)}</dd>
                 </div>
                 <div className="sm:col-span-2">
                   <dt className="text-ink-muted">Member note</dt>
@@ -68,7 +69,7 @@ export default async function AdminServeInterestDetailPage({
                 {row.reviewed_at ? (
                   <div>
                     <dt className="text-ink-muted">Last reviewed</dt>
-                    <dd className="text-ink">{new Date(row.reviewed_at).toLocaleString()}</dd>
+                    <dd className="text-ink">{formatKenyaDateTime(row.reviewed_at)}</dd>
                   </div>
                 ) : null}
               </dl>

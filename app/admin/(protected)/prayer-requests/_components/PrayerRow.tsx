@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Form";
+import { formatKenyaDateTime } from "@/lib/dates";
 import { updatePrayerStatus, updatePrayerNotes, deletePrayerRequest } from "@/services/admin/prayer";
 const STATUSES = ["NEW", "READ", "RESPONDED", "ARCHIVED"] as const;
 
@@ -20,7 +21,7 @@ export function PrayerRow({ row }: { row: { id: string; full_name: string | null
     setSavingNotes(true);
     const res = await updatePrayerNotes(row.id, notes);
     setSavingNotes(false);
-    if (res.ok) setSavedAt(new Date().toLocaleTimeString());
+    if (res.ok) setSavedAt(formatKenyaDateTime(new Date()));
   }
   async function onDelete() {
     if (!confirm("Permanently delete this prayer request?")) return;
@@ -43,7 +44,7 @@ export function PrayerRow({ row }: { row: { id: string; full_name: string | null
       </div>
       <p className="text-sm font-medium text-ink">{row.full_name ?? "Anonymous"}</p>
       <p className="text-xs text-ink-muted">
-        {row.email ?? "—"} · {row.phone ?? "—"} · {new Date(row.created_at).toLocaleString()}
+        {row.email ?? "—"} · {row.phone ?? "—"} · {formatKenyaDateTime(row.created_at)}
       </p>
       <p className="rounded-xl border border-brand-100 bg-surface-muted p-3 text-sm text-ink">{row.request_text}</p>
       <details className="rounded-xl border border-brand-100 bg-surface p-3">

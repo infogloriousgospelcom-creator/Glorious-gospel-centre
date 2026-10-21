@@ -15,6 +15,7 @@ import {
 } from "@/services/admin/serve-interests.read";
 import { SERVE_INTEREST_STATUSES } from "@/lib/ministry-serve-interest";
 import { ServeInterestFilters } from "./_components/ServeInterestFilters";
+import { formatKenyaDateTime } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -92,7 +93,7 @@ export default async function AdminServeInterestsPage({
                       </p>
                       <p className="text-sm text-ink-muted">
                         {row.ministry_name ?? "General serving"} ·{" "}
-                        {new Date(row.created_at).toLocaleDateString()}
+                        {formatKenyaDateTime(row.created_at)}
                       </p>
                     </div>
                     <Badge tone={row.status === "NEW" ? "warning" : "neutral"}>{row.status}</Badge>

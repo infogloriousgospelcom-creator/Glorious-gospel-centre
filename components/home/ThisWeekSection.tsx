@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getPublishedServices, getUpcomingEvents } from "@/services/content";
 import { dayName } from "@/types/content";
 import { SectionReveal } from "@/components/motion/SectionReveal";
+import { KENYA_TZ } from "@/lib/dates";
 
 function formatTime(time: string): string {
   const [h, m] = time.split(":");
@@ -14,13 +15,15 @@ function formatTime(time: string): string {
   return `${h12}:${m} ${ampm}`;
 }
 
+const eventDateFmt = new Intl.DateTimeFormat("en-KE", {
+  timeZone: KENYA_TZ,
+  weekday: "short",
+  month: "short",
+  day: "numeric",
+});
+
 function formatEventDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
+  return eventDateFmt.format(new Date(iso));
 }
 
 export async function ThisWeekSection() {

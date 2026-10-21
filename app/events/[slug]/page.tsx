@@ -19,8 +19,19 @@ import {
 } from "@/lib/seo";
 import { EventRegistrationForm } from "@/app/events/_components/EventRegistrationForm";
 import { eventHasEnded } from "@/lib/event-registration";
+import { KENYA_TZ } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
+
+const dateTimeFmt = new Intl.DateTimeFormat("en-KE", {
+  timeZone: KENYA_TZ,
+  weekday: "long",
+  month: "long",
+  day: "numeric",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
 
 export async function generateMetadata({
   params,
@@ -44,15 +55,7 @@ export async function generateMetadata({
 }
 
 function formatDateTime(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleString(undefined, {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  return dateTimeFmt.format(new Date(iso));
 }
 
 export default async function EventDetailPage({

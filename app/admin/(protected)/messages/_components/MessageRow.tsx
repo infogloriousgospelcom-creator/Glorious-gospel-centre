@@ -1,6 +1,7 @@
 "use client";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { formatKenyaDateTime } from "@/lib/dates";
 import { markMessageRead, deleteMessage } from "@/services/admin/messages";
 
 export function MessageRow({ msg }: { msg: { id: string; full_name: string; email: string; phone: string | null; subject: string | null; message: string; is_read: boolean; created_at: string } }) {
@@ -25,7 +26,7 @@ export function MessageRow({ msg }: { msg: { id: string; full_name: string; emai
       </div>
       <p className="text-sm font-medium text-ink">{msg.full_name} <span className="font-normal text-ink-muted">· {msg.email}{msg.phone ? ` · ${msg.phone}` : ""}</span></p>
       <p className="rounded-xl border border-brand-100 bg-surface-muted p-3 text-sm text-ink">{msg.message}</p>
-      <p className="text-xs text-ink-muted">{new Date(msg.created_at).toLocaleString()}</p>
+      <p className="text-xs text-ink-muted">{formatKenyaDateTime(msg.created_at)}</p>
     </li>
   );
 }

@@ -11,6 +11,7 @@ import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Field, Textarea } from "@/components/ui/Form";
 import { LinkButton } from "@/components/ui/LinkButton";
+import { formatKenyaDateTime } from "@/lib/dates";
 import type { ConnectGroupMembershipOwn } from "@/lib/connect-group-members";
 import { membershipStatusLabel } from "@/lib/connect-group-members";
 
@@ -107,7 +108,7 @@ export function ConnectGroupMembershipPanel({
         </Alert>
         {membership.requested_at ? (
           <p className="text-xs text-ink-muted">
-            Requested {new Date(membership.requested_at).toLocaleDateString()}
+            Requested {formatKenyaDateTime(membership.requested_at)}
           </p>
         ) : null}
       </div>
