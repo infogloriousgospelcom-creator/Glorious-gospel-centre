@@ -1,0 +1,4 @@
+* text=auto eol=lf
+
+# Binary assets must never be line-ending normalized
+*.{png,jpg,jpeg,gif,webp,avif,ico,woff,woff2,ttf,eot,mp4,mov,pdf,zip} binary
