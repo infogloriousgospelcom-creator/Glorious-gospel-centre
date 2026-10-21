@@ -20,7 +20,7 @@
 - **All permission checks go through `supabase.rpc("has_permission", { permission_key })`** with the user-scoped client from `supabase/server.ts` — never the service-role client.
 - **Service-role client (`supabase/admin.ts`) is server-only** and is only used after a permission check has already passed.
 - **No secrets in the client bundle.** `getServerEnv()` stays in `server-only` modules only.
-- **Dates rendered to users use `Africa/Nairobi`.** New date formatting goes through the helper created in Task 3.3.
+- **Dates rendered to users use `Africa/Nairobi`.** New date formatting goes through the helper created in Task 10.
 - **Money is stored in integer cents.** One exported constant defines the cap; never hardcode a limit twice.
 - **Every task ends with a commit.** Commit messages follow the existing convention: `fix(scope): <imperative summary>`.
 - **Verification gate for every task:** `npm run typecheck && npm run lint && npm test` all pass, and `npm run build` passes for any task touching `app/` or `next.config.mjs`.
@@ -29,17 +29,17 @@
 
 These five failure modes are implied by the spec but not directly exercised by most of the tasks below. Each has a pinned test in the task that owns the code.
 
-1. **A signed-in member (not an admin) tampering with an `id` parameter** must never read or write another member's giving, notifications, serve-interest, connect-group or testimony data. Pinned in Task 1.2 (`services/admin/*` permission assertions) and Task 4.4.
-2. **An M-Pesa callback arriving twice, or arriving with an amount/phone that does not match the pending transaction**, must not double-complete the transaction and must not record a mismatched amount. Pinned in Task 2.1 and Task 2.2.
-3. **Two members sharing one Kenyan family phone number** giving the same amount to the same category must not block each other. Pinned in Task 2.3.
-4. **A crawler requesting a URL that does not exist** must receive HTTP 404, not 200, and must not be indexed. Pinned in Task 3.2 and Task 3.4.
+1. **A signed-in member (not an admin) tampering with an `id` parameter** must never read or write another member's giving, notifications, serve-interest, connect-group or testimony data. Pinned in Task 2 (`services/admin/*` permission assertions) and Task 4.4.
+2. **An M-Pesa callback arriving twice, or arriving with an amount/phone that does not match the pending transaction**, must not double-complete the transaction and must not record a mismatched amount. Pinned in Task 3 and Task 4.
+3. **Two members sharing one Kenyan family phone number** giving the same amount to the same category must not block each other. Pinned in Task 5.
+4. **A crawler requesting a URL that does not exist** must receive HTTP 404, not 200, and must not be indexed. Pinned in Task 9 and Task 11.
 5. **Two admins editing the same record in two tabs** — the second save must be rejected with a conflict message, not silently overwrite the first editor's changes. Pinned in Task 4.3.
 
 ---
 
 # Wave 1A — Authorization & RLS
 
-### Task 1.1: Let admins read their own admin row (unblocks all non-SUPER_ADMIN roles)
+### Task 1: Let admins read their own admin row (unblocks all non-SUPER_ADMIN roles)
 
 **Findings:** `#1` · **Severity:** Critical
 
@@ -147,17 +147,19 @@ git commit -m "fix(auth): allow admins to read their own admin row"
 
 ---
 
-### Task 1.2: Add a public SELECT policy for `gallery_items`
+### Task 2: Restore the missing RLS policies on `gallery_items`
 
 **Findings:** `#2` · **Severity:** Critical
 
+> **Scope widened by the controller (2026-10-21).** The original task text covered only the public SELECT policy. On reading the code, the gap is larger: `gallery_items` has **no policy at all**, and the admin gallery write path uses the **session** client — `services/admin/gallery.ts:109` (insert) and `:125` (delete) call `auth.supabase.from("gallery_items")` where `auth.supabase` comes from `createClient()` in `supabase/server.ts`, i.e. the RLS-enforced session client, not the service-role client. So adding and removing photos in the admin gallery is **also** broken, and `services/admin/gallery.read.ts:38` (also the session client) cannot read items belonging to a draft album. The task below restores the whole policy set, mirroring the house pattern that `0009_rls_policies.sql:207-216` already uses for `gallery_albums`.
+
 **Files:**
-- Create: `supabase/migrations/0040_gallery_items_public_select.sql`
+- Create: `supabase/migrations/0040_gallery_items_policies.sql`
 - Test: `tests/unit/gallery-rls.test.ts`
 
 **Interfaces:**
-- Consumes: `public.gallery_albums(id, status, published_at)`, `public.gallery_items(album_id)`.
-- Produces: `gallery_items_public_select` policy + column-level grant for `anon`/`authenticated`.
+- Consumes: `public.gallery_albums(id, status)`, `public.is_published(public.content_status)` (defined at `0009_rls_policies.sql:30`), `public.has_permission(text)` (defined at `0003_authorization_helpers.sql:45`), `public.gallery_items(album_id, storage_path, caption, alt_text, sort_order, uploaded_by, created_at)`.
+- Produces: `gallery_items_public_select`, `gallery_items_admin_select`, `gallery_items_admin_write` policies; column-level grants; `tg_gallery_items_guard_uploaded_by` BEFORE INSERT OR UPDATE trigger.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -166,18 +168,31 @@ git commit -m "fix(auth): allow admins to read their own admin row"
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 
-const m = readFileSync("supabase/migrations/0040_gallery_items_public_select.sql", "utf8");
+const m = readFileSync("supabase/migrations/0040_gallery_items_policies.sql", "utf8");
 
-describe("gallery_items public select", () => {
+describe("gallery_items policies", () => {
   it("exposes items only via a published album", () => {
     expect(m).toMatch(/create policy gallery_items_public_select/i);
-    expect(m).toMatch(/status = 'PUBLISHED'/);
+    expect(m).toMatch(/public\.is_published\(a\.status\)/);
   });
-  it("grants only the safe columns", () => {
+  it("grants only the safe columns to the public roles", () => {
     expect(m).toMatch(/grant select \(id, album_id, storage_path, caption, alt_text, sort_order, created_at\)/i);
   });
-  it("does not expose uploaded_by", () => {
+  it("does not expose uploaded_by through a select grant", () => {
     expect(m).not.toMatch(/grant select \([^)]*uploaded_by/i);
+  });
+  it("lets media managers read items in draft albums", () => {
+    expect(m).toMatch(/create policy gallery_items_admin_select/i);
+    expect(m).toMatch(/has_permission\('media\.manage'\)/);
+  });
+  it("lets media managers insert and delete items", () => {
+    expect(m).toMatch(/create policy gallery_items_admin_write/i);
+    expect(m).toMatch(/grant insert/i);
+    expect(m).toMatch(/grant delete/i);
+  });
+  it("sets uploaded_by server-side so staff cannot forge it", () => {
+    expect(m).toMatch(/new\.uploaded_by := auth\.uid\(\)/);
+    expect(m).toMatch(/before insert on public\.gallery_items/i);
   });
 });
 ```
@@ -190,44 +205,105 @@ Expected: FAIL — file missing.
 - [ ] **Step 3: Create the migration**
 
 ```sql
--- 0040 — gallery_items had RLS enabled (0009:20) but no policy, so every
--- public read returned zero rows and the gallery rendered empty.
--- The fix is a policy (not a table grant) so uploaded_by stays private.
+-- 0040 — gallery_items had RLS enabled (0009:20) but NO policy of any kind.
+--
+-- Consequences, both of which are live bugs:
+--   1. The public gallery rendered empty — every anon/authenticated read of
+--      gallery_items returned zero rows (services/gallery.ts:96-98 and
+--      services/content.ts:395).
+--   2. The ADMIN gallery was equally broken — services/admin/gallery.ts uses
+--      the session client (not the service-role client) for its insert and
+--      delete, so adding and removing photos failed, and
+--      services/admin/gallery.read.ts could not read items in draft albums.
+--
+-- The policies below mirror the house pattern that 0009 already applies to
+-- gallery_albums (0009_rls_policies.sql:207-216).
 
+-- Public read: an item is visible exactly when its album is visible, so the
+-- item policy and the album policy can never disagree.
 drop policy if exists gallery_items_public_select on public.gallery_items;
 create policy gallery_items_public_select on public.gallery_items
   for select to anon, authenticated
   using (
     exists (
-      select 1 from public.gallery_albums a
+      select 1
+      from public.gallery_albums a
       where a.id = gallery_items.album_id
-        and a.status = 'PUBLISHED'
-        and a.published_at is not null
+        and public.is_published(a.status)
     )
   );
 
+-- Admin read of any album, published or not.
+drop policy if exists gallery_items_admin_select on public.gallery_items;
+create policy gallery_items_admin_select on public.gallery_items
+  for select to authenticated
+  using (public.has_permission('media.manage'));
+
+-- Admin write.
+drop policy if exists gallery_items_admin_write on public.gallery_items;
+create policy gallery_items_admin_write on public.gallery_items
+  for all to authenticated
+  using (public.has_permission('media.manage'))
+  with check (public.has_permission('media.manage'));
+
+-- Column grants. The public roles see only the columns the public UI renders;
+-- uploaded_by is a staff-only audit column and stays hidden from anon.
 revoke all on table public.gallery_items from anon, authenticated;
 grant select (id, album_id, storage_path, caption, alt_text, sort_order, created_at)
   on table public.gallery_items to anon, authenticated;
+
+-- INSERT privilege is required on every column the client names, so
+-- uploaded_by must be granted even though the trigger below overwrites it.
+-- This is the same pattern as ministry_serve_interests in 0036, which grants
+-- insert on profile_id and lets a BEFORE INSERT trigger overwrite it.
+-- No UPDATE grant: the app has no update path for gallery items (it inserts
+-- and deletes only). DELETE is granted because staff remove photos.
+grant insert (album_id, storage_path, caption, alt_text, sort_order, uploaded_by),
+      delete
+  on table public.gallery_items to authenticated;
+
+-- uploaded_by is set by the database, never by the client. This mirrors the
+-- pattern already used for ministry_serve_interests in 0036.
+create or replace function public.tg_gallery_items_guard_uploaded_by()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.uploaded_by := auth.uid();
+  return new;
+end;
+$$;
+
+drop trigger if exists gallery_items_guard_uploaded_by on public.gallery_items;
+create trigger gallery_items_guard_uploaded_by
+  before insert on public.gallery_items
+  for each row execute function public.tg_gallery_items_guard_uploaded_by();
 ```
+
+> **Column grants and the app's queries.** The public UI selects exactly `id, album_id, storage_path, caption, alt_text, sort_order` (`services/gallery.ts:97`, `services/content.ts:395`) and `id` alone for the count (`services/gallery.ts:112`); the admin read selects `id, album_id, storage_path, caption, alt_text, sort_order, created_at` (`services/admin/gallery.read.ts:39`). All of those columns are granted. `uploaded_by` is granted for INSERT but not for SELECT, so it stays invisible to the public and to the admin UI, and the trigger overwrites whatever the client sent with `auth.uid()`. **The app's insert must keep sending `uploaded_by`** (`services/admin/gallery.ts:112`) — Postgres rejects an INSERT that names a column the role has no INSERT privilege on, so removing it from the grant without removing it from the app would break photo uploads outright.
 
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run tests/unit/gallery-rls.test.ts`
-Expected: PASS (3 tests).
+Expected: PASS (6 tests).
+
+Also confirm the new migration parses — `tests/unit/migrations-parse.test.ts` (added in Task 1) parses every file in `supabase/migrations/`, so:
+
+Run: `npx vitest run tests/unit/migrations-parse.test.ts`
+Expected: PASS, with 40 of 40 migrations parsed.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add supabase/migrations/0040_gallery_items_public_select.sql tests/unit/gallery-rls.test.ts
-git commit -m "fix(gallery): add public select policy for gallery items"
+git add supabase/migrations/0040_gallery_items_policies.sql tests/unit/gallery-rls.test.ts
+git commit -m "fix(gallery): restore missing rls policies on gallery items"
 ```
 
 ---
 
 # Wave 1B — Payment Integrity
 
-### Task 2.1: Enforce the payment transition map on the staff status override
+### Task 3: Enforce the payment transition map on the staff status override
 
 **Findings:** `#3` · **Severity:** Critical
 
@@ -385,7 +461,7 @@ git commit -m "fix(giving): enforce payment transitions on staff status override
 
 ---
 
-### Task 2.2: Bind the M-Pesa callback to the payment event, not just the transaction
+### Task 4: Bind the M-Pesa callback to the payment event, not just the transaction
 
 **Findings:** `#11`, `#12`, `#16` · **Severity:** High
 
@@ -522,7 +598,7 @@ git commit -m "fix(payments): bind mpesa callback to payment event and stop logg
 
 ---
 
-### Task 2.3: Fix the idempotency-key collision and release the key on failure
+### Task 5: Fix the idempotency-key collision and release the key on failure
 
 **Findings:** `#10`, `#15` · **Severity:** Critical
 
@@ -616,7 +692,7 @@ git commit -m "fix(giving): make idempotency key unique per request and release 
 
 ---
 
-### Task 2.4: Add a reaper for stale giving transactions
+### Task 6: Add a reaper for stale giving transactions
 
 **Findings:** `#9` · **Severity:** Critical
 
@@ -670,7 +746,7 @@ PROCESSING: new Set(["SUCCESS", "FAILED", "CANCELLED"]),
 
 **No change to `lib/payment-transitions.ts` is required.** The Step 1 assertions on `canTransition("PROCESSING", "FAILED")` and `canTransition("PENDING", "FAILED")` are therefore **regression guards that already pass** — they are not the failing part of the test. The failing assertion is the one that reads `supabase/migrations/0043_giving_reaper.sql`, which does not exist yet.
 
-Do **not** modify the `ALLOWED` map. Task 2.1 added a separate `STAFF_ALLOWED` map for the staff path; that is where the transition rules live.
+Do **not** modify the `ALLOWED` map. Task 3 added a separate `STAFF_ALLOWED` map for the staff path; that is where the transition rules live.
 
 - [ ] **Step 4: Create the migration**
 
@@ -729,7 +805,7 @@ git commit -m "fix(giving): expire stale giving transactions"
 
 ---
 
-### Task 2.5: Unify the donation cap into one exported constant
+### Task 7: Unify the donation cap into one exported constant
 
 **Findings:** `#15` · **Severity:** High
 
@@ -804,7 +880,7 @@ git commit -m "fix(giving): unify donation cap across schema, service and form"
 
 # Wave 1C — SEO & Accessibility Foundations
 
-### Task 3.1: Ship a real default OG image and fix the homepage title
+### Task 8: Ship a real default OG image and fix the homepage title
 
 **Findings:** `#4`, `#8` · **Severity:** Critical
 
@@ -961,7 +1037,7 @@ git commit -m "fix(seo): ship default og image and absolute homepage title"
 
 ---
 
-### Task 3.2: Return real 404s for unknown URLs
+### Task 9: Return real 404s for unknown URLs
 
 **Findings:** `#5`, `#6` · **Severity:** Critical
 
@@ -1048,7 +1124,7 @@ git commit -m "fix(routing): return real 404s for unknown urls"
 
 ---
 
-### Task 3.3: Give every public page exactly one `<h1>`
+### Task 10: Give every public page exactly one `<h1>`
 
 **Findings:** `#7`, `#29`, `#35` · **Severity:** Critical
 
@@ -1181,7 +1257,7 @@ git commit -m "fix(a11y): give every public page one h1 and pin dates to Africa/
 
 ---
 
-### Task 3.4: Complete the structured data for local SEO
+### Task 11: Complete the structured data for local SEO
 
 **Findings:** `#4`, `#7`, SEO-M1-#M8 · **Severity:** High
 
@@ -1300,7 +1376,7 @@ git commit -m "feat(seo): complete local business and content structured data"
 
 # Wave 1D — Hardening
 
-### Task 4.1: Enforce a CSP with nonces and restrict Storage uploads
+### Task 12: Enforce a CSP with nonces and restrict Storage uploads
 
 **Findings:** `#13`, `#14` · **Severity:** High
 
@@ -1439,7 +1515,7 @@ git commit -m "feat(security): enforce csp with nonces and restrict storage cont
 
 # Wave 2 — Correctness & Performance
 
-### Task 5.1: Fix PostgREST filter escaping and comma-breaking search
+### Task 13: Fix PostgREST filter escaping and comma-breaking search
 
 **Findings:** `#26`, `#27` · **Severity:** Medium
 
@@ -1508,7 +1584,7 @@ git commit -m "fix(search): escape postgrest filter metacharacters in search ter
 
 ---
 
-### Task 5.2: Paginate admin lists and compute totals correctly
+### Task 14: Paginate admin lists and compute totals correctly
 
 **Findings:** `#17`, `#42` · **Severity:** High
 
@@ -1590,7 +1666,7 @@ git commit -m "feat(admin): paginate admin lists and compute totals with count q
 
 ---
 
-### Task 5.3: Add optimistic locking to admin content updates
+### Task 15: Add optimistic locking to admin content updates
 
 **Findings:** `#20` · **Severity:** High
 
@@ -1662,7 +1738,7 @@ git commit -m "feat(admin): add optimistic locking to content updates"
 
 ---
 
-### Task 5.4: Audit-log every admin mutation
+### Task 16: Audit-log every admin mutation
 
 **Findings:** `#18`, `#36` · **Severity:** High
 
@@ -1731,7 +1807,7 @@ git commit -m "feat(admin): audit log every admin mutation and share crud helper
 
 ---
 
-### Task 5.5: Move public content routes off `force-dynamic` and fix cross-instance caching
+### Task 17: Move public content routes off `force-dynamic` and fix cross-instance caching
 
 **Findings:** `#22` · **Severity:** High
 
@@ -1826,7 +1902,7 @@ git commit -m "perf: cache public content and use cross-instance revalidation ta
 
 ---
 
-### Task 5.6: Move the Vercel region and trim the public asset weight
+### Task 18: Move the Vercel region and trim the public asset weight
 
 **Findings:** `#21`, `#41`, `#44` · **Severity:** High
 
@@ -1947,7 +2023,7 @@ git commit -m "perf: move videos to storage, compress assets and target a closer
 
 ---
 
-### Task 5.7: Wire `aria-describedby` and fix colour contrast
+### Task 19: Wire `aria-describedby` and fix colour contrast
 
 **Findings:** `#34`, `#35` · **Severity:** Medium
 
@@ -2129,7 +2205,7 @@ Expected: `404` for all unknown URLs, `200` for `/opengraph-image`, `1` h1 on ev
 - **Spec coverage:** every Critical (#1-#10) and High (#11-#22) finding from `docs/AUDIT_2026-10-21.md` maps to a task in Waves 1-2. The 25 Medium findings map to Wave 3. The 10 product gaps map to Wave 4. The 31 Low findings are covered by the Wave 3 table and the documentation task below.
 - **Step scan:** every step names one file, one behaviour and one verification command. No step says "handle edge cases" or "add appropriate validation".
 - **Type consistency:** `resolveSiteUrl()`, `buildPageMetadata({ absoluteTitle })`, `escapePostgrestLike()`, `paginate()`, `MAX_GIFT_CENTS`, `generateIdempotencyKey(categoryId, amountCents, phone, userId, transactionId)`, `signCallbackToken(transactionId, secret, checkoutId?)` and `formatKenyaDate()` are each introduced once and consumed with the same signature everywhere.
-- **Review Focus:** all five failure modes have a pinned test — member id tampering (Task 1.2, 5.4), duplicate/mismatched callback (Task 2.1, 2.2), shared family phone (Task 2.3), crawler 404 (Task 3.2), concurrent admin edits (Task 5.3).
+- **Review Focus:** all five failure modes have a pinned test — member id tampering (Task 2, 5.4), duplicate/mismatched callback (Task 3, 2.2), shared family phone (Task 5), crawler 404 (Task 9), concurrent admin edits (Task 15).
 - **Proportion:** the plan states decisions an implementer cannot make alone (exact SQL, exact function signatures, exact test assertions) without transcribing whole files.
 
 ## Documentation Task (do last)
