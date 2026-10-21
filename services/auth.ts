@@ -61,26 +61,17 @@ export async function getCurrentAdmin(): Promise<AdminSession | null> {
 
     const userId = userData.user.id;
 
-    const [{ data: profile }, { data: roles }, { data: perms }] = await Promise.all([
+    const [{ data: profile }, { data: roleRows }, { data: perms }] = await Promise.all([
       supabase
         .from("profiles")
         .select("full_name,avatar_url,phone")
         .eq("id", userId)
         .maybeSingle(),
-      supabase
-        .from("admins")
-        .select("role:roles(key)")
-        .eq("profile_id", userId)
-        .eq("is_active", true),
+      supabase.rpc("roles_for_user", { p_user_id: userId }),
       supabase.rpc("permissions_for_user", { p_user_id: userId }),
     ]);
 
-    const roleKeys = (roles ?? [])
-      .map((r) => {
-        const role = Array.isArray(r.role) ? r.role[0] : r.role;
-        return (role as { key?: string } | null)?.key;
-      })
-      .filter((k): k is string => Boolean(k));
+    const roleKeys = (roleRows ?? []).map((r: { key: string }) => r.key).filter(Boolean);
 
     const permissionKeys = (perms ?? []).map((p: { key: string }) => p.key);
 
