@@ -41,7 +41,7 @@ export function PageHeader({
           )}
         >
           {eyebrow ? <SectionEyebrow>{eyebrow}</SectionEyebrow> : null}
-          <SectionTitle className={align === "center" ? undefined : "text-left"}>
+          <SectionTitle as="h1" className={align === "center" ? undefined : "text-left"}>
             {title}
           </SectionTitle>
           <div

@@ -135,10 +135,15 @@ export function CmsPageView({
             ) : null}
           </article>
         ) : (
-          <EmptyState
-            title={`${fallbackTitle} coming soon`}
-            description="This page will populate once content is published through the admin."
-          />
+          <>
+            {!hideTitle ? (
+              <h1 className="heading-1 mb-4 text-balance">{fallbackTitle}</h1>
+            ) : null}
+            <EmptyState
+              title={`${fallbackTitle} coming soon`}
+              description="This page will populate once content is published through the admin."
+            />
+          </>
         )}
       </Container>
     </Section>
