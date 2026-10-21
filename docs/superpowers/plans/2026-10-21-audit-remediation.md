@@ -1350,13 +1350,34 @@ git commit -m "fix(seo): ship default og image and absolute homepage title"
 
 **Findings:** `#5`, `#6` · **Severity:** Critical
 
+> **Corrected by the controller (2026-10-21) after an empirical test.** The original task text said to remove the root `app/loading.tsx` and "move the skeleton into the segments that need it". **That does not work.** The controller built the app and measured it:
+>
+> ```
+> root app/loading.tsx REMOVED, app/sermons/loading.tsx ADDED
+> /sermons/nope        -> 200   ← segment loading file reintroduced the bug
+> /sermons/series/nope -> 200   ← same
+> /events/nope         -> 404
+> /gallery/nope        -> 404
+> /connect/nope        -> 404
+> /testimonies/nope    -> 404
+> /ministries/nope     -> 200   ← the separate `return null` bug
+> ```
+>
+> A segment-level `loading.tsx` creates a Suspense boundary that flushes the response shell with HTTP 200 **before** the page resolves, exactly like the root one does. Any route under that segment that calls `notFound()` therefore returns 200. **There is no safe segment to put a `loading.tsx` in**, because every dynamic route in this app calls `notFound()`.
+
 **Files:**
-- Modify: `app/loading.tsx` (delete or scope), `app/ministries/[slug]/page.tsx:74`
-- Create: `app/not-found.tsx` metadata addition
+- Delete: `app/loading.tsx`
+- Modify: `app/ministries/[slug]/page.tsx`
+- Modify: `app/not-found.tsx`
 - Test: `tests/unit/not-found-behaviour.test.ts`
 
 **Interfaces:**
-- Produces: HTTP 404 for every unmatched dynamic route.
+- Produces: HTTP 404 for every unmatched URL under `/sermons/*`, `/events/*`, `/ministries/*`, `/gallery/*`, `/connect/*`, `/testimonies/*`.
+
+**The two defects:**
+
+1. **Every "not found" page returns HTTP 200.** The root `app/loading.tsx` creates a Suspense boundary that flushes the response shell with **HTTP 200** before the page resolves. When `notFound()` then throws, Next sets `res.statusCode = 404`, but the headers are already sent, so the status is lost. Google treats these as **soft 404s**: it indexes them as thin duplicate pages, reports "Soft 404" in Search Console, and burns crawl budget on an infinite URL space.
+2. **`app/ministries/[slug]/page.tsx` renders a blank 200 page** for an unknown slug, because it does `return null` instead of calling `notFound()`. Every *other* dynamic route in the app already calls `notFound()` — this one is the odd case out.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1366,8 +1387,14 @@ import { describe, expect, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 
 describe("not found behaviour", () => {
-  it("does not have a root loading.tsx that flushes a 200 shell", () => {
+  it("has no root loading.tsx that flushes a 200 shell", () => {
     expect(existsSync("app/loading.tsx")).toBe(false);
+  });
+  it("has no segment loading.tsx under a segment that calls notFound()", () => {
+    // A segment-level loading.tsx causes the same 200 flush as the root one.
+    for (const seg of ["sermons", "events", "gallery", "ministries", "connect", "testimonies"]) {
+      expect(existsSync(`app/${seg}/loading.tsx`), seg).toBe(false);
+    }
   });
   it("ministries slug calls notFound()", () => {
     const src = readFileSync("app/ministries/[slug]/page.tsx", "utf8");
@@ -1384,17 +1411,28 @@ describe("not found behaviour", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/unit/not-found-behaviour.test.ts`
-Expected: FAIL — `app/loading.tsx` exists and ministries returns `null`.
+Expected: FAIL — `app/loading.tsx` exists and the ministries route returns `null`.
 
-- [ ] **Step 3: Move the loading skeleton out of the root**
+- [ ] **Step 3: Delete the root loading file**
 
-Delete `app/loading.tsx`. Add route-level `loading.tsx` files to the segments that benefit from streaming — at minimum `app/sermons/loading.tsx`, `app/events/loading.tsx`, `app/gallery/loading.tsx`, `app/account/loading.tsx`, `app/admin/(protected)/loading.tsx` — each a copy of the existing skeleton.
+```bash
+git rm app/loading.tsx
+```
 
-> **Critical:** do **not** add `app/loading.tsx` back at the root. A root `loading.tsx` creates the Suspense boundary that flushes HTTP 200 before `notFound()` can set the status.
+**Do not add a replacement anywhere.** Do not create `app/sermons/loading.tsx`, `app/events/loading.tsx`, `app/gallery/loading.tsx`, `app/ministries/loading.tsx`, `app/connect/loading.tsx` or `app/testimonies/loading.tsx` — the controller's measurement above proves each of them reintroduces the 200.
 
-- [ ] **Step 4: Make the ministries route call `notFound()`**
+If a loading state is wanted for a slow page, the correct pattern is a Suspense boundary **inside** the page, wrapping a slow child component — not a segment-level `loading.tsx`. That is out of scope for this task.
 
-In `app/ministries/[slug]/page.tsx`:
+- [ ] **Step 4: Make the ministries route call notFound()**
+
+In `app/ministries/[slug]/page.tsx`, the route currently does:
+
+```ts
+const ministry = await getMinistryBySlug(params.slug);
+if (!ministry) return null;
+```
+
+Change it to:
 
 ```ts
 import { notFound } from "next/navigation";
@@ -1403,31 +1441,56 @@ const ministry = await getMinistryBySlug(params.slug);
 if (!ministry) notFound();
 ```
 
+Check that `next/navigation` is not already imported under a different alias, and that `notFound` is not already in scope.
+
 - [ ] **Step 5: Make the 404 page non-indexable**
 
-In `app/not-found.tsx` add:
+In `app/not-found.tsx`, add:
 
 ```tsx
+import type { Metadata } from "next";
+
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 ```
 
-- [ ] **Step 6: Verify with a production build**
+The 404 page currently inherits the root layout's `alternates.canonical` of `/`, which is wrong for a page that should never be indexed.
 
-Run: `npm run build && npm run start`
-Then: `for p in events/nope sermons/nope ministries/nope gallery/nope; do echo -n "/$p -> "; curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/$p; done`
-Expected: `404` for all four.
-
-- [ ] **Step 7: Run test to verify it passes**
+- [ ] **Step 6: Run test to verify it passes**
 
 Run: `npx vitest run tests/unit/not-found-behaviour.test.ts`
-Expected: PASS.
+Expected: PASS (4 tests).
+
+- [ ] **Step 7: Verify the HTTP status against a production build — this is the part that matters**
+
+Run: `npm run build`, then start the server and check the status of every route that can call `notFound()`:
+
+```bash
+npm run start &
+# wait for it to come up
+for p in sermons/nope sermons/series/nope events/nope ministries/nope gallery/nope connect/nope testimonies/nope not-a-route; do
+  printf "/%-22s -> " "$p"
+  curl -s -o /dev/null -w "%{http_code}\n" "http://localhost:3000/$p"
+done
+```
+
+**Every one must return 404.** If any returns 200, find the `loading.tsx` that is causing it and remove it — that is the only way this regresses.
+
+Also confirm a real page still renders:
+
+```bash
+curl -s -o /dev/null -w "/ -> %{http_code}\n" http://localhost:3000/
+```
+
+Expected: `200`.
+
+Stop the server when you are done.
 
 - [ ] **Step 8: Commit**
 
 ```bash
-git add -A app/loading.tsx app/ministries/\[slug\]/page.tsx app/not-found.tsx app/sermons/loading.tsx app/events/loading.tsx app/gallery/loading.tsx app/account/loading.tsx tests/unit/not-found-behaviour.test.ts
+git add -A app/loading.tsx app/ministries/\[slug\]/page.tsx app/not-found.tsx tests/unit/not-found-behaviour.test.ts
 git commit -m "fix(routing): return real 404s for unknown urls"
 ```
 
