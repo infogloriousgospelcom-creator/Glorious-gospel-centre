@@ -439,7 +439,9 @@ Deno.serve(async (req: Request) => {
       typeof amountCents !== "number" ||
       !Number.isFinite(amountCents) ||
       amountCents <= 0 ||
-      amountCents > 10_000_000 ||
+      // Keep in sync with MAX_GIFT_CENTS in lib/giving-limits.ts — the Edge
+// Function bundle cannot import from the app's lib/ directory.
+amountCents > 10_000_000 ||
       !phone ||
       typeof phone !== "string"
     ) {

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { MAX_GIFT_CENTS, MIN_GIFT_CENTS } from "@/lib/giving-limits";
 import { createClient } from "@/supabase/server";
 import { createServiceRoleClient, isServiceRoleConfigured } from "@/supabase/admin";
 import { getServerEnv, publicEnv } from "@/lib/env";
@@ -53,7 +54,7 @@ export interface InitiateGivingResult {
 export async function initiateGiving(
   input: InitiateGivingInput,
 ): Promise<InitiateGivingResult> {
-  if (input.amountCents <= 0 || input.amountCents > 10_000_000) {
+  if (input.amountCents < MIN_GIFT_CENTS || input.amountCents > MAX_GIFT_CENTS) {
     return {
       ok: false,
       message: "Amount must be greater than zero and within allowed limits.",

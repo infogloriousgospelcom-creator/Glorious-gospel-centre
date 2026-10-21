@@ -2,6 +2,7 @@
 
 import "server-only";
 import { z } from "zod";
+import { MAX_GIFT_SHILLINGS } from "@/lib/giving-limits";
 import { consumeAsync } from "@/lib/rate-limit";
 import { getClientIpHash } from "@/lib/ip-hash";
 import { initiateGiving } from "@/services/giving";
@@ -11,7 +12,7 @@ const SubmitSchema = z.object({
   amount: z.coerce
     .number()
     .positive("Amount must be greater than zero.")
-    .max(10_000_000, "Amount too large."),
+    .max(MAX_GIFT_SHILLINGS, "Maximum gift is KES 100,000."),
   currency: z.string().trim().min(3).max(8).default("KES"),
   phone: z
     .string()

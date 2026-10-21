@@ -6,6 +6,7 @@ import { submitGiving, type GivingState } from "@/services/giving.actions";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Form";
+import { MAX_GIFT_SHILLINGS } from "@/lib/giving-limits";
 import { usePaymentStatus, type PaymentStatus } from "@/lib/hooks/usePaymentStatus";
 
 interface CategoryOpt {
@@ -187,6 +188,7 @@ export function GivingForm({ categories }: { categories: CategoryOpt[] }) {
             name="amount"
             type="number"
             min={1}
+            max={MAX_GIFT_SHILLINGS}
             step={1}
             required
             inputMode="numeric"
