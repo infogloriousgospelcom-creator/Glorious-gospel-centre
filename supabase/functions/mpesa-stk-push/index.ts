@@ -80,10 +80,15 @@ function generateIdempotencyKey(
   categoryId: string,
   amountCents: number,
   phone: string,
+  userId: string,
 ): string {
-  const bucket = Math.floor(Date.now() / (5 * 60 * 1000));
-
-  return `${categoryId}|${amountCents}|${phone}|${bucket}`;
+  // Unique per request. The previous 5-minute time bucket collided across
+  // users on a shared phone number and permanently blocked retries, because
+  // the row that reserved the key was never cleaned up.
+  //
+  // The `|` separator marks this as a temporary key rather than a real
+  // provider reference; the callback relies on that marker.
+  return `${categoryId}|${amountCents}|${phone}|${userId}|${crypto.randomUUID()}`;
 }
 
 /**
@@ -553,6 +558,7 @@ Deno.serve(async (req: Request) => {
       categoryId,
       normalizedAmountCents,
       normalizedPhone,
+      user.id,
     );
 
     let transactionId: string;
@@ -650,13 +656,38 @@ Deno.serve(async (req: Request) => {
         description?.trim() || "GGC Giving",
     };
 
-    const result = isMockMode(config)
-      ? stkPushMock(request)
-      : await stkPushLive(
-          config,
-          request,
-          callbackUrl,
-        );
+    let result: StkPushResult;
+    try {
+      result = isMockMode(config)
+        ? stkPushMock(request)
+        : await stkPushLive(
+            config,
+            request,
+            callbackUrl,
+          );
+    } catch (error) {
+      console.error("Daraja STK push failed:", error);
+
+      // Release the reserved idempotency key. Without this the row stays PENDING
+      // holding the key forever, and the unique index blocks the member's retry.
+      await supabase
+        .from("giving_transactions")
+        .update({ status: "FAILED", external_reference: null })
+        .eq("id", transactionId);
+
+      return new Response(
+        JSON.stringify({
+          error: "Could not initiate giving",
+        }),
+        {
+          status: 500,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+    }
 
     const updatedReference =
       result.externalReference ||
