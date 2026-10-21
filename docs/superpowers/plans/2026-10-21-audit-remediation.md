@@ -862,12 +862,13 @@ git commit -m "fix(giving): make idempotency key unique per request and release 
 **Findings:** `#9` · **Severity:** Critical
 
 **Files:**
-- Modify: `lib/payment-transitions.ts`
 - Create: `supabase/migrations/0043_giving_reaper.sql`
 - Test: `tests/unit/giving-reaper.test.ts`
 
 **Interfaces:**
-- Produces: `PROCESSING → FAILED` and `PENDING → FAILED` added to the transition map; DB trigger `trg_expire_giving_transactions`.
+- Consumes: `giving_transactions.status` (`public.giving_tx_status`), `giving_transactions.updated_at`.
+- Produces: `public.expire_stale_giving_transactions() returns integer` (a `SECURITY DEFINER` function granted to `service_role`), scheduled every 10 minutes by `pg_cron` under the job name `expire-giving-transactions`.
+- **`lib/payment-transitions.ts` is NOT modified.** The existing `ALLOWED` map already permits `PENDING → FAILED` and `PROCESSING → FAILED`; no change is needed and none is in scope.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -891,6 +892,17 @@ describe("giving reaper", () => {
   });
   it("never expires a successful transaction", () => {
     expect(m).toMatch(/status in \('PENDING','PROCESSING'\)/);
+  });
+  it("schedules the reaper with pg_cron", () => {
+    expect(m).toMatch(/cron\.schedule\(/);
+    expect(m).toMatch(/'expire-giving-transactions'/);
+    expect(m).toMatch(/'\*\/10 \* \* \* \*'/);
+  });
+  it("passes the cron command as a single-quoted string, not a dollar quote", () => {
+    // A dollar-quoted string nested inside the dollar-quoted DO body closes
+    // the body early and the migration fails to parse.
+    expect(m).toMatch(/'select public\.expire_stale_giving_transactions\(\);'/);
+    expect(m).not.toMatch(/\$\$select public\.expire_stale_giving_transactions\(\);\$\$/);
   });
 });
 ```
@@ -943,12 +955,15 @@ revoke all on function public.expire_stale_giving_transactions() from public;
 grant execute on function public.expire_stale_giving_transactions() to service_role;
 
 -- Fire every 10 minutes via pg_cron (Supabase enables pg_cron by default).
+-- The command string MUST be single-quoted here: a dollar-quoted string
+-- nested inside this dollar-quoted body closes the body early and the
+-- migration fails to parse.
 do $$ begin
   if exists (select 1 from pg_extension where extname = 'pg_cron') then
     perform cron.schedule(
       'expire-giving-transactions',
       '*/10 * * * *',
-      $$select public.expire_stale_giving_transactions();$$
+      'select public.expire_stale_giving_transactions();'
     );
   end if;
 end $$;
