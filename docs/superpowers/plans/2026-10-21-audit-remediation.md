@@ -1498,16 +1498,23 @@ git commit -m "fix(routing): return real 404s for unknown urls"
 
 ### Task 10: Give every public page exactly one `<h1>`
 
-**Findings:** `#7`, `#29`, `#35` · **Severity:** Critical
+**Findings:** `#7` · **Severity:** Critical
 
 **Files:**
-- Modify: `components/ui/PageHeader.tsx:44-46`, `components/ui/Section.tsx:13-24`
-- Create: `lib/dates.ts`
-- Modify: `app/about/story/page.tsx`, `app/about/vision-mission/page.tsx`, `app/about/statement-of-faith/page.tsx`
-- Test: `tests/unit/page-headings.test.ts`, `tests/unit/dates.test.ts`
+- Modify: `components/ui/PageHeader.tsx`
+- Modify: `app/about/page.tsx`
+- Modify: `app/about/leadership/page.tsx`
+- Modify: `app/about/pastors/page.tsx`
+- Test: `tests/unit/page-headings.test.ts`
 
 **Interfaces:**
-- Produces: `formatKenyaDate(iso)`, `formatKenyaDateTime(iso)` in `lib/dates.ts` — always `Intl.DateTimeFormat("en-KE", { timeZone: "Africa/Nairobi" })`.
+- Produces: `PageHeader` renders an `<h1>` by default.
+
+**The defect.** `PageHeader` renders `<SectionTitle>` with no `as` prop, and `SectionTitle` defaults to `as="h2"`. Every page that uses `PageHeader` therefore starts its document outline at `<h2>` and has **no `<h1>` at all**.
+
+The `<h1>` is the strongest single on-page relevance signal. Its absence on the money pages — `/give`, `/prayer`, `/visit`, `/services`, `/contact` — directly weakens matching for the target queries ("prayer request", "service times", "church near me"), and it gives screen-reader users a document with no top-level heading.
+
+**The 21 pages with no `<h1>`** (verified by counting `<h1` in the rendered HTML): `/about`, `/about/leadership`, `/about/pastors`, `/ministries`, `/ministries/hospitality`, `/ministries/hospitality/orphans`, `/ministries/hospitality/feeding`, `/serve`, `/services`, `/events`, `/sermons`, `/gallery`, `/give`, `/prayer`, `/testimonies`, `/testimonies/share`, `/connect`, `/contact`, `/livestream`, `/visit`, `/privacy`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1521,36 +1528,23 @@ describe("page headings", () => {
     const src = readFileSync("components/ui/PageHeader.tsx", "utf8");
     expect(src).toMatch(/SectionTitle as="h1"/);
   });
-  it("CmsPageView pages pass hideTitle to avoid two h1s", () => {
-    for (const p of ["story", "vision-mission", "statement-of-faith"]) {
-      const src = readFileSync(`app/about/${p}/page.tsx`, "utf8");
-      expect(src).toMatch(/hideTitle/);
+  it("pages that also render CmsPageView pass hideTitle", () => {
+    // CmsPageView renders its own <h1>; without hideTitle these pages would
+    // have two <h1> elements once PageHeader becomes one.
+    for (const p of ["about", "about/leadership", "about/pastors"]) {
+      const src = readFileSync(`app/${p}/page.tsx`, "utf8");
+      expect(src, p).toMatch(/hideTitle/);
     }
   });
 });
 ```
 
-```ts
-// tests/unit/dates.test.ts
-import { describe, expect, it } from "vitest";
-import { formatKenyaDate, formatKenyaDateTime } from "@/lib/dates";
+- [ ] **Step 2: Run test to verify it fails**
 
-describe("kenya dates", () => {
-  it("renders a date-only column without shifting a day", () => {
-    expect(formatKenyaDate("2024-01-15")).toContain("15");
-  });
-  it("formats a timestamp in Nairobi time", () => {
-    expect(formatKenyaDateTime("2026-10-21T22:00:00Z")).toContain("22");
-  });
-});
-```
+Run: `npx vitest run tests/unit/page-headings.test.ts`
+Expected: FAIL — `PageHeader` has no `as="h1"`, and the three pages do not pass `hideTitle`.
 
-- [ ] **Step 2: Run tests to verify they fail**
-
-Run: `npx vitest run tests/unit/page-headings.test.ts tests/unit/dates.test.ts`
-Expected: FAIL.
-
-- [ ] **Step 3: Make `PageHeader` render an `<h1>`**
+- [ ] **Step 3: Make PageHeader render an h1**
 
 In `components/ui/PageHeader.tsx`:
 
@@ -1560,13 +1554,112 @@ In `components/ui/PageHeader.tsx`:
 </SectionTitle>
 ```
 
-`components/ui/Section.tsx` already styles `h1` via `heading-1`, so no visual change is needed beyond confirming the token exists.
+`components/ui/Section.tsx` already styles `h1` with the `heading-1` token, so there is **no visual change** — the same class is applied, only the tag changes.
 
-- [ ] **Step 4: Prevent double `<h1>` on the CMS pages**
+> **Do not change `components/ui/Section.tsx`.** Its `SectionTitle` default of `as="h2"` is correct for every other caller — changing the default would turn every section heading on the site into an `<h1>`.
 
-`app/about/story/page.tsx`, `app/about/vision-mission/page.tsx` and `app/about/statement-of-faith/page.tsx` render both `PageHeader` and `CmsPageView`. Pass `hideTitle` to `CmsPageView` on all three (matching what `app/privacy/page.tsx:40` already does).
+- [ ] **Step 4: Pass `hideTitle` on the three pages that render both**
 
-- [ ] **Step 5: Create `lib/dates.ts`**
+`CmsPageView` renders its own `<h1 className="heading-1 mb-4 text-balance">{page.title}</h1>` (`components/about/CmsPageView.tsx:67`) unless `hideTitle` is set. Three pages render **both** `PageHeader` and `CmsPageView`, so after Step 3 they would have two `<h1>` elements:
+
+- `app/about/page.tsx`
+- `app/about/leadership/page.tsx`
+- `app/about/pastors/page.tsx`
+
+On each, pass `hideTitle` to `CmsPageView`, exactly as `app/privacy/page.tsx:40` already does:
+
+```tsx
+<CmsPageView page={page} fallbackTitle="..." hideTitle />
+```
+
+Read each file first — the `fallbackTitle` differs per page, so keep each file's existing props and **add** `hideTitle` rather than rewriting the call.
+
+> **The three CMS-only pages need no change.** `app/about/story/page.tsx`, `app/about/vision-mission/page.tsx` and `app/about/statement-of-faith/page.tsx` render **only** `CmsPageView` and no `PageHeader` — they already have exactly one `<h1>` from `CmsPageView` itself. Do not touch them.
+
+> **`app/design-system/page.tsx` is a deliberate exception — leave it alone.** It renders `<h1 className="heading-1">Heading 1 — Display</h1>` at line 160, but that is a **typography specimen** demonstrating the h1 style, not the page's own heading. Changing it would break the design system's purpose. It is an internal page and is not indexed.
+
+- [ ] **Step 5: Run test to verify it passes**
+
+Run: `npx vitest run tests/unit/page-headings.test.ts`
+Expected: PASS (2 tests).
+
+- [ ] **Step 6: Verify the heading count against a production build**
+
+Run: `npm run build`, then start the server and count `<h1` in the rendered HTML of the pages that use `PageHeader`:
+
+```bash
+npm run start &
+for p in / /about /about/leadership /about/pastors /about/story /ministries /services /events /sermons /gallery /give /prayer /testimonies /connect /contact /livestream /visit /privacy; do
+  printf "%-24s h1=" "$p"
+  curl -s --max-time 15 "http://localhost:3000$p" | grep -c "<h1"
+done
+```
+
+**Every one must print exactly 1.** If any prints 2, find the second `<h1>` and add `hideTitle` where it is needed. If any prints 0, that page has a different heading source than expected — investigate rather than forcing it.
+
+Stop the server when you are done — a leftover server on port 3000 will break the next task's build. Check with `ss -lptn 'sport = :3000'` and kill the PID you started.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add components/ui/PageHeader.tsx app/about/page.tsx app/about/leadership/page.tsx app/about/pastors/page.tsx tests/unit/page-headings.test.ts
+git commit -m "fix(a11y): give every public page exactly one h1"
+```
+
+---
+
+### Task 11: Render every date in Africa/Nairobi instead of the server's timezone
+
+**Findings:** `#29`, `#30` · **Severity:** Medium
+
+**Files:**
+- Create: `lib/dates.ts`
+- Modify: the 28 files listed in Step 4
+- Test: `tests/unit/dates.test.ts`
+
+**Interfaces:**
+- Produces: `KENYA_TZ`, `formatKenyaDate(value)`, `formatKenyaDateTime(value)` from `lib/dates.ts`.
+
+**The defect, in two parts:**
+
+1. **Server-rendered dates use the server's timezone (UTC), not Africa/Nairobi.** The church is in `Africa/Nairobi` (UTC+3). A gift made at 01:00 EAT on 21 October is displayed to the donor as **20 October**. Admin giving timestamps are three hours behind what the donor saw on their phone.
+2. **Client components call `toLocaleDateString()` with an implicit locale**, which executes on the server during SSR of the client component and again on the client. Node's default locale/timezone differs from the browser's, so React 18 compares two different strings during hydration, logs `Text content did not match`, and patches the DOM — a visible flicker on every account and admin page load.
+
+There are **34 call sites across 28 files**, and **not one of them passes an explicit locale**.
+
+- [ ] **Step 1: Write the failing test**
+
+```ts
+// tests/unit/dates.test.ts
+import { describe, expect, it } from "vitest";
+import { formatKenyaDate, formatKenyaDateTime } from "@/lib/dates";
+
+describe("kenya dates", () => {
+  it("renders a date-only column without shifting a day", () => {
+    expect(formatKenyaDate("2024-01-15")).toContain("15");
+    expect(formatKenyaDate("2024-01-15")).toContain("Jan");
+  });
+  it("formats a timestamp in Nairobi time", () => {
+    // 22:00 UTC on 21 Oct is 01:00 on 22 Oct in Nairobi (UTC+3).
+    expect(formatKenyaDateTime("2026-10-21T22:00:00Z")).toContain("22");
+  });
+  it("is stable regardless of the machine timezone", () => {
+    expect(formatKenyaDate("2024-01-15")).toBe(formatKenyaDate("2024-01-15"));
+  });
+  it("handles empty input", () => {
+    expect(formatKenyaDate(null)).toBe("");
+    expect(formatKenyaDate(undefined)).toBe("");
+    expect(formatKenyaDateTime(null)).toBe("");
+  });
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `npx vitest run tests/unit/dates.test.ts`
+Expected: FAIL — the module does not exist.
+
+- [ ] **Step 3: Create `lib/dates.ts`**
 
 ```ts
 export const KENYA_TZ = "Africa/Nairobi";
@@ -1587,7 +1680,14 @@ const dateTimeFmt = new Intl.DateTimeFormat("en-KE", {
   minute: "2-digit",
 });
 
-/** For Postgres `date` columns — format the YYYY-MM-DD string directly so it never shifts a day. */
+/**
+ * Formats a date for display.
+ *
+ * Postgres `date` columns hold a calendar date with no time and no zone.
+ * Passing "2024-01-15" to `new Date()` yields 2024-01-15T00:00:00Z, which
+ * renders as 14 January anywhere west of UTC — so a date-only value is
+ * formatted from its string parts and never round-tripped through `Date`.
+ */
 export function formatKenyaDate(value: string | Date | null | undefined): string {
   if (!value) return "";
   if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -1597,39 +1697,91 @@ export function formatKenyaDate(value: string | Date | null | undefined): string
   return dateFmt.format(new Date(value));
 }
 
+/** Formats a timestamp in Nairobi time. */
 export function formatKenyaDateTime(value: string | Date | null | undefined): string {
   if (!value) return "";
   return dateTimeFmt.format(new Date(value));
 }
 ```
 
-- [ ] **Step 6: Replace every implicit-locale date call**
+Both formatters are deterministic and timezone-pinned, so the server and the browser produce identical strings — which is what removes the hydration mismatch.
 
-Replace `new Date(x).toLocaleDateString(...)` / `toLocaleString(...)` with the helpers in:
-`app/account/_components/AccountGivingSection.tsx:69`, `app/account/_components/AccountNotificationsSection.tsx:47`, `app/connect/[slug]/_components/ConnectGroupMembershipPanel.tsx:110`, `app/admin/(protected)/giving/page.tsx:89`, `app/admin/(protected)/giving/[id]/page.tsx:70,74`, `app/admin/(protected)/messages/_components/MessageRow.tsx:28`, `app/admin/(protected)/approvals/_components/ApprovalQueue.tsx:128`, `app/admin/(protected)/testimonies/_components/TestimonyRow.tsx:59,75`, `app/admin/(protected)/connect-groups/[id]/members/_components/MembershipRow.tsx:51,64,66`, `app/admin/(protected)/prayer-requests/_components/PrayerRow.tsx:46`, `app/sermons/page.tsx:31`, `app/sermons/[slug]/page.tsx:54`, `app/events/page.tsx:29-35`, `app/events/[slug]/page.tsx:48`, `app/gallery/page.tsx:29`, `app/gallery/[album]/page.tsx:50`, `components/home/ThisWeekSection.tsx:19`, `components/home/LatestSermonSection.tsx:13`, `app/admin/(protected)/audit/page.tsx:43`.
+- [ ] **Step 4: Replace every implicit-locale date call**
 
-For the 7 **client** components, the server/client locale mismatch must also be avoided: `formatKenyaDate` is deterministic, so it is safe to call during SSR *provided* it is not passed through `toLocale*`. Using the explicit `Intl.DateTimeFormat` above makes server and client output identical.
+These are the **28 files with 34 call sites** between them:
 
-- [ ] **Step 7: Run tests to verify they pass**
+```
+app/account/_components/AccountGivingSection.tsx
+app/account/_components/AccountNotificationsSection.tsx
+app/account/_components/AccountServeInterests.tsx
+app/admin/(protected)/approvals/_components/ApprovalQueue.tsx
+app/admin/(protected)/audit/page.tsx
+app/admin/(protected)/connect-groups/[id]/members/_components/MembershipRow.tsx
+app/admin/(protected)/events/[id]/page.tsx
+app/admin/(protected)/events/page.tsx
+app/admin/(protected)/giving/[id]/page.tsx
+app/admin/(protected)/giving/page.tsx
+app/admin/(protected)/messages/_components/MessageRow.tsx
+app/admin/(protected)/prayer-requests/_components/PrayerRow.tsx
+app/admin/(protected)/serve-interests/[id]/page.tsx
+app/admin/(protected)/serve-interests/page.tsx
+app/admin/(protected)/testimonies/_components/TestimonyRow.tsx
+app/connect/[slug]/_components/ConnectGroupMembershipPanel.tsx
+app/events/page.tsx
+app/events/[slug]/page.tsx
+app/gallery/[album]/page.tsx
+app/gallery/page.tsx
+app/sermons/page.tsx
+app/sermons/series/[slug]/page.tsx
+app/sermons/[slug]/page.tsx
+components/admin/ApprovalHistoryPanel.tsx
+components/home/LatestSermonSection.tsx
+components/home/ThisWeekSection.tsx
+```
 
-Run: `npx vitest run tests/unit/page-headings.test.ts tests/unit/dates.test.ts`
-Expected: PASS.
+For each call site:
 
-- [ ] **Step 8: Verify heading counts**
+- **`toLocaleDateString()` with no arguments** → `formatKenyaDate(value)`.
+- **`toLocaleDateString(undefined, { ...options })`** → `formatKenyaDate(value)` if the options are the default numeric-ish set, otherwise `new Intl.DateTimeFormat("en-KE", { timeZone: KENYA_TZ, ...options }).format(new Date(value))`.
+- **`toLocaleString()`** → `formatKenyaDateTime(value)`.
+- **`toLocaleTimeString()`** → include the time in `formatKenyaDateTime`, or use `new Intl.DateTimeFormat("en-KE", { timeZone: KENYA_TZ, hour: "numeric", minute: "2-digit" })`.
 
-Run: `npm run build && npm run start`, then for each of `/about`, `/give`, `/prayer`, `/visit`, `/services`, `/contact`, `/events`, `/sermons` run `curl -s http://localhost:3000<path> | grep -c '<h1'`.
-Expected: `1` for every page.
+Read each call site before changing it — some format a `date` column (no time) and some format a `timestamptz`. **A `date` column must use `formatKenyaDate`; a timestamp must use `formatKenyaDateTime`.** Getting this backwards reintroduces the off-by-one-day bug the `date`-column branch exists to prevent.
 
-- [ ] **Step 9: Commit**
+Add the import to each file:
+
+```tsx
+import { formatKenyaDate } from "@/lib/dates";          // date columns only
+import { formatKenyaDate, formatKenyaDateTime } from "@/lib/dates";  // both
+```
+
+Some of these files are `"use client"` components and some are server components — the import path is the same for both.
+
+- [ ] **Step 5: Verify no implicit-locale date calls remain**
+
+Run:
 
 ```bash
-git add components/ui/PageHeader.tsx components/ui/Section.tsx lib/dates.ts app/ tests/unit/page-headings.test.ts tests/unit/dates.test.ts
-git commit -m "fix(a11y): give every public page one h1 and pin dates to Africa/Nairobi"
+grep -rn "toLocaleDateString\|toLocaleString\|toLocaleTimeString" app/ components/ --include=*.tsx
+```
+
+Every remaining hit must either pass an explicit `"en-KE"` locale **and** an explicit `timeZone`, or be a call the task deliberately left alone. If a file needs a locale the helper does not cover, give it its own `Intl.DateTimeFormat` with `timeZone: KENYA_TZ` and an explicit locale — never a bare `toLocaleDateString()`.
+
+- [ ] **Step 6: Run test to verify it passes**
+
+Run: `npx vitest run tests/unit/dates.test.ts`
+Expected: PASS (4 tests).
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add lib/dates.ts app/ components/ tests/unit/dates.test.ts
+git commit -m "fix(a11y): render all dates in Africa/Nairobi"
 ```
 
 ---
 
-### Task 11: Complete the structured data for local SEO
+### Task 12: Complete the structured data for local SEO
 
 **Findings:** `#4`, `#7`, SEO-M1-#M8 · **Severity:** High
 
@@ -1748,7 +1900,7 @@ git commit -m "feat(seo): complete local business and content structured data"
 
 # Wave 1D — Hardening
 
-### Task 12: Enforce a CSP with nonces and restrict Storage uploads
+### Task 13: Enforce a CSP with nonces and restrict Storage uploads
 
 **Findings:** `#13`, `#14` · **Severity:** High
 
@@ -1887,7 +2039,7 @@ git commit -m "feat(security): enforce csp with nonces and restrict storage cont
 
 # Wave 2 — Correctness & Performance
 
-### Task 13: Fix PostgREST filter escaping and comma-breaking search
+### Task 14: Fix PostgREST filter escaping and comma-breaking search
 
 **Findings:** `#26`, `#27` · **Severity:** Medium
 
@@ -1956,7 +2108,7 @@ git commit -m "fix(search): escape postgrest filter metacharacters in search ter
 
 ---
 
-### Task 14: Paginate admin lists and compute totals correctly
+### Task 15: Paginate admin lists and compute totals correctly
 
 **Findings:** `#17`, `#42` · **Severity:** High
 
@@ -2038,7 +2190,7 @@ git commit -m "feat(admin): paginate admin lists and compute totals with count q
 
 ---
 
-### Task 15: Add optimistic locking to admin content updates
+### Task 16: Add optimistic locking to admin content updates
 
 **Findings:** `#20` · **Severity:** High
 
@@ -2110,7 +2262,7 @@ git commit -m "feat(admin): add optimistic locking to content updates"
 
 ---
 
-### Task 16: Audit-log every admin mutation
+### Task 17: Audit-log every admin mutation
 
 **Findings:** `#18`, `#36` · **Severity:** High
 
@@ -2179,7 +2331,7 @@ git commit -m "feat(admin): audit log every admin mutation and share crud helper
 
 ---
 
-### Task 17: Move public content routes off `force-dynamic` and fix cross-instance caching
+### Task 18: Move public content routes off `force-dynamic` and fix cross-instance caching
 
 **Findings:** `#22` · **Severity:** High
 
@@ -2274,7 +2426,7 @@ git commit -m "perf: cache public content and use cross-instance revalidation ta
 
 ---
 
-### Task 18: Move the Vercel region and trim the public asset weight
+### Task 19: Move the Vercel region and trim the public asset weight
 
 **Findings:** `#21`, `#41`, `#44` · **Severity:** High
 
@@ -2395,7 +2547,7 @@ git commit -m "perf: move videos to storage, compress assets and target a closer
 
 ---
 
-### Task 19: Wire `aria-describedby` and fix colour contrast
+### Task 20: Wire `aria-describedby` and fix colour contrast
 
 **Findings:** `#34`, `#35` · **Severity:** Medium
 
