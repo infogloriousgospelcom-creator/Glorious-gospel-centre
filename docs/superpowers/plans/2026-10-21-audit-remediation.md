@@ -471,82 +471,148 @@ git commit -m "fix(giving): enforce payment transitions on staff status override
 
 ---
 
-### Task 4: Bind the M-Pesa callback to the payment event, not just the transaction
+### Task 4: Verify the M-Pesa callback amount and account reference, and stop logging the signed URL
 
 **Findings:** `#11`, `#12`, `#16` · **Severity:** High
 
+> **Rewritten by the controller (2026-10-21).** The original task text proposed binding the `CheckoutRequestID` into the HMAC and re-signing the callback URL after Daraja returns it. **That design is architecturally impossible:** Daraja calls back the exact `CallBackURL` that was sent in the STK-push request, so the URL cannot be re-signed afterwards. The original text also proposed changing the signed-message format, which would have had to be applied in **three independent implementations** of `ggc-callback:${transactionId}` — `lib/callback-auth.ts` (Node), `supabase/functions/mpesa-callback/index.ts` (Deno, its own copy), and `supabase/functions/mpesa-stk-push/index.ts` (Deno, inline `crypto.subtle`) — and any mismatch between them silently breaks every payment confirmation. The rewritten task below fixes the real vulnerabilities without touching the signature format.
+
 **Files:**
-- Modify: `lib/callback-auth.ts`
 - Modify: `supabase/functions/mpesa-callback/index.ts`
-- Modify: `supabase/functions/mpesa-stk-push/index.ts:240-251`
-- Test: `tests/unit/callback-auth.test.ts`
+- Modify: `supabase/functions/mpesa-stk-push/index.ts`
+- Test: `tests/unit/mpesa-callback-verification.test.ts`
 
 **Interfaces:**
-- Consumes: `transactionId`, `amountCents`, `checkoutId`.
-- Produces: `signCallbackToken(transactionId, secret, checkoutId?)`, `verifyCallbackToken(transactionId, signature, secret, checkoutId?)`, and a callback parser that returns `{ checkoutRequestId, resultCode, amount, accountReference }`.
+- Consumes: `giving_transactions.amount_cents` (`bigint`), `giving_transactions.id` (uuid), the STK push's `AccountReference: request.transactionId.slice(0, 12)`.
+- Produces: `CallbackPayload.amountCents: number | null` and `CallbackPayload.accountReference: string` in the Edge Function.
+
+**The two vulnerabilities this closes:**
+
+1. **The callback never checks what was actually charged.** `parseCallback` extracts only `CheckoutRequestID` and `ResultCode`; the body's `Amount` and `AccountReference` are discarded. A leaked signed callback URL can therefore mark an **unpaid** transaction `SUCCESS` at any amount the ledger happens to record.
+2. **The signed callback URL is written to the Edge Function logs.** `supabase/functions/mpesa-stk-push/index.ts` logs `callbackUrl` verbatim, and that URL contains `?tx=<uuid>&sig=<HMAC>` — the exact secret an attacker needs. Logs are readable by anyone with Supabase project access and are routinely shipped to log-drain vendors.
 
 - [ ] **Step 1: Write the failing test**
 
 ```ts
-// tests/unit/callback-auth.test.ts
+// tests/unit/mpesa-callback-verification.test.ts
 import { describe, expect, it } from "vitest";
-import { signCallbackToken, verifyCallbackToken } from "@/lib/callback-auth";
+import { readFileSync } from "node:fs";
 
-describe("callback token binding", () => {
-  it("round-trips with a matching checkout id", () => {
-    const sig = signCallbackToken("tx-1", "s3cret", "chk-1");
-    expect(verifyCallbackToken("tx-1", sig, "s3cret", "chk-1")).toBe(true);
+const callback = readFileSync("supabase/functions/mpesa-callback/index.ts", "utf8");
+const stk = readFileSync("supabase/functions/mpesa-stk-push/index.ts", "utf8");
+
+describe("mpesa callback verification", () => {
+  it("extracts the charged amount from the callback body", () => {
+    expect(callback).toMatch(/stkCallback\.Amount/);
+    expect(callback).toMatch(/amountCents/);
   });
-  it("rejects a token minted for a different checkout id", () => {
-    const sig = signCallbackToken("tx-1", "s3cret", "chk-1");
-    expect(verifyCallbackToken("tx-1", sig, "s3cret", "chk-2")).toBe(false);
+  it("extracts the account reference from the callback body", () => {
+    expect(callback).toMatch(/stkCallback\.AccountReference/);
+    expect(callback).toMatch(/accountReference/);
   });
-  it("does not accept a token minted without a checkout id", () => {
-    const sig = signCallbackToken("tx-1", "s3cret");
-    expect(verifyCallbackToken("tx-1", sig, "s3cret", "chk-1")).toBe(false);
+  it("reads the stored amount so it can be compared", () => {
+    expect(callback).toMatch(/select\([^)]*amount_cents/i);
+  });
+  it("rejects a successful callback whose amount does not match the ledger", () => {
+    expect(callback).toMatch(/amount mismatch/i);
+    expect(callback).toMatch(/payload\.amountCents !== Number\(transaction\.amount_cents\)/);
+  });
+  it("rejects a successful callback whose account reference does not match", () => {
+    expect(callback).toMatch(/account reference mismatch/i);
+  });
+  it("does not log the signed callback url", () => {
+    expect(stk).not.toMatch(/console\.log\([^)]*callbackUrl/s);
+    expect(stk).toMatch(/transactionId: request\.transactionId/);
+  });
+  it("normalises the amount to whole shillings before storing it", () => {
+    expect(stk).toMatch(/Math\.round\(request\.amountCents \/ 100\) \* 100/);
   });
 });
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npx vitest run tests/unit/callback-auth.test.ts`
-Expected: FAIL — `signCallbackToken` / `verifyCallbackToken` do not exist with that signature.
+Run: `npx vitest run tests/unit/mpesa-callback-verification.test.ts`
+Expected: FAIL — none of these behaviours exist yet.
 
-- [ ] **Step 3: Extend `lib/callback-auth.ts`**
+- [ ] **Step 3: Extract `Amount` and `AccountReference` in the Edge Function**
 
-Keep the existing `signCallbackToken(transactionId, secret)` behaviour working for the "not yet re-signed" case, but make the signed message include the checkout id:
+In `supabase/functions/mpesa-callback/index.ts`, extend the `CallbackPayload` interface:
 
 ```ts
-export function signCallbackToken(
-  transactionId: string,
-  secret: string,
-  checkoutId?: string,
-): string {
-  return createHmac("sha256", secret)
-    .update(`ggc-callback:${transactionId}:${checkoutId ?? ""}`)
-    .digest("hex");
-}
-
-export function verifyCallbackToken(
-  transactionId: string,
-  signature: string,
-  secret: string,
-  checkoutId?: string,
-): boolean {
-  const expected = signCallbackToken(transactionId, secret, checkoutId);
-  const a = Buffer.from(expected, "hex");
-  const b = Buffer.from(signature, "hex");
-  if (a.length !== b.length || a.length === 0) return false;
-  return timingSafeEqual(a, b);
+interface CallbackPayload {
+  externalReference: string;
+  status: "SUCCESS" | "FAILED" | "CANCELLED";
+  raw: unknown;
+  resultCode: number;
+  resultDescription: string;
+  /** Whole-keshi amount Daraja says it charged, or null when the body omits it. */
+  amountCents: number | null;
+  /** The AccountReference Daraja echoes back from the STK push. */
+  accountReference: string;
 }
 ```
 
-> **Breaking change:** every existing caller must be updated in the same commit, because the signed message changed. Callers: `services/payment/mpesa.ts`, `app/api/mpesa/callback/route.ts`, `supabase/functions/mpesa-stk-push/index.ts`, `supabase/functions/mpesa-callback/index.ts`.
+In `parseCallback`, alongside the existing `checkoutRequestID` extraction:
 
-- [ ] **Step 4: Stop logging the signed callback URL**
+```ts
+const amountRaw = stkCallback.Amount;
+const amountNumber = typeof amountRaw === "number" ? amountRaw : Number(amountRaw);
+const amountCents =
+  amountRaw === undefined || amountRaw === null || Number.isNaN(amountNumber)
+    ? null
+    : Math.round(amountNumber * 100);
 
-In `supabase/functions/mpesa-stk-push/index.ts:244-251`, replace the `callbackUrl` log field:
+const accountReference =
+  typeof stkCallback.AccountReference === "string" ? stkCallback.AccountReference : "";
+```
+
+and return both from `parseCallback`.
+
+> **`amountCents` must be `number | null`, not `number`.** `Amount` is absent from some Daraja error responses, and `Number(undefined)` is `NaN` — a NaN comparison against `amount_cents` would always be false, silently passing the check. `null` makes "amount missing" distinguishable from "amount is zero".
+
+- [ ] **Step 4: Select `amount_cents` and fail closed on a mismatched SUCCESS**
+
+In the transaction lookup in the same file, add the column:
+
+```ts
+.select("id, status, provider, external_reference, amount_cents")
+```
+
+Then, **immediately after the existing CheckoutRequestID mismatch check and before the `transaction.status === "SUCCESS"` early return**, add:
+
+```ts
+// A SUCCESS callback must prove what was actually charged and which
+// account reference it was sent for. Without these two checks a leaked
+// signed callback URL can mark an unpaid transaction as paid at any amount.
+//
+// Failures are deliberately NOT gated on these: Daraja omits Amount and
+// AccountReference on some error responses, and refusing those would leave
+// genuinely failed transactions stuck in PROCESSING.
+if (finalStatus === "SUCCESS") {
+  if (payload.amountCents === null) {
+    console.error("Callback missing Amount for transaction", txId);
+    return jsonResponse({ error: "Callback missing Amount" }, 400);
+  }
+  if (payload.amountCents !== Number(transaction.amount_cents)) {
+    console.error("Amount mismatch for transaction", txId);
+    return jsonResponse({ error: "Amount mismatch" }, 400);
+  }
+  const expectedReference = transaction.id.slice(0, 12);
+  if (!payload.accountReference || payload.accountReference !== expectedReference) {
+    console.error("Account reference mismatch for transaction", txId);
+    return jsonResponse({ error: "Account reference mismatch" }, 400);
+  }
+}
+```
+
+> **Placement note.** `finalStatus` is `payload.status`. The check must sit **before** the update and **after** the transaction row is available. Putting it before the `transaction.status === "SUCCESS"` early return means a replayed callback with a wrong amount is rejected even when the transaction is already marked successful.
+
+- [ ] **Step 5: Stop logging the signed callback URL**
+
+In `supabase/functions/mpesa-stk-push/index.ts`, the `console.log("Sending Daraja STK Push:", {...})` object currently includes `callbackUrl`. That URL contains `?tx=<uuid>&sig=<HMAC>`.
+
+Replace it with:
 
 ```ts
 console.log("Sending Daraja STK Push:", {
@@ -559,54 +625,49 @@ console.log("Sending Daraja STK Push:", {
 });
 ```
 
-Also scan the file for any other `callbackUrl` in a `console.*` call and remove it. **Then rotate `M_PESA_CALLBACK_SECRET` in production** (it has been in logs).
+Then grep the whole file for any other `console.log` or `console.error` that includes `callbackUrl`, `sig`, or `signature`, and remove the secret from those too.
 
-- [ ] **Step 5: Validate Amount and AccountReference in the callback**
+- [ ] **Step 6: Normalise the amount so the ledger and the charge cannot disagree**
 
-In `supabase/functions/mpesa-callback/index.ts`, extract the fields from the callback body and compare them to the pending row before writing:
+Daraja charges whole shillings. Today `stkPushLive` sends `Math.round(request.amountCents / 100)` to Daraja, but the insert writes the raw `request.amountCents` — so a 100.50 KES gift is recorded as 10050 cents while the donor is charged 101.00.
 
-```ts
-const stk = body?.stkCallback ?? {};
-const callbackAmount = Number(stk?.Amount ?? 0);
-const accountReference = String(stk?.AccountReference ?? "");
-```
-
-Select `amount_cents` alongside `status` in the transaction lookup, then fail closed:
+In `supabase/functions/mpesa-stk-push/index.ts`, in the handler that owns both the insert and the STK call, normalise **once**, before either use:
 
 ```ts
-if (callbackAmount > 0 && Math.round(callbackAmount * 100) !== tx.amount_cents) {
-  return jsonResponse({ error: "Amount mismatch" }, 400);
-}
-if (!accountReference.startsWith(tx.id.slice(0, 12))) {
-  return jsonResponse({ error: "Account reference mismatch" }, 400);
-}
+// Daraja charges whole shillings. Normalise once so the ledger and the
+// charge can never disagree by a fraction.
+const amountCents = Math.round(request.amountCents / 100) * 100;
 ```
 
-- [ ] **Step 6: Normalise the amount to whole shillings before storing**
-
-In `supabase/functions/mpesa-stk-push/index.ts`, derive one value and use it for both the provider call and the ledger:
+Use `amountCents` in the `giving_transactions` insert (replacing the current `amount_cents: amountCents` value that holds the un-normalised number), and change `stkPushLive` to send the exact amount:
 
 ```ts
-const amount = Math.round(request.amountCents / 100);
-if (amount <= 0) return jsonResponse({ error: "Invalid amount" }, 400);
-const amountCents = amount * 100;   // ledger and provider now agree
+Amount: request.amountCents / 100,
 ```
 
-Use `amountCents` in the insert.
+`request.amountCents / 100` is then an exact integer, because the value was already normalised to a multiple of 100.
+
+> **Scope note:** the normalisation belongs in the Edge Function because the Edge Function owns the insert. `services/giving.actions.ts` sends `amount * 100` to the function, and the function normalises it, so the row that lands in the database is correct. The app's own pre-flight validation is a separate concern handled by Task 7.
 
 - [ ] **Step 7: Run test to verify it passes**
 
-Run: `npx vitest run tests/unit/callback-auth.test.ts tests/unit/payment-provider.test.ts tests/unit/mpesa-provider.test.ts`
+Run: `npx vitest run tests/unit/mpesa-callback-verification.test.ts`
+Expected: PASS (7 tests).
+
+Also confirm nothing regressed:
+
+Run: `npx vitest run tests/unit/mpesa-provider.test.ts tests/unit/mpesa-sandbox-readiness.test.ts tests/unit/payment-provider.test.ts`
 Expected: PASS.
 
 - [ ] **Step 8: Commit**
 
 ```bash
-git add lib/callback-auth.ts supabase/functions/mpesa-callback/index.ts supabase/functions/mpesa-stk-push/index.ts services/payment/mpesa.ts app/api/mpesa/callback/route.ts tests/unit/callback-auth.test.ts
-git commit -m "fix(payments): bind mpesa callback to payment event and stop logging signed urls"
+git add supabase/functions/mpesa-callback/index.ts supabase/functions/mpesa-stk-push/index.ts tests/unit/mpesa-callback-verification.test.ts
+git commit -m "fix(payments): verify callback amount and account reference, stop logging signed url"
 ```
 
 ---
+
 
 ### Task 5: Fix the idempotency-key collision and release the key on failure
 
