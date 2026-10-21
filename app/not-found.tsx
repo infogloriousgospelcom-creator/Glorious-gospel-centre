@@ -1,7 +1,12 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/Button";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default function NotFound() {
   return (

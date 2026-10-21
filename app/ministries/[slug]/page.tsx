@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
@@ -71,7 +71,7 @@ export default async function MinistryDetailPage({
   }
 
   const ministry = await getMinistryBySlug(params.slug);
-  if (!ministry) return null;
+  if (!ministry) notFound();
 
   if (ministry.slug === "hospitality") {
     redirect("/ministries/hospitality");
