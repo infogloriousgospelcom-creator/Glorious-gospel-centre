@@ -17,7 +17,7 @@ language sql
 stable
 security definer
 set search_path = public
-as $$;
+as $$
   select r.key
   from public.admins a
   join public.roles r on r.id = a.role_id

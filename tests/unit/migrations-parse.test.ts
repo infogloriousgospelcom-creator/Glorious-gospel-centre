@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parse } from "libpg-query";
-import { readdirSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const migrationDir = resolve(process.cwd(), "supabase/migrations");
@@ -12,12 +12,12 @@ describe("migration parse", () => {
     let failed: Array<{ file: string; error: string }> = [];
     for (const f of files) {
       const path = resolve(migrationDir, f);
-      const sql = await import("node:fs").then((mod) => mod.readFileSync(path, "utf8"));
+      const sql = readFileSync(path, "utf8");
       try {
-        parse(sql);
+        await parse(sql);
         ok++;
-      } catch (e: any) {
-        failed.push({ file: f, error: e.message || String(e) });
+      } catch (e: unknown) {
+        failed.push({ file: f, error: e instanceof Error ? e.message : String(e) });
       }
     }
     expect(failed).toHaveLength(0);
