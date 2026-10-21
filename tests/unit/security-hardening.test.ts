@@ -1,7 +1,31 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import { serializeJsonLd } from "@/lib/json-ld";
 import { sniffImageMagic } from "@/lib/file-magic";
 import { isAllowedCmsMediaUrl, isSafeHttpsUrl, isSafeStoragePath } from "@/lib/safe-url";
+
+const config = readFileSync("next.config.mjs", "utf8");
+const middleware = readFileSync("middleware.ts", "utf8");
+const storage = readFileSync("supabase/migrations/0046_storage_content_types.sql", "utf8");
+
+describe("csp and storage hardening", () => {
+  it("uses Content-Security-Policy-Report-Only with a report-uri", () => {
+    expect(config).not.toMatch(/Content-Security-Policy-Report-Only/);
+    expect(middleware).toMatch(/Content-Security-Policy-Report-Only/);
+    expect(middleware).toMatch(/report-uri/);
+  });
+  it("does not allow unsafe-eval", () => {
+    expect(config).not.toMatch(/'unsafe-eval'/);
+    expect(middleware).not.toMatch(/'unsafe-eval'/);
+  });
+  it("generates a nonce in middleware", () => {
+    expect(middleware).toMatch(/nonce/);
+    expect(middleware).toMatch(/crypto\.randomUUID/);
+  });
+  it("restricts storage uploads by content type", () => {
+    expect(storage).toMatch(/storage\.extension\(name\)/);
+  });
+});
 
 describe("serializeJsonLd", () => {
   it("escapes script-breaking characters", () => {
