@@ -6,6 +6,7 @@ import { createClient } from "@/supabase/server";
 import { createServiceRoleClient, isServiceRoleConfigured } from "@/supabase/admin";
 import { writeAuditLog } from "@/lib/audit";
 import { getClientIpHash } from "@/lib/ip-hash";
+import { canStaffTransition } from "@/lib/payment-transitions";
 import type { AdminActionState } from "./sermons";
 
 const STATUS = ["PENDING", "PROCESSING", "SUCCESS", "FAILED", "CANCELLED"] as const;
@@ -57,6 +58,16 @@ export async function overrideTransactionStatus(
       .eq("id", parsed.data.id)
       .maybeSingle();
     if (!prior) return { ok: false, message: "Transaction not found." };
+
+    if (prior.status === parsed.data.status) {
+      return { ok: true, message: "Status unchanged." };
+    }
+    if (!canStaffTransition(prior.status, parsed.data.status)) {
+      return {
+        ok: false,
+        message: `Cannot move a ${prior.status} transaction to ${parsed.data.status}.`,
+      };
+    }
 
     const { error } = await supabase
       .from("giving_transactions")
