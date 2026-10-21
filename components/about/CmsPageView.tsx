@@ -5,6 +5,8 @@ import { EmptyState } from "@/components/ui/Section";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { LeaderBio } from "@/components/about/LeaderBio";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { buildPersonSchema, siteUrl } from "@/lib/seo";
 import type { PageItem } from "@/types/content";
 
 function slugifyHeading(text: string): string {
@@ -189,6 +191,7 @@ export function LeaderGrid({
       />
     );
   }
+  const churchId = `${siteUrl("/").replace(/\/+$/, "")}/#church`;
   return (
     <ul className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
       {leaders.map((l) => (
@@ -225,6 +228,17 @@ export function LeaderGrid({
               ) : null}
             </div>
           </div>
+          <JsonLd
+            data={buildPersonSchema({
+              name: l.full_name,
+              image: l.image_url,
+              jobTitle: l.title,
+              description: l.bio,
+              email: l.email,
+              telephone: l.phone,
+              worksForId: churchId,
+            })}
+          />
         </li>
       ))}
     </ul>

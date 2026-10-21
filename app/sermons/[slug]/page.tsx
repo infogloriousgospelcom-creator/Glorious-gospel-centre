@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState, SectionEyebrow } from "@/components/ui/Section";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { getSermonBySlug, getSeriesForSermon } from "@/services/sermons";
-import { toEmbedUrl, formatDuration } from "@/lib/media";
+import { toEmbedUrl, formatDuration, youtubeThumbnailUrl } from "@/lib/media";
 import {
   buildPageMetadata,
   buildVideoSchema,
@@ -71,7 +71,7 @@ export default async function SermonDetailPage({
     ? buildVideoSchema({
         name: sermon.title,
         description: sermon.description ?? sermon.title,
-        thumbnailUrl: sermon.thumbnail_url,
+        thumbnailUrl: sermon.thumbnail_url ?? youtubeThumbnailUrl(sermon.video_url),
         uploadDate: sermon.published_at ?? `${sermon.preached_on}T00:00:00Z`,
         contentUrl: sermon.video_url,
         embedUrl: embed,

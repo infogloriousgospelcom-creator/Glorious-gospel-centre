@@ -7,7 +7,12 @@ import { LinkButton } from "@/components/ui/LinkButton";
 import { Container, Section } from "@/components/ui/Container";
 import { SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
 import { FaqAccordion } from "@/components/ui/FaqAccordion";
-import { buildPageMetadata, siteUrl } from "@/lib/seo";
+import { JsonLd } from "@/components/seo/JsonLd";
+import {
+  buildPageMetadata,
+  buildFaqSchema,
+  siteUrl,
+} from "@/lib/seo";
 import {
   getPublishedServices,
   getSiteSettings,
@@ -418,6 +423,14 @@ export default async function VisitPage() {
               </div>
             </SectionReveal>
           </Container>
+          <JsonLd
+            data={buildFaqSchema(
+              faqItems.map((item) => ({
+                question: item.question,
+                answer: item.answer,
+              }))
+            )}
+          />
         </Section>
 
         <InviteSomeone inviteUrl={siteUrl("/visit")} churchName={churchName} />

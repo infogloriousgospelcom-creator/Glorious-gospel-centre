@@ -167,14 +167,21 @@ export interface ChurchSchemaInput {
   telephone?: string | null;
   email?: string | null;
   address?: string | null;
-  /** IANA timezone, e.g. "Africa/Nairobi". */
-  timezone?: string;
+  addressLocality?: string | null;
+  addressRegion?: string | null;
+  postalCode?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  sameAs?: string[];
+  openingHours?: Array<{ day: string; opens: string; closes?: string }>;
 }
 
 export function buildChurchSchema(input: ChurchSchemaInput): JsonLd {
+  const baseUrl = input.url.replace(/\/+$/, "");
   const node: JsonLd = {
     "@context": "https://schema.org",
     "@type": "Church",
+    "@id": `${baseUrl}/#church`,
     name: input.name,
     description: input.description,
     url: input.url,
@@ -182,16 +189,41 @@ export function buildChurchSchema(input: ChurchSchemaInput): JsonLd {
     ...(input.imageUrl ? { image: input.imageUrl } : {}),
     ...(input.telephone ? { telephone: input.telephone } : {}),
     ...(input.email ? { email: input.email } : {}),
+    ...(input.sameAs && input.sameAs.length > 0 ? { sameAs: input.sameAs } : {}),
     ...(input.address
       ? {
           address: {
             "@type": "PostalAddress",
             streetAddress: input.address,
             addressCountry: "KE",
+            ...(input.addressLocality ? { addressLocality: input.addressLocality } : {}),
+            ...(input.addressRegion ? { addressRegion: input.addressRegion } : {}),
+            ...(input.postalCode ? { postalCode: input.postalCode } : {}),
           },
         }
       : {}),
-    ...(input.timezone ? { openingHoursSpecification: input.timezone } : {}),
+    ...(input.latitude !== undefined &&
+    input.longitude !== undefined &&
+    input.latitude !== null &&
+    input.longitude !== null
+      ? {
+          geo: {
+            "@type": "GeoCoordinates",
+            latitude: input.latitude,
+            longitude: input.longitude,
+          },
+        }
+      : {}),
+    ...(input.openingHours && input.openingHours.length > 0
+      ? {
+          openingHoursSpecification: input.openingHours.map((h) => ({
+            "@type": "OpeningHoursSpecification",
+            dayOfWeek: h.day,
+            opens: h.opens,
+            ...(h.closes ? { closes: h.closes } : {}),
+          })),
+        }
+      : {}),
   };
   return node;
 }
@@ -207,6 +239,12 @@ export interface EventSchemaInput {
   url: string;
   imageUrl?: string | null;
   location?: string | null;
+  locationAddress?: string | null;
+  locationLocality?: string | null;
+  locationRegion?: string | null;
+  locationPostalCode?: string | null;
+  locationLatitude?: number | null;
+  locationLongitude?: number | null;
   performer?: string | null;
   organizerName: string;
   organizerUrl: string;
@@ -235,9 +273,52 @@ export function buildEventSchema(input: EventSchemaInput): JsonLd {
           location: {
             "@type": "Place",
             name: input.location,
+            ...(input.locationAddress ||
+            input.locationLocality ||
+            input.locationRegion ||
+            input.locationPostalCode
+              ? {
+                  address: {
+                    "@type": "PostalAddress",
+                    ...(input.locationAddress
+                      ? { streetAddress: input.locationAddress }
+                      : {}),
+                    ...(input.locationLocality
+                      ? { addressLocality: input.locationLocality }
+                      : {}),
+                    ...(input.locationRegion
+                      ? { addressRegion: input.locationRegion }
+                      : {}),
+                    ...(input.locationPostalCode
+                      ? { postalCode: input.locationPostalCode }
+                      : {}),
+                    addressCountry: "KE",
+                  },
+                }
+              : {}),
+            ...(input.locationLatitude !== undefined &&
+            input.locationLongitude !== undefined &&
+            input.locationLatitude !== null &&
+            input.locationLongitude !== null
+              ? {
+                  geo: {
+                    "@type": "GeoCoordinates",
+                    latitude: input.locationLatitude,
+                    longitude: input.locationLongitude,
+                  },
+                }
+              : {}),
           },
         }
       : {}),
+    offers: {
+      "@type": "Offer",
+      price: 0,
+      priceCurrency: "KES",
+      availability: "https://schema.org/InStock",
+      url: input.url,
+      validFrom: input.startDate,
+    },
     ...(input.performer
       ? {
           performer: {
@@ -299,6 +380,76 @@ export function buildBreadcrumbSchema(items: BreadcrumbItem[]): JsonLd {
       name: it.name,
       item: it.url,
     })),
+  };
+}
+
+/**
+ * Build a `FAQPage` schema for a page with frequently asked questions.
+ */
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+export function buildFaqSchema(items: FaqItem[]): JsonLd {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer,
+      },
+    })),
+  };
+}
+
+/**
+ * Build a `Person` schema for a leader/pastor.
+ */
+export interface PersonSchemaInput {
+  name: string;
+  url?: string | null;
+  image?: string | null;
+  jobTitle?: string | null;
+  description?: string | null;
+  email?: string | null;
+  telephone?: string | null;
+  worksForId: string;
+}
+
+export function buildPersonSchema(input: PersonSchemaInput): JsonLd {
+  const node: JsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: input.name,
+    ...(input.url ? { url: input.url } : {}),
+    ...(input.image ? { image: input.image } : {}),
+    ...(input.jobTitle ? { jobTitle: input.jobTitle } : {}),
+    ...(input.description ? { description: input.description } : {}),
+    ...(input.email ? { email: input.email } : {}),
+    ...(input.telephone ? { telephone: input.telephone } : {}),
+    worksFor: {
+      "@id": input.worksForId,
+    },
+  };
+  return node;
+}
+
+/**
+ * Build a `WebSite` schema with publisher linking to the Church entity.
+ */
+export function buildWebSiteSchema(siteUrl: string, churchId: string): JsonLd {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    url: siteUrl,
+    name: "Glorious Gospel Centre Church",
+    publisher: {
+      "@id": churchId,
+    },
   };
 }
 

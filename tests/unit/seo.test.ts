@@ -7,6 +7,7 @@ import {
   buildEventSchema,
   buildVideoSchema,
   buildBreadcrumbSchema,
+  buildFaqSchema,
   iso8601Duration,
   truncate,
   plainText,
@@ -212,5 +213,27 @@ describe("site url and absolute titles", () => {
     const size = statSync("public/og-default.png").size;
     expect(size).toBeGreaterThan(0);
     expect(size).toBeLessThan(300 * 1024);
+  });
+});
+
+describe("local seo schema", () => {
+  it("emits sameAs and opening hours for the church", () => {
+    const s = buildChurchSchema({
+      name: "GGCC",
+      description: "d",
+      url: "https://example.org",
+      sameAs: ["https://facebook.com/ggcc"],
+      openingHours: [{ day: "Sunday", opens: "08:00" }],
+    });
+    expect(s.sameAs).toEqual(["https://facebook.com/ggcc"]);
+    expect((s.openingHoursSpecification as unknown[])[0]).toMatchObject({
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: "Sunday",
+    });
+  });
+  it("emits a valid FAQPage", () => {
+    const s = buildFaqSchema([{ question: "q", answer: "a" }]);
+    expect(s["@type"]).toBe("FAQPage");
+    expect((s.mainEntity as unknown[])[0]).toMatchObject({ "@type": "Question" });
   });
 });

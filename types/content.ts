@@ -12,6 +12,11 @@ export interface SiteSettings {
   phone: string | null;
   email: string | null;
   address: string | null;
+  locality: string | null;
+  region: string | null;
+  postal_code: string | null;
+  latitude: number | null;
+  longitude: number | null;
   office_hours: string | null;
   google_maps_url: string | null;
   whatsapp: string | null;
