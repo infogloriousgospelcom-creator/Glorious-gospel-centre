@@ -101,37 +101,27 @@ export default async function MemberAccountPage({
             ) : null}
 
             <div className="grid gap-8 lg:grid-cols-2">
-              <Card>
+              <Card className="lg:col-span-2">
                 <CardHeader>
-                  <CardTitle>Profile</CardTitle>
+                  <CardTitle>My Giving</CardTitle>
                   <CardDescription>
-                    Update the name and phone number on your account.
-                  </CardDescription>
-                </CardHeader>
-                <div className="space-y-6 px-6 pb-6">
-                  <ProfileCompletenessIndicator completeness={completeness} />
-                  <p className="text-sm text-ink-muted">
-                    Signed in as <span className="font-medium text-ink">{session.email}</span>
-                  </p>
-                  <MemberProfileForm
-                    fullName={session.fullName ?? ""}
-                    phone={session.phone ?? ""}
-                  />
-                </div>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Account security</CardTitle>
-                  <CardDescription>
-                    Email verification and password for your church account.
+                    Your recent gifts while signed in (visible only to you).
                   </CardDescription>
                 </CardHeader>
                 <CardBody>
-                  <AccountSecuritySection
-                    email={session.email}
-                    emailConfirmed={session.emailConfirmed}
-                  />
+                  <AccountGivingSection items={giving.items} loadOk={giving.ok} />
+                </CardBody>
+              </Card>
+
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Your next steps</CardTitle>
+                  <CardDescription>
+                    Simple suggestions based on your current account and membership status.
+                  </CardDescription>
+                </CardHeader>
+                <CardBody>
+                  <AccountNextStepsPanel steps={nextSteps} />
                 </CardBody>
               </Card>
 
@@ -144,18 +134,6 @@ export default async function MemberAccountPage({
                 </CardHeader>
                 <CardBody>
                   <AccountMembershipSections memberships={memberships} />
-                </CardBody>
-              </Card>
-
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>My Giving</CardTitle>
-                  <CardDescription>
-                    Your recent gifts while signed in (visible only to you).
-                  </CardDescription>
-                </CardHeader>
-                <CardBody>
-                  <AccountGivingSection items={giving.items} loadOk={giving.ok} />
                 </CardBody>
               </Card>
 
@@ -198,15 +176,37 @@ export default async function MemberAccountPage({
                 </CardBody>
               </Card>
 
-              <Card className="lg:col-span-2">
+              <Card>
                 <CardHeader>
-                  <CardTitle>Your next steps</CardTitle>
+                  <CardTitle>Profile</CardTitle>
                   <CardDescription>
-                    Simple suggestions based on your current account and membership status.
+                    Update the name and phone number on your account.
+                  </CardDescription>
+                </CardHeader>
+                <div className="space-y-6 px-6 pb-6">
+                  <ProfileCompletenessIndicator completeness={completeness} />
+                  <p className="text-sm text-ink-muted">
+                    Signed in as <span className="font-medium text-ink">{session.email}</span>
+                  </p>
+                  <MemberProfileForm
+                    fullName={session.fullName ?? ""}
+                    phone={session.phone ?? ""}
+                  />
+                </div>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Account security</CardTitle>
+                  <CardDescription>
+                    Email verification and password for your church account.
                   </CardDescription>
                 </CardHeader>
                 <CardBody>
-                  <AccountNextStepsPanel steps={nextSteps} />
+                  <AccountSecuritySection
+                    email={session.email}
+                    emailConfirmed={session.emailConfirmed}
+                  />
                 </CardBody>
               </Card>
             </div>

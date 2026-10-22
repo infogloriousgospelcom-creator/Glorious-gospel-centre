@@ -194,15 +194,15 @@ describe("I-B8 member read path + Account UI", () => {
     expect(markActionSrc).not.toMatch(/\.eq\(\s*["']recipient_id["']/);
   });
 
-  it("renders Activity section between My Giving and next steps", () => {
+  it("renders the Activity section after My Giving and next steps", () => {
     expect(accountPageSrc).toMatch(/AccountNotificationsSection/);
     expect(accountPageSrc).toMatch(/>Activity</);
     const givingIdx = accountPageSrc.indexOf("My Giving");
-    const activityIdx = accountPageSrc.indexOf(">Activity<");
     const nextIdx = accountPageSrc.indexOf("Your next steps");
+    const activityIdx = accountPageSrc.indexOf(">Activity<");
     expect(givingIdx).toBeGreaterThan(-1);
-    expect(activityIdx).toBeGreaterThan(givingIdx);
-    expect(nextIdx).toBeGreaterThan(activityIdx);
+    expect(nextIdx).toBeGreaterThan(givingIdx);
+    expect(activityIdx).toBeGreaterThan(nextIdx);
   });
 
   it("shows empty/error states and mark-as-read without admin notes", () => {
