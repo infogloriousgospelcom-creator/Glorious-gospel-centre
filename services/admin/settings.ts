@@ -3,6 +3,7 @@ import "server-only";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/supabase/server";
+import { invalidateCache } from "@/lib/cache";
 import type { AdminActionState } from "./sermons";
 
 const SettingsSchema = z.object({
@@ -83,6 +84,8 @@ export async function updateSiteSettings(_p: AdminActionState | null, fd: FormDa
     revalidatePath("/admin/settings");
     revalidatePath("/contact");
     revalidatePath("/give");
+    invalidateCache("site-settings");
+    invalidateCache("social-links");
     return { ok: true, message: "Settings saved." };
   } catch { return { ok: false, message: "Could not save settings." }; }
 }

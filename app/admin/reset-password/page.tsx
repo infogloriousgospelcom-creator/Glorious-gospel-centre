@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Navbar } from "@/components/layout/Navbar";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
-import { ChangePasswordForm } from "../account/_components/ChangePasswordForm";
+import { ChangePasswordForm } from "../(protected)/account/_components/ChangePasswordForm";
 import { createClient } from "@/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -29,13 +29,14 @@ export default async function ResetPasswordPage() {
 
   return (
     <>
-      <Navbar />
-      <main id="main" className="bg-surface-muted min-h-[calc(100vh-8rem)]">
+      <SiteHeader />
+      <main id="main" className="bg-surface-muted">
         <div className="container-page py-section">
           <div className="mx-auto max-w-md">
             <Card>
               <CardHeader>
-                <CardTitle>Set a new password</CardTitle>
+                <p className="eyebrow">Administrator</p>
+                <CardTitle className="mt-2">Set a new password</CardTitle>
                 <CardDescription>
                   Enter and confirm your new password to regain access.
                 </CardDescription>
@@ -44,7 +45,7 @@ export default async function ResetPasswordPage() {
                 <ChangePasswordForm />
                 <p className="text-sm text-ink-muted">
                   Changed your mind?{" "}
-                  <Link href="/admin/login" className="font-medium text-brand-700 hover:text-brand-800">
+                  <Link href="/admin/login" className="font-semibold text-brand-700 transition-colors hover:text-brand-800">
                     Back to sign in
                   </Link>
                 </p>

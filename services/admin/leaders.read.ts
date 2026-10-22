@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/supabase/server";
+import type { LeaderCategory } from "@/types/content";
 
 export interface AdminLeaderRow {
   id: string;
@@ -11,17 +12,25 @@ export interface AdminLeaderRow {
   phone: string | null;
   sort_order: number;
   is_featured: boolean;
+  category: LeaderCategory;
   status: string;
   published_at: string | null;
   created_at: string;
 }
 
-export async function listAllLeaders(): Promise<AdminLeaderRow[]> {
+const COLUMNS =
+  "id,full_name,title,bio,image_url,email,phone,sort_order,is_featured,category,status,published_at,created_at";
+
+export async function listAllLeaders(category?: LeaderCategory): Promise<AdminLeaderRow[]> {
   try {
     const supabase = createClient();
-    const { data, error } = await supabase.from("leaders").select(
-      "id,full_name,title,bio,image_url,email,phone,sort_order,is_featured,status,published_at,created_at"
-    ).order("sort_order", { ascending: true }).order("full_name", { ascending: true });
+    let query = supabase
+      .from("leaders")
+      .select(COLUMNS)
+      .order("sort_order", { ascending: true })
+      .order("full_name", { ascending: true });
+    if (category) query = query.eq("category", category);
+    const { data, error } = await query;
     if (error) return [];
     return (data ?? []) as AdminLeaderRow[];
   } catch { return []; }
@@ -30,9 +39,8 @@ export async function listAllLeaders(): Promise<AdminLeaderRow[]> {
 export async function getLeaderForAdmin(id: string): Promise<AdminLeaderRow | null> {
   try {
     const supabase = createClient();
-    const { data, error } = await supabase.from("leaders").select(
-      "id,full_name,title,bio,image_url,email,phone,sort_order,is_featured,status,published_at,created_at"
-    ).eq("id", id).maybeSingle();
+    const { data, error } = await supabase.from("leaders").select(COLUMNS)
+      .eq("id", id).maybeSingle();
     if (error) return null;
     return (data ?? null) as AdminLeaderRow | null;
   } catch { return null; }

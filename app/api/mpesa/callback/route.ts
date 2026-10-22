@@ -1,27 +1,47 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { applyCallback } from "@/services/giving";
 import { getPaymentProvider } from "@/services/payment";
+import { getServerEnv } from "@/lib/env";
+import { verifyCallbackToken } from "@/lib/callback-auth";
 
 /**
- * M-Pesa Daraja STK Push callback receiver.
+ * Secondary M-Pesa callback receiver (Next.js).
  *
- * Verifies the request signature (HMAC-SHA256 of the raw body using
- * M_PESA_CALLBACK_SECRET), parses the provider payload, and updates
- * the matching `giving_transactions` row idempotently.
+ * Production callbacks should hit the Edge Function with a signed CallBackURL.
+ * This route remains for local/dev and as a compatibility endpoint.
  *
- * Always responds 200 unless verification fails — Daraja retries on
- * non-2xx responses.
+ * Auth: query `tx` + `sig` HMAC (preferred) OR body HMAC header in live mode.
+ * Never accepts missing signatures in production.
  */
 export async function POST(request: NextRequest) {
-  const rawBody = await request.text();
-  const signature =
-    request.headers.get("x-daraja-signature") ?? request.headers.get("x-signature");
+  const env = getServerEnv();
+  const secret = env.M_PESA_CALLBACK_SECRET ?? env.M_PESA_PASSKEY ?? null;
 
-  const provider = getPaymentProvider();
-  if (!provider.verifyCallback(rawBody, signature)) {
+  if (process.env.NODE_ENV === "production" && !secret) {
+    return NextResponse.json({ error: "Callback secret not configured." }, { status: 503 });
+  }
+
+  const rawBody = await request.text();
+  const { searchParams } = new URL(request.url);
+  const txId = searchParams.get("tx");
+  const sig = searchParams.get("sig");
+
+  let authorized = false;
+
+  if (txId && sig && secret) {
+    authorized = verifyCallbackToken(txId, sig, secret);
+  } else {
+    const signature =
+      request.headers.get("x-daraja-signature") ?? request.headers.get("x-signature");
+    const provider = getPaymentProvider();
+    authorized = provider.verifyCallback(rawBody, signature);
+  }
+
+  if (!authorized) {
     return NextResponse.json({ error: "Invalid signature." }, { status: 401 });
   }
 
+  const provider = getPaymentProvider();
   const payload = provider.parseCallback(rawBody);
   if (!payload.externalReference) {
     return NextResponse.json({ ok: true, ignored: true });
@@ -31,6 +51,7 @@ export async function POST(request: NextRequest) {
     externalReference: payload.externalReference,
     status: payload.status,
     raw: payload.raw,
+    transactionId: txId ?? undefined,
   });
   return NextResponse.json({ ok: true, ...result });
 }

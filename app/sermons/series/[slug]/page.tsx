@@ -1,14 +1,23 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
-import { Navbar } from "@/components/layout/Navbar";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
 import { Card, CardBody, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState, SectionEyebrow } from "@/components/ui/Section";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { getSermonSeriesBySlug, listSermonsPaged } from "@/services/sermons";
-import { formatDuration } from "@/lib/media";
+import { formatDuration, youtubeThumbnailUrl } from "@/lib/media";
+import {
+  buildPageMetadata,
+  buildBreadcrumbSchema,
+  plainText,
+  siteUrl,
+} from "@/lib/seo";
+import { formatKenyaDateWith } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -18,20 +27,27 @@ export async function generateMetadata({
   params: { slug: string };
 }): Promise<Metadata> {
   const series = await getSermonSeriesBySlug(params.slug);
-  if (!series) return { title: "Series" };
-  return {
+  if (!series) {
+    return buildPageMetadata({
+      title: "Series",
+      description: "Sermon series",
+      path: `/sermons/series/${params.slug}`,
+      noindex: true,
+    });
+  }
+  return buildPageMetadata({
     title: series.title,
-    description: series.description ?? `Sermon series: ${series.title}.`,
-  };
+    description: series.description
+      ? plainText(series.description, 200)
+      : `Sermon series: ${series.title} from Glorious Gospel Centre Church.`,
+    path: `/sermons/series/${series.slug}`,
+    image: series.hero_image,
+    imageAlt: `${series.title} sermon series`,
+  });
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatKenyaDateWith(iso, { weekday: "short", month: "short", day: "numeric", year: "numeric" });
 }
 
 export default async function SeriesDetailPage({
@@ -44,9 +60,15 @@ export default async function SeriesDetailPage({
 
   const paged = await listSermonsPaged(1, { seriesId: series.id });
 
+  const breadcrumb = buildBreadcrumbSchema([
+    { name: "Home", url: siteUrl("/") },
+    { name: "Sermons", url: siteUrl("/sermons") },
+    { name: series.title, url: siteUrl(`/sermons/series/${series.slug}`) },
+  ]);
+
   return (
     <>
-      <Navbar />
+      <SiteHeader />
       <main id="main">
         <Section className="bg-gradient-to-br from-brand-50 via-surface to-accent-50">
           <Container>
@@ -73,11 +95,16 @@ export default async function SeriesDetailPage({
 
         {series.hero_image ? (
           <Container>
-            <img
-              src={series.hero_image}
-              alt=""
-              className="aspect-[21/9] w-full rounded-2xl object-cover shadow-elevated"
-            />
+            <div className="relative aspect-[21/9] w-full rounded-2xl overflow-hidden shadow-elevated">
+              <Image
+                src={series.hero_image}
+                alt={`${series.title} sermon series`}
+                fill
+                className="object-cover"
+                priority
+                sizes="100vw"
+              />
+            </div>
           </Container>
         ) : null}
 
@@ -99,12 +126,14 @@ export default async function SeriesDetailPage({
                   return (
                     <Link key={s.id} href={`/sermons/${s.slug}`} className="group">
                       <Card className="flex h-full flex-col transition-shadow group-hover:shadow-elevated">
-                        <div className="aspect-video overflow-hidden bg-gradient-to-br from-brand-900 via-brand-800 to-accent-700" aria-hidden="true">
-                          {s.thumbnail_url ? (
-                            <img
-                              src={s.thumbnail_url}
-                              alt=""
-                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-brand-900 via-brand-800 to-accent-700" aria-hidden="true">
+                          {(s.thumbnail_url ?? youtubeThumbnailUrl(s.video_url)) ? (
+                            <Image
+                              src={s.thumbnail_url ?? youtubeThumbnailUrl(s.video_url)!}
+                              alt={`${s.title} sermon thumbnail`}
+                              fill
+                              className="object-cover transition-transform duration-500 group-hover:scale-105"
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                             />
                           ) : null}
                         </div>
@@ -132,6 +161,7 @@ export default async function SeriesDetailPage({
             )}
           </Container>
         </Section>
+        <JsonLd data={breadcrumb} />
       </main>
       <Footer />
     </>

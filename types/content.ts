@@ -12,6 +12,11 @@ export interface SiteSettings {
   phone: string | null;
   email: string | null;
   address: string | null;
+  locality: string | null;
+  region: string | null;
+  postal_code: string | null;
+  latitude: number | null;
+  longitude: number | null;
   office_hours: string | null;
   google_maps_url: string | null;
   whatsapp: string | null;
@@ -96,6 +101,8 @@ export interface MinistryItem {
   meeting_info: string | null;
   contact_email: string | null;
   contact_phone: string | null;
+  /** Self-referencing parent for nested ministries (e.g. Hospitality children). */
+  parent_id: string | null;
   sort_order: number;
   published_at: string | null;
 }
@@ -113,6 +120,10 @@ export interface ServiceItem {
   is_recurring: boolean;
 }
 
+/** Content category for a person in `leaders`. `PASTOR` rows are additionally
+ * served by the Pastors section; every published row stays on Leadership. */
+export type LeaderCategory = "PASTOR" | "LEADERSHIP";
+
 export interface LeaderItem {
   id: string;
   full_name: string;
@@ -123,6 +134,7 @@ export interface LeaderItem {
   phone: string | null;
   sort_order: number;
   is_featured: boolean;
+  category: LeaderCategory;
 }
 
 export interface GivingCategory {
@@ -194,3 +206,85 @@ export const DAYS_OF_WEEK = [
 export function dayName(dayOfWeek: number): string {
   return DAYS_OF_WEEK[dayOfWeek] ?? "";
 }
+
+export type TestimonyStatus = "PENDING" | "APPROVED" | "REJECTED" | "ARCHIVED";
+
+/** Safe public fields only — never includes email, phone, notes, or IP. */
+export interface TestimonyPublic {
+  id: string;
+  slug: string;
+  title: string;
+  story: string;
+  display_name: string | null;
+  anonymous: boolean;
+  published_at: string | null;
+  created_at: string;
+}
+
+export interface TestimonyAdminRow {
+  id: string;
+  slug: string | null;
+  title: string;
+  story: string;
+  display_name: string | null;
+  anonymous: boolean;
+  submitter_email: string | null;
+  submitter_phone: string | null;
+  consent_to_publish: boolean;
+  consent_at: string;
+  status: TestimonyStatus;
+  internal_notes: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ConnectGroupStatus = "DRAFT" | "OPEN" | "FULL" | "CLOSED" | "ARCHIVED";
+
+/** Public Connect Group fields — no membership or private profile data. */
+export interface ConnectGroupPublic {
+  id: string;
+  slug: string;
+  name: string;
+  short_description: string | null;
+  description: string | null;
+  meeting_day: number | null;
+  meeting_time: string | null;
+  meeting_frequency: string | null;
+  location_note: string | null;
+  capacity: number | null;
+  leader_display_name: string | null;
+  ministry_id: string | null;
+  status: "OPEN" | "FULL" | "CLOSED";
+  sort_order: number;
+  published_at: string | null;
+}
+
+export interface ConnectGroupAdminRow {
+  id: string;
+  slug: string;
+  name: string;
+  short_description: string | null;
+  description: string | null;
+  meeting_day: number | null;
+  meeting_time: string | null;
+  meeting_frequency: string | null;
+  location_note: string | null;
+  capacity: number | null;
+  leader_display_name: string | null;
+  ministry_id: string | null;
+  status: ConnectGroupStatus;
+  sort_order: number;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type {
+  ConnectGroupMemberStatus,
+  ConnectGroupMembershipOwn,
+} from "@/lib/connect-group-members";
+
+

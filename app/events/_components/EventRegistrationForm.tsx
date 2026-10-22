@@ -29,7 +29,7 @@ export function EventRegistrationForm({ eventId }: { eventId: string }) {
   }
 
   return (
-    <form action={formAction} className="space-y-4" noValidate>
+    <form action={formAction} className="relative space-y-4" noValidate>
       <input type="hidden" name="event_id" value={eventId} />
 
       <Field label="Full name" htmlFor="reg-name" required error={state.errors?.full_name}>
@@ -66,6 +66,12 @@ export function EventRegistrationForm({ eventId }: { eventId: string }) {
       <Field label="Notes" htmlFor="reg-notes" error={state.errors?.notes}>
         <Textarea id="reg-notes" name="notes" rows={3} />
       </Field>
+
+      {/* Honeypot — leave empty */}
+      <div className="absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
+        <label htmlFor="reg-website">Website</label>
+        <input id="reg-website" name="website" type="text" tabIndex={-1} autoComplete="off" />
+      </div>
 
       {state.message && !state.ok ? (
         <Alert tone="danger">{state.message}</Alert>

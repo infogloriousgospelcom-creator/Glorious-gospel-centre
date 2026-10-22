@@ -2,6 +2,22 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "img.youtube.com",
+      },
+      {
+        protocol: "https",
+        hostname: "i.ytimg.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.supabase.co",
+      },
+    ],
+  },
   experimental: {
     typedRoutes: false,
   },
@@ -18,6 +34,9 @@ const nextConfig = {
             key: "Strict-Transport-Security",
             value: "max-age=63072000; includeSubDomains; preload",
           },
+          // CSP is now set per-request in middleware.ts with a nonce.
+          // It is report-only for safe rollout; flip to "Content-Security-Policy"
+          // in middleware.ts once the violation stream is clean.
         ],
       },
     ];

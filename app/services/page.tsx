@@ -1,16 +1,25 @@
 import type { Metadata } from "next";
-import { Navbar } from "@/components/layout/Navbar";
+import Link from "next/link";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
-import { EmptyState, SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
+import { EmptyState } from "@/components/ui/Section";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { LinkButton } from "@/components/ui/LinkButton";
 import { getPublishedServices, groupServicesByDay } from "@/services/content";
+import { buildPageMetadata } from "@/lib/seo";
+import { SectionReveal } from "@/components/motion/SectionReveal";
+import { ContextualNextSteps } from "@/components/church/ContextualNextSteps";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "Services",
-  description: "Weekly service schedule for Glorious Gospel Centre.",
-};
+  description:
+    "Weekly service schedule for Glorious Gospel Centre Church — Sunday worship, mid-week gatherings, and prayer meetings.",
+  path: "/services",
+  keywords: ["church services", "worship schedule", "sunday service", "bible study"],
+});
 
 function formatTime(time: string): string {
   const [h, m] = time.split(":");
@@ -23,24 +32,21 @@ function formatTime(time: string): string {
 export default async function ServicesPage() {
   const services = await getPublishedServices();
   const byDay = groupServicesByDay(services);
-  const hasRecurring = services.some((s) => s.is_recurring);
 
   return (
     <>
-      <Navbar />
+      <SiteHeader />
       <main id="main">
-        <Section className="bg-gradient-to-br from-brand-50 via-surface to-accent-50">
-          <Container>
-            <div className="mx-auto max-w-3xl text-center">
-              <SectionEyebrow>Weekly schedule</SectionEyebrow>
-              <SectionTitle>Join us in worship</SectionTitle>
-              <SectionLead>
-                We gather throughout the week for prayer, teaching, and worship.
-                All are welcome to participate.
-              </SectionLead>
-            </div>
-          </Container>
-        </Section>
+        <PageHeader
+          eyebrow="Weekly schedule"
+          title="Join us in worship"
+          description="We gather throughout the week for prayer, teaching, and worship. All are welcome to participate."
+        >
+          <LinkButton href="/visit">Plan Your Visit</LinkButton>
+          <LinkButton href="/livestream" variant="secondary">
+            Watch Online
+          </LinkButton>
+        </PageHeader>
 
         <Section>
           <Container>
@@ -50,37 +56,25 @@ export default async function ServicesPage() {
                 description="Weekly services will appear here once added through the admin."
               />
             ) : (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {byDay.map(({ day, label, services }) => (
-                  <article
-                    key={day}
-                    className="overflow-hidden rounded-2xl border border-brand-100 bg-surface shadow-soft"
-                  >
-                    <header className="border-b border-brand-100 bg-brand-50 px-5 py-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">
-                        Day {day + 1}
-                      </p>
-                      <h2 className="heading-3 text-ink">{label}</h2>
-                    </header>
-                    <ul className="divide-y divide-brand-100">
-                      {services.map((s) => (
-                        <li key={s.id} className="px-5 py-4">
-                          <div className="flex items-start justify-between gap-4">
+              <SectionReveal>
+                <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                  {byDay.map(({ day, label, services: dayServices }) => (
+                    <article key={day} className="border-t border-accent-400/70 pt-4">
+                      <h2 className="font-display text-lg font-semibold text-brand-900">{label}</h2>
+                      <ul className="mt-3 divide-y divide-border border-y border-border">
+                        {dayServices.map((s) => (
+                          <li key={s.id} className="flex items-start justify-between gap-4 py-3">
                             <div>
-                              <p className="font-medium text-ink">{s.name}</p>
+                              <p className="font-medium text-brand-900">{s.name}</p>
                               {s.description ? (
-                                <p className="mt-1 text-sm text-ink-muted">
-                                  {s.description}
-                                </p>
+                                <p className="mt-1 text-sm text-ink-muted">{s.description}</p>
                               ) : null}
                               {s.location ? (
-                                <p className="mt-2 inline-flex items-center gap-1 text-xs text-ink-muted">
-                                  <span aria-hidden="true">📍</span> {s.location}
-                                </p>
+                                <p className="mt-1 text-xs text-ink-muted">{s.location}</p>
                               ) : null}
                             </div>
                             <div className="shrink-0 text-right">
-                              <p className="text-sm font-medium text-brand-700">
+                              <p className="text-sm font-semibold text-brand-700">
                                 {formatTime(s.start_time)}
                               </p>
                               {s.end_time ? (
@@ -89,26 +83,37 @@ export default async function ServicesPage() {
                                 </p>
                               ) : null}
                             </div>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </article>
-                ))}
-              </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </article>
+                  ))}
+                </div>
+              </SectionReveal>
             )}
 
-            {hasRecurring ? (
+            {services.length > 0 ? (
               <p className="mt-10 text-center text-xs text-ink-muted">
-                Schedule repeats weekly. Special services and one-time events appear on the{" "}
-                <a href="/events" className="text-brand-700 hover:text-brand-800">
+                Schedule typically repeats weekly. Special services and one-time events appear on the{" "}
+                <Link href="/events" className="brand-link">
                   events page
-                </a>
+                </Link>
                 .
               </p>
             ) : null}
           </Container>
         </Section>
+
+        <ContextualNextSteps
+          title="Ready to join us?"
+          description="See the weekly rhythm above, then plan your visit or watch online."
+          actions={[
+            { href: "/visit", label: "Plan Your Visit" },
+            { href: "/livestream", label: "Watch Online", variant: "secondary" },
+            { href: "/events", label: "View Events", variant: "ghost" },
+          ]}
+          surface="muted"
+        />
       </main>
       <Footer />
     </>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Navbar } from "@/components/layout/Navbar";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { getCurrentAdmin } from "@/services/auth";
 import { LoginForm } from "./_components/LoginForm";
@@ -23,13 +23,14 @@ export default async function LoginPage({
 
   return (
     <>
-      <Navbar />
-      <main id="main" className="bg-surface-muted min-h-[calc(100vh-8rem)]">
+      <SiteHeader />
+      <main id="main" className="bg-surface-muted">
         <div className="container-page py-section">
           <div className="mx-auto max-w-md">
             <Card>
               <CardHeader>
-                <CardTitle>Sign in</CardTitle>
+                <p className="eyebrow">Administrator</p>
+                <CardTitle className="mt-2">Sign in</CardTitle>
                 <CardDescription>
                   Administrator access. Use the email and password provided by
                   your church administrator.

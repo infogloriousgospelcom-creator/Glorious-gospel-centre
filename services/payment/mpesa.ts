@@ -7,7 +7,8 @@ import type {
   StkPushResult,
 } from "./provider";
 import { isMockMode } from "./provider";
-import { randomUUID, createHmac, timingSafeEqual } from "node:crypto";
+import { randomUUID } from "node:crypto";
+import { verifyBodyHmac } from "@/lib/callback-auth";
 
 /**
  * Safaricom Daraja M-Pesa STK Push provider.
@@ -47,21 +48,23 @@ export class MpesaDarajaProvider implements PaymentProvider {
     return this.stkPushLive(req);
   }
 
+  /**
+   * Verify callback authenticity.
+   *
+   * Production always fails closed: missing secret or missing/invalid
+   * signature → false. Mock/dev accepts only the fixed `dev-signature`
+   * (never null).
+   */
   verifyCallback(rawBody: string, signature: string | null): boolean {
+    const isProd = process.env.NODE_ENV === "production";
+
     if (this.mode === "mock") {
-      // Mock mode: accept a fixed dev signature.
-      return signature === "dev-signature" || signature === null;
+      if (isProd) return false;
+      return signature === "dev-signature";
     }
-    if (!this.callbackSecret || !signature) return false;
-    const expected = createHmac("sha256", this.callbackSecret).update(rawBody).digest("hex");
-    try {
-      const a = Buffer.from(expected, "hex");
-      const b = Buffer.from(signature, "hex");
-      if (a.length !== b.length) return false;
-      return timingSafeEqual(a, b);
-    } catch {
-      return false;
-    }
+
+    if (!this.callbackSecret) return false;
+    return verifyBodyHmac(rawBody, signature, this.callbackSecret);
   }
 
   parseCallback(rawBody: string): CallbackPayload {
@@ -91,6 +94,55 @@ export class MpesaDarajaProvider implements PaymentProvider {
     return { externalReference: checkoutId, status, raw: parsed };
   }
 
+  /**
+   * Confirm STK result with Daraja Query API.
+   * Returns true only when Daraja reports ResultCode 0.
+   * In mock mode, trusts the provided expected status when signature was already verified.
+   */
+  async confirmStkSuccess(checkoutRequestId: string): Promise<boolean> {
+    if (!checkoutRequestId) return false;
+    if (this.mode === "mock") {
+      return process.env.NODE_ENV !== "production";
+    }
+    if (!this.shortcode || !this.passkey) return false;
+
+    const base =
+      this.environment === "production"
+        ? "https://api.safaricom.co.ke"
+        : "https://sandbox.safaricom.co.ke";
+    const token = await this.fetchOAuthToken(base);
+    if (!token) return false;
+
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[^0-9]/g, "")
+      .slice(0, 14);
+    const password = Buffer.from(`${this.shortcode}${this.passkey}${timestamp}`).toString(
+      "base64",
+    );
+
+    try {
+      const res = await fetch(`${base}/mpesa/stkpushquery/v1/query`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          BusinessShortCode: this.shortcode,
+          Password: password,
+          Timestamp: timestamp,
+          CheckoutRequestID: checkoutRequestId,
+        }),
+      });
+      const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      const resultCode = Number(json.ResultCode ?? json.resultCode ?? 1);
+      return res.ok && resultCode === 0;
+    } catch {
+      return false;
+    }
+  }
+
   private async stkPushMock(req: StkPushRequest): Promise<StkPushResult> {
     const externalReference = `mock_${randomUUID()}`;
     return {
@@ -102,7 +154,10 @@ export class MpesaDarajaProvider implements PaymentProvider {
   }
 
   private async stkPushLive(req: StkPushRequest): Promise<StkPushResult> {
-    const base = this.environment === "production" ? "https://api.safaricom.co.ke" : "https://sandbox.safaricom.co.ke";
+    const base =
+      this.environment === "production"
+        ? "https://api.safaricom.co.ke"
+        : "https://sandbox.safaricom.co.ke";
     const token = await this.fetchOAuthToken(base);
     if (!token) {
       return { externalReference: "", accepted: false, message: "OAuth failed.", raw: null };
@@ -111,7 +166,9 @@ export class MpesaDarajaProvider implements PaymentProvider {
       .toISOString()
       .replace(/[^0-9]/g, "")
       .slice(0, 14);
-    const password = Buffer.from(`${this.shortcode}${this.passkey}${timestamp}`).toString("base64");
+    const password = Buffer.from(`${this.shortcode}${this.passkey}${timestamp}`).toString(
+      "base64",
+    );
 
     const res = await fetch(`${base}/mpesa/stkpush/v1/processrequest`, {
       method: "POST",
@@ -146,10 +203,9 @@ export class MpesaDarajaProvider implements PaymentProvider {
   private async fetchOAuthToken(base: string): Promise<string | null> {
     if (!this.consumerKey || !this.consumerSecret) return null;
     const auth = Buffer.from(`${this.consumerKey}:${this.consumerSecret}`).toString("base64");
-    const res = await fetch(
-      `${base}/oauth/v1/generate?grant_type=client_credentials`,
-      { headers: { Authorization: `Basic ${auth}` } },
-    );
+    const res = await fetch(`${base}/oauth/v1/generate?grant_type=client_credentials`, {
+      headers: { Authorization: `Basic ${auth}` },
+    });
     if (!res.ok) return null;
     const json: Record<string, unknown> = await res.json().catch(() => ({}));
     return typeof json.access_token === "string" ? json.access_token : null;
@@ -159,7 +215,8 @@ export class MpesaDarajaProvider implements PaymentProvider {
     const digits = phone.replace(/\D/g, "");
     if (digits.startsWith("254")) return digits;
     if (digits.startsWith("0") && digits.length === 10) return `254${digits.slice(1)}`;
-    if (digits.startsWith("7") && digits.length === 9) return `254${digits}`;
+    if ((digits.startsWith("7") || digits.startsWith("1")) && digits.length === 9)
+      return `254${digits}`;
     return digits;
   }
 }

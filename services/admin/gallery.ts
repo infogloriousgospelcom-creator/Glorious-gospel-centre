@@ -4,13 +4,19 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/supabase/server";
+import { isAllowedCmsMediaUrl, isSafeStoragePath } from "@/lib/safe-url";
 import type { AdminActionState } from "./sermons";
 const STATUS = ["DRAFT", "PENDING_APPROVAL", "APPROVED", "PUBLISHED", "REJECTED", "ARCHIVED"] as const;
 const AlbumSchema = z.object({
   slug: z.string().trim().min(2).max(120).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/i, "Slug must be lowercase letters, numbers, and hyphens."),
   title: z.string().trim().min(2, "Title is required.").max(200),
   description: z.string().trim().max(2000).optional().or(z.literal("")),
-  cover_image: z.string().url().optional().or(z.literal("")),
+  cover_image: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal(""))
+    .refine((v) => !v || isAllowedCmsMediaUrl(v), "Cover image must be HTTPS on an approved host."),
   category: z.string().trim().max(80).optional().or(z.literal("")),
   event_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal("")),
   sort_order: z.coerce.number().int().min(0).max(10000).optional(),
@@ -83,7 +89,12 @@ export async function deleteAlbum(id: string): Promise<AdminActionState> {
 
 const ItemSchema = z.object({
   album_id: z.string().uuid(),
-  storage_path: z.string().trim().min(2, "Storage path is required.").max(500),
+  storage_path: z
+    .string()
+    .trim()
+    .min(2, "Storage path is required.")
+    .max(500)
+    .refine(isSafeStoragePath, "Storage path contains unsafe characters."),
   caption: z.string().trim().max(500).optional().or(z.literal("")),
   alt_text: z.string().trim().max(200).optional().or(z.literal("")),
   sort_order: z.coerce.number().int().min(0).max(100000).optional(),

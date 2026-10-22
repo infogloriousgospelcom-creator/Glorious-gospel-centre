@@ -5,6 +5,7 @@ export interface DashboardCounts {
   upcomingEvents: number;
   publishedSermons: number;
   newPrayerRequests: number;
+  pendingTestimonies: number;
   galleryAlbums: number;
   unreadMessages: number;
   pendingContent: number;
@@ -18,6 +19,7 @@ export async function getDashboardCounts(): Promise<DashboardCounts> {
       { count: upcomingEvents },
       { count: publishedSermons },
       { count: newPrayerRequests },
+      { count: pendingTestimonies },
       { count: galleryAlbums },
       { count: unreadMessages },
       { count: pendingEvents },
@@ -38,6 +40,10 @@ export async function getDashboardCounts(): Promise<DashboardCounts> {
         .from("prayer_requests")
         .select("id", { count: "exact", head: true })
         .eq("status", "NEW"),
+      supabase
+        .from("testimonies")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "PENDING"),
       supabase
         .from("gallery_albums")
         .select("id", { count: "exact", head: true })
@@ -67,6 +73,7 @@ export async function getDashboardCounts(): Promise<DashboardCounts> {
       upcomingEvents: upcomingEvents ?? 0,
       publishedSermons: publishedSermons ?? 0,
       newPrayerRequests: newPrayerRequests ?? 0,
+      pendingTestimonies: pendingTestimonies ?? 0,
       galleryAlbums: galleryAlbums ?? 0,
       unreadMessages: unreadMessages ?? 0,
       pendingContent:
@@ -80,6 +87,7 @@ export async function getDashboardCounts(): Promise<DashboardCounts> {
       upcomingEvents: 0,
       publishedSermons: 0,
       newPrayerRequests: 0,
+      pendingTestimonies: 0,
       galleryAlbums: 0,
       unreadMessages: 0,
       pendingContent: 0,

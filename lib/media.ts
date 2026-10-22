@@ -26,7 +26,10 @@ export function toEmbedUrl(url: string | null | undefined): string | null {
       }
     }
     if (host.endsWith("vimeo.com")) {
-      const id = u.pathname.replace(/^\//, "").split("/")[0];
+      // /12345 or /video/12345 (with or without trailing path).
+      const parts = u.pathname.replace(/^\//, "").split("/").filter(Boolean);
+      if (parts.length === 0) return null;
+      const id = parts[0] === "video" ? parts[1] : parts[0];
       return id ? `https://player.vimeo.com/video/${id}` : null;
     }
     if (host === "player.vimeo.com") {
@@ -48,4 +51,47 @@ export function formatDuration(seconds: number | null | undefined): string | nul
   const s = seconds % 60;
   if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+/**
+ * Extract the YouTube video ID from a URL.
+ * Handles youtu.be, youtube.com/watch, youtube.com/embed, and youtube.com/shorts.
+ * Returns null for non-YouTube or unparseable URLs.
+ */
+export function getYouTubeVideoId(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    const host = u.hostname.toLowerCase();
+
+    if (host === "youtu.be") {
+      const id = u.pathname.replace(/^\//, "").split("?")[0];
+      return id || null;
+    }
+    if (host.endsWith("youtube.com") || host.endsWith("youtube-nocookie.com")) {
+      if (u.pathname === "/watch") {
+        return u.searchParams.get("v") || null;
+      }
+      if (u.pathname.startsWith("/embed/")) {
+        const id = u.pathname.replace("/embed/", "").split("/")[0];
+        return id || null;
+      }
+      if (u.pathname.startsWith("/shorts/")) {
+        const id = u.pathname.replace("/shorts/", "").split("/")[0];
+        return id || null;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Generate a YouTube thumbnail URL from any YouTube video URL.
+ * Returns null if the URL is not a recognised YouTube link.
+ */
+export function youtubeThumbnailUrl(url: string | null | undefined): string | null {
+  const id = getYouTubeVideoId(url);
+  return id ? `https://img.youtube.com/vi/${id}/maxresdefault.jpg` : null;
 }

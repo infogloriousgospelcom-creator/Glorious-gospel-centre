@@ -93,8 +93,12 @@ export async function deletePrayerRequest(id: string): Promise<AdminActionState>
   if (!auth.ok) return { ok: false, message: auth.error };
   if (!/^[0-9a-f-]{36}$/i.test(id)) return { ok: false, message: "Invalid id." };
   try {
-    const { error } = await auth.supabase.from("prayer_requests").delete().eq("id", id);
-    if (error) return { ok: false, message: "Could not delete." };
+    const { data, error } = await auth.supabase
+      .from("prayer_requests")
+      .delete()
+      .eq("id", id)
+      .select("id");
+    if (error || !data?.length) return { ok: false, message: "Could not delete." };
     await writeAuditLog({
       actorId: auth.userId,
       action: "prayer.delete",

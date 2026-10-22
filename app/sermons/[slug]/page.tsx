@@ -1,15 +1,25 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Navbar } from "@/components/layout/Navbar";
+import Link from "next/link";
+import Image from "next/image";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState, SectionEyebrow } from "@/components/ui/Section";
-import Link from "next/link";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { getSermonBySlug, getSeriesForSermon } from "@/services/sermons";
-import { toEmbedUrl, formatDuration } from "@/lib/media";
+import { toEmbedUrl, formatDuration, youtubeThumbnailUrl } from "@/lib/media";
+import {
+  buildPageMetadata,
+  buildVideoSchema,
+  buildBreadcrumbSchema,
+  plainText,
+  siteUrl,
+} from "@/lib/seo";
 import { SermonAudioPlayer } from "../_components/SermonAudioPlayer";
+import { formatKenyaDate } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -19,20 +29,30 @@ export async function generateMetadata({
   params: { slug: string };
 }): Promise<Metadata> {
   const sermon = await getSermonBySlug(params.slug);
-  if (!sermon) return { title: "Sermon" };
-  return {
+  if (!sermon) {
+    return buildPageMetadata({
+      title: "Sermon",
+      description: "Sermon",
+      path: `/sermons/${params.slug}`,
+      noindex: true,
+    });
+  }
+  return buildPageMetadata({
     title: sermon.title,
-    description: sermon.description ?? `Sermon by ${sermon.speaker ?? "unknown"}.`,
-  };
+    description: sermon.description
+      ? plainText(sermon.description, 200)
+      : `Sermon by ${sermon.speaker ?? "unknown"} — ${formatKenyaDate(sermon.preached_on)}.`,
+    path: `/sermons/${sermon.slug}`,
+    image: sermon.thumbnail_url,
+    imageAlt: `${sermon.title} sermon thumbnail`,
+    type: "article",
+    publishedTime: sermon.published_at ?? undefined,
+    keywords: sermon.category ? ["sermon", sermon.category] : ["sermon"],
+  });
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatKenyaDate(iso);
 }
 
 export default async function SermonDetailPage({
@@ -47,9 +67,27 @@ export default async function SermonDetailPage({
   const embed = toEmbedUrl(sermon.video_url);
   const duration = formatDuration(sermon.duration_seconds);
 
+  const videoSchema = sermon.video_url
+    ? buildVideoSchema({
+        name: sermon.title,
+        description: sermon.description ?? sermon.title,
+        thumbnailUrl: sermon.thumbnail_url ?? youtubeThumbnailUrl(sermon.video_url),
+        uploadDate: sermon.published_at ?? `${sermon.preached_on}T00:00:00Z`,
+        contentUrl: sermon.video_url,
+        embedUrl: embed,
+        durationSeconds: sermon.duration_seconds,
+      })
+    : null;
+
+  const breadcrumb = buildBreadcrumbSchema([
+    { name: "Home", url: siteUrl("/") },
+    { name: "Sermons", url: siteUrl("/sermons") },
+    { name: sermon.title, url: siteUrl(`/sermons/${sermon.slug}`) },
+  ]);
+
   return (
     <>
-      <Navbar />
+      <SiteHeader />
       <main id="main">
         <Section className="bg-gradient-to-br from-brand-50 via-surface to-accent-50">
           <Container>
@@ -90,36 +128,41 @@ export default async function SermonDetailPage({
                 {sermon.audio_url ? <Badge tone="info">Audio</Badge> : null}
                 {sermon.livestream_url ? <Badge tone="warning">Livestream</Badge> : null}
               </div>
-            </div>
-          </Container>
-        </Section>
-
-        <Section>
-          <Container>
-            {embed ? (
-              <div className="overflow-hidden rounded-2xl bg-ink shadow-elevated">
-                <div className="aspect-video">
-                  <iframe
-                    src={embed}
-                    title={sermon.title}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    className="h-full w-full"
+</div>
+            </Container>
+          </Section>
+ 
+          <Section>
+            <Container>
+              {embed ? (
+                <div className="overflow-hidden rounded-2xl bg-ink shadow-elevated">
+                  <div className="aspect-video">
+                    <iframe
+                      src={embed}
+                      title={sermon.title}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                      className="h-full w-full"
+                    />
+                  </div>
+                </div>
+              ) : sermon.thumbnail_url ? (
+                <div className="relative aspect-video w-full rounded-2xl overflow-hidden shadow-elevated">
+                  <Image
+                    src={sermon.thumbnail_url}
+                    alt={`${sermon.title} sermon cover image`}
+                    fill
+                    className="object-cover"
+                    priority
+                    sizes="100vw"
                   />
                 </div>
-              </div>
-            ) : sermon.thumbnail_url ? (
-              <img
-                src={sermon.thumbnail_url}
-                alt=""
-                className="aspect-video w-full rounded-2xl object-cover shadow-elevated"
-              />
-            ) : (
-              <EmptyState
-                title="Media coming soon"
-                description="The video, audio, or livestream link will appear once published."
-              />
-            )}
+              ) : (
+                <EmptyState
+                  title="Media coming soon"
+                  description="The video, audio, or livestream link will appear once published."
+                />
+              )}
 
             {sermon.audio_url ? (
               <div className="mt-6">
@@ -215,6 +258,7 @@ export default async function SermonDetailPage({
             </div>
           </Container>
         </Section>
+        <JsonLd data={videoSchema ? [videoSchema, breadcrumb] : [breadcrumb]} />
       </main>
       <Footer />
     </>

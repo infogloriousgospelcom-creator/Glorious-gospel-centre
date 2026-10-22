@@ -61,6 +61,7 @@ export interface ProviderConfig {
   shortcode?: string;
   passkey?: string;
   environment: "sandbox" | "production";
+  callbackSecret?: string;
 }
 
 export function isMockMode(env: ProviderConfig): boolean {

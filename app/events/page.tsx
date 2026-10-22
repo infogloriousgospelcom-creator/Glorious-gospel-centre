@@ -1,30 +1,47 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Navbar } from "@/components/layout/Navbar";
+import Image from "next/image";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
 import { Card, CardBody, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { EmptyState, SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
+import { EmptyState } from "@/components/ui/Section";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { getAllPublishedEvents } from "@/services/content";
+import { buildPageMetadata } from "@/lib/seo";
+import { SectionReveal } from "@/components/motion/SectionReveal";
+import { ContextualNextSteps } from "@/components/church/ContextualNextSteps";
+import { KENYA_TZ } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "Events",
-  description: "Upcoming events at Glorious Gospel Centre.",
-};
+  description:
+    "Upcoming and recent events at Glorious Gospel Centre Church — conferences, outreach, fellowships, and special services.",
+  path: "/events",
+  keywords: ["church events", "conferences", "outreach", "fellowship"],
+});
+
+const dayFmt = new Intl.DateTimeFormat("en-KE", {
+  timeZone: KENYA_TZ,
+  weekday: "short",
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+const timeFmt = new Intl.DateTimeFormat("en-KE", {
+  timeZone: KENYA_TZ,
+  hour: "numeric",
+  minute: "2-digit",
+});
 
 function formatEventDateTime(iso: string): { day: string; time: string } {
   const d = new Date(iso);
   return {
-    day: d.toLocaleDateString(undefined, {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    }),
-    time: d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }),
+    day: dayFmt.format(d),
+    time: timeFmt.format(d),
   };
 }
 
@@ -36,20 +53,13 @@ export default async function EventsPage() {
 
   return (
     <>
-      <Navbar />
+      <SiteHeader />
       <main id="main">
-        <Section className="bg-gradient-to-br from-brand-50 via-surface to-accent-50">
-          <Container>
-            <div className="mx-auto max-w-3xl text-center">
-              <SectionEyebrow>Events</SectionEyebrow>
-              <SectionTitle>What&apos;s coming up</SectionTitle>
-              <SectionLead>
-                Conferences, outreach, fellowships, and special services. Join us
-                for any of these events.
-              </SectionLead>
-            </div>
-          </Container>
-        </Section>
+        <PageHeader
+          eyebrow="Events"
+          title="What's coming up"
+          description="Conferences, outreach, fellowships, and special services. Join us for any of these gatherings."
+        />
 
         <Section>
           <Container>
@@ -60,18 +70,21 @@ export default async function EventsPage() {
                 description="Schedule events through the admin to see them here."
               />
             ) : (
+              <SectionReveal>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {upcoming.map((e) => {
                   const { day, time } = formatEventDateTime(e.starts_at);
                   return (
                     <Link key={e.id} href={`/events/${e.slug}`} className="group">
-                      <Card className="flex h-full flex-col transition-shadow group-hover:shadow-elevated">
-                        <div className="aspect-[4/3] bg-gradient-to-br from-brand-100 to-accent-100" aria-hidden="true">
+                      <Card hoverable className="flex h-full flex-col overflow-hidden">
+                        <div className="relative aspect-[4/3] bg-gradient-to-br from-brand-100 to-brand-50" aria-hidden="true">
                           {e.poster_url ? (
-                            <img
+                            <Image
                               src={e.poster_url}
-                              alt=""
-                              className="h-full w-full object-cover"
+                              alt={e.title}
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                             />
                           ) : null}
                         </div>
@@ -82,7 +95,9 @@ export default async function EventsPage() {
                               <Badge tone="accent">Registration</Badge>
                             ) : null}
                           </div>
-                          <CardTitle>{e.title}</CardTitle>
+                          <CardTitle className="transition-colors group-hover:text-brand-700">
+                            {e.title}
+                          </CardTitle>
                           {e.short_description ? (
                             <CardDescription>{e.short_description}</CardDescription>
                           ) : null}
@@ -98,6 +113,7 @@ export default async function EventsPage() {
                   );
                 })}
               </div>
+              </SectionReveal>
             )}
           </Container>
         </Section>
@@ -106,17 +122,17 @@ export default async function EventsPage() {
           <Section className="bg-surface-muted">
             <Container>
               <h2 className="heading-3 mb-6">Past events</h2>
-              <ul className="divide-y divide-brand-100 overflow-hidden rounded-2xl border border-brand-100 bg-surface shadow-soft">
+              <ul className="divide-y divide-border border-y border-border">
                 {past.slice(0, 10).map((e) => {
                   const { day } = formatEventDateTime(e.starts_at);
                   return (
                     <li key={e.id}>
                       <Link
                         href={`/events/${e.slug}`}
-                        className="flex items-center justify-between px-5 py-4 hover:bg-brand-50"
+                        className="flex min-h-touch items-center justify-between gap-4 py-4 transition-colors duration-ui ease-smooth hover:text-brand-800"
                       >
                         <div>
-                          <p className="font-medium text-ink">{e.title}</p>
+                          <p className="font-medium text-brand-900">{e.title}</p>
                           {e.location ? (
                             <p className="text-xs text-ink-muted">{e.location}</p>
                           ) : null}
@@ -130,6 +146,16 @@ export default async function EventsPage() {
             </Container>
           </Section>
         ) : null}
+
+        <ContextualNextSteps
+          title="Coming to an event?"
+          description="Plan your visit, explore ministries, or reach out if you have questions."
+          actions={[
+            { href: "/visit", label: "Plan Your Visit" },
+            { href: "/ministries", label: "Explore Ministries", variant: "secondary" },
+            { href: "/contact", label: "Contact GGCC", variant: "ghost" },
+          ]}
+        />
       </main>
       <Footer />
     </>

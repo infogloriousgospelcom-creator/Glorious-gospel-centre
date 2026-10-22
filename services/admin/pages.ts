@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/supabase/server";
+import { isAllowedCmsMediaUrl } from "@/lib/safe-url";
 import type { AdminActionState } from "./sermons";
 const STATUS = ["DRAFT", "PENDING_APPROVAL", "APPROVED", "PUBLISHED", "REJECTED", "ARCHIVED"] as const;
 const PageSchema = z.object({
@@ -11,10 +12,20 @@ const PageSchema = z.object({
   title: z.string().trim().min(2, "Title is required.").max(200),
   excerpt: z.string().trim().max(500).optional().or(z.literal("")),
   body: z.string().trim().max(200000).optional().or(z.literal("")),
-  hero_image: z.string().url().optional().or(z.literal("")),
+  hero_image: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal(""))
+    .refine((v) => !v || isAllowedCmsMediaUrl(v), "Hero image must be HTTPS on an approved host."),
   seo_title: z.string().trim().max(200).optional().or(z.literal("")),
   seo_description: z.string().trim().max(500).optional().or(z.literal("")),
-  seo_og_image: z.string().url().optional().or(z.literal("")),
+  seo_og_image: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal(""))
+    .refine((v) => !v || isAllowedCmsMediaUrl(v), "OG image must be HTTPS on an approved host."),
   status: z.enum(STATUS).default("DRAFT"),
 });
 function flattenZod(err: z.ZodError): Record<string, string> {

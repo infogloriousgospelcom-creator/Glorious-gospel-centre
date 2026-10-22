@@ -1,0 +1,4 @@
+export const MAX_GIFT_SHILLINGS = 100_000;
+export const MAX_GIFT_CENTS = MAX_GIFT_SHILLINGS * 100;
+export const MIN_GIFT_SHILLINGS = 1;
+export const MIN_GIFT_CENTS = MIN_GIFT_SHILLINGS * 100;

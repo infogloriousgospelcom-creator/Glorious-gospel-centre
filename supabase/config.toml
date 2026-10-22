@@ -19,7 +19,13 @@ port = 54323
 [auth]
 enabled = true
 site_url = "http://localhost:3000"
-additional_redirect_urls = ["http://localhost:3000/admin", "http://localhost:3000/admin/reset-password"]
+additional_redirect_urls = [
+  "http://localhost:3000/admin",
+  "http://localhost:3000/admin/reset-password",
+  "http://localhost:3000/auth/callback",
+  "http://localhost:3000/reset-password",
+  "http://localhost:3000/account",
+]
 jwt_expiry = 3600
 enable_signup = false
 
@@ -35,3 +41,8 @@ redirect_to = "/admin/reset-password"
 [storage]
 enabled = true
 file_size_limit = "50MiB"
+
+# Daraja POSTs have no Supabase user JWT. Authenticity is the signed
+# CallBackURL query (?tx=&sig= HMAC), enforced inside the function.
+[functions.mpesa-callback]
+verify_jwt = false

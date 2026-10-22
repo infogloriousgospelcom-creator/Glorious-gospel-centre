@@ -1,5 +1,7 @@
 import "server-only";
 import { createClient } from "@/supabase/server";
+import { cached } from "@/lib/cache";
+import { filterActiveAnnouncements } from "@/lib/announcements";
 import { dayName } from "@/types/content";
 import type {
   Announcement,
@@ -15,11 +17,16 @@ import type {
 } from "@/types/content";
 
 const DEFAULT_SETTINGS: SiteSettings = {
-  church_name: "Glorious Gospel Centre",
+  church_name: "Glorious Gospel Centre Church",
   tagline: "A community anchored in grace.",
   phone: null,
   email: null,
   address: null,
+  locality: null,
+  region: null,
+  postal_code: null,
+  latitude: null,
+  longitude: null,
   office_hours: null,
   google_maps_url: null,
   whatsapp: null,
@@ -31,64 +38,76 @@ const DEFAULT_SETTINGS: SiteSettings = {
   seo_default_og_image: null,
 };
 
-export async function getSiteSettings(): Promise<SiteSettings> {
-  try {
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("site_settings")
-      .select("*")
-      .limit(1)
-      .maybeSingle();
-    if (error || !data) return DEFAULT_SETTINGS;
-    return {
-      church_name: data.church_name ?? DEFAULT_SETTINGS.church_name,
-      tagline: data.tagline ?? DEFAULT_SETTINGS.tagline,
-      phone: data.phone,
-      email: data.email,
-      address: data.address,
-      office_hours: data.office_hours,
-      google_maps_url: data.google_maps_url,
-      whatsapp: data.whatsapp,
-      mpesa_paybill: data.mpesa_paybill,
-      mpesa_till: data.mpesa_till,
-      bank_instructions: data.bank_instructions,
-      seo_default_title: data.seo_default_title,
-      seo_default_description: data.seo_default_description,
-      seo_default_og_image: data.seo_default_og_image,
-    };
-  } catch {
-    return DEFAULT_SETTINGS;
-  }
+export function getSiteSettings(): Promise<SiteSettings> {
+  return cached("site-settings", 3600_000, async () => {
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("site_settings")
+        .select("*")
+        .limit(1)
+        .maybeSingle();
+      if (error || !data) return DEFAULT_SETTINGS;
+      return {
+        church_name: data.church_name ?? DEFAULT_SETTINGS.church_name,
+        tagline: data.tagline ?? DEFAULT_SETTINGS.tagline,
+        phone: data.phone,
+        email: data.email,
+        address: data.address,
+        locality: data.locality,
+        region: data.region,
+        postal_code: data.postal_code,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        office_hours: data.office_hours,
+        google_maps_url: data.google_maps_url,
+        whatsapp: data.whatsapp,
+        mpesa_paybill: data.mpesa_paybill,
+        mpesa_till: data.mpesa_till,
+        bank_instructions: data.bank_instructions,
+        seo_default_title: data.seo_default_title,
+        seo_default_description: data.seo_default_description,
+        seo_default_og_image: data.seo_default_og_image,
+      };
+    } catch {
+      return DEFAULT_SETTINGS;
+    }
+  });
 }
 
-export async function getActiveSocialLinks(): Promise<SocialLink[]> {
-  try {
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("social_links")
-      .select("*")
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true });
-    if (error) return [];
-    return (data ?? []) as SocialLink[];
-  } catch {
-    return [];
-  }
+export function getActiveSocialLinks(): Promise<SocialLink[]> {
+  return cached("social-links", 3600_000, async () => {
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("social_links")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+      if (error) return [];
+      return (data ?? []) as SocialLink[];
+    } catch {
+      return [];
+    }
+  });
 }
 
 export async function getActiveAnnouncements(): Promise<Announcement[]> {
   try {
     const supabase = createClient();
+    const nowIso = new Date().toISOString();
     const { data, error } = await supabase
       .from("announcements")
       .select("id,title,body,starts_at,ends_at,is_pinned,published_at")
       .eq("status", "PUBLISHED")
-      .or(`ends_at.is.null,ends_at.gt.${new Date().toISOString()}`)
+      .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
+      .or(`ends_at.is.null,ends_at.gt.${nowIso}`)
       .order("is_pinned", { ascending: false })
       .order("starts_at", { ascending: false })
       .limit(5);
     if (error) return [];
-    return (data ?? []) as Announcement[];
+    // Defense in depth: re-apply active window in memory (safe public fields only).
+    return filterActiveAnnouncements((data ?? []) as Announcement[]);
   } catch {
     return [];
   }
@@ -202,32 +221,36 @@ export async function getSermonBySlug(slug: string): Promise<SermonItem | null> 
   }
 }
 
-export async function getFeaturedMinistries(limit = 6): Promise<MinistryItem[]> {
-  try {
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("ministries")
-      .select(
-        "id,slug,name,short_description,description,hero_image,meeting_info,contact_email,contact_phone,sort_order,published_at",
-      )
-      .eq("status", "PUBLISHED")
-      .order("sort_order", { ascending: true })
-      .limit(limit);
-    if (error) return [];
-    return (data ?? []) as MinistryItem[];
-  } catch {
-    return [];
-  }
+export function getFeaturedMinistries(limit = 6): Promise<MinistryItem[]> {
+  return cached(`featured-ministries:${limit}`, 300_000, async () => {
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("ministries")
+        .select(
+          "id,slug,name,short_description,description,hero_image,meeting_info,contact_email,contact_phone,parent_id,sort_order,published_at",
+        )
+        .eq("status", "PUBLISHED")
+        .is("parent_id", null)
+        .order("sort_order", { ascending: true })
+        .limit(limit);
+      if (error) return [];
+      return (data ?? []) as MinistryItem[];
+    } catch {
+      return [];
+    }
+  });
 }
+
+const MINISTRY_PUBLIC_SELECT =
+  "id,slug,name,short_description,description,hero_image,meeting_info,contact_email,contact_phone,parent_id,sort_order,published_at";
 
 export async function getAllPublishedMinistries(): Promise<MinistryItem[]> {
   try {
     const supabase = createClient();
     const { data, error } = await supabase
       .from("ministries")
-      .select(
-        "id,slug,name,short_description,description,hero_image,meeting_info,contact_email,contact_phone,sort_order,published_at",
-      )
+      .select(MINISTRY_PUBLIC_SELECT)
       .eq("status", "PUBLISHED")
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true });
@@ -243,9 +266,7 @@ export async function getMinistryBySlug(slug: string): Promise<MinistryItem | nu
     const supabase = createClient();
     const { data, error } = await supabase
       .from("ministries")
-      .select(
-        "id,slug,name,short_description,description,hero_image,meeting_info,contact_email,contact_phone,sort_order,published_at",
-      )
+      .select(MINISTRY_PUBLIC_SELECT)
       .eq("slug", slug)
       .eq("status", "PUBLISHED")
       .maybeSingle();
@@ -268,7 +289,7 @@ export async function getMinistryLeaders(ministryId: string): Promise<MinistryLe
     const { data, error } = await supabase
       .from("ministry_leaders")
       .select(
-        "role,sort_order,leader:leaders(id,full_name,title,bio,image_url,email,phone,sort_order,is_featured)",
+        "role,sort_order,leader:leaders(id,full_name,title,bio,image_url,email,phone,sort_order,is_featured,category)",
       )
       .eq("ministry_id", ministryId)
       .order("sort_order", { ascending: true });
@@ -286,22 +307,24 @@ export async function getMinistryLeaders(ministryId: string): Promise<MinistryLe
   }
 }
 
-export async function getPublishedServices(): Promise<ServiceItem[]> {
-  try {
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("services")
-      .select(
-        "id,name,description,day_of_week,start_time,end_time,location,ministry_id,sort_order",
-      )
-      .eq("status", "PUBLISHED")
-      .order("day_of_week", { ascending: true })
-      .order("start_time", { ascending: true });
-    if (error) return [];
-    return (data ?? []) as ServiceItem[];
-  } catch {
-    return [];
-  }
+export function getPublishedServices(): Promise<ServiceItem[]> {
+  return cached("published-services", 300_000, async () => {
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("services")
+        .select(
+          "id,name,description,day_of_week,start_time,end_time,location,ministry_id,sort_order",
+        )
+        .eq("status", "PUBLISHED")
+        .order("day_of_week", { ascending: true })
+        .order("start_time", { ascending: true });
+      if (error) return [];
+      return (data ?? []) as ServiceItem[];
+    } catch {
+      return [];
+    }
+  });
 }
 
 export function groupServicesByDay(
@@ -314,7 +337,11 @@ export function groupServicesByDay(
     groups.set(s.day_of_week, list);
   }
   return Array.from(groups.entries())
-    .sort(([a], [b]) => a - b)
+    .sort(([a], [b]) => {
+      const oa = a === 0 ? 7 : a;
+      const ob = b === 0 ? 7 : b;
+      return oa - ob;
+    })
     .map(([day, services]) => ({
       day,
       label: dayName(day),
@@ -322,23 +349,25 @@ export function groupServicesByDay(
     }));
 }
 
-export async function getFeaturedLeaders(limit = 4): Promise<LeaderItem[]> {
-  try {
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("leaders")
-      .select(
-        "id,full_name,title,bio,image_url,email,phone,sort_order,is_featured",
-      )
-      .eq("status", "PUBLISHED")
-      .eq("is_featured", true)
-      .order("sort_order", { ascending: true })
-      .limit(limit);
-    if (error) return [];
-    return (data ?? []) as LeaderItem[];
-  } catch {
-    return [];
-  }
+export function getFeaturedLeaders(limit = 4): Promise<LeaderItem[]> {
+  return cached(`featured-leaders:${limit}`, 300_000, async () => {
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("leaders")
+        .select(
+          "id,full_name,title,bio,image_url,email,phone,sort_order,is_featured,category",
+        )
+        .eq("status", "PUBLISHED")
+        .eq("is_featured", true)
+        .order("sort_order", { ascending: true })
+        .limit(limit);
+      if (error) return [];
+      return (data ?? []) as LeaderItem[];
+    } catch {
+      return [];
+    }
+  });
 }
 
 export async function getPublishedGalleryAlbums(

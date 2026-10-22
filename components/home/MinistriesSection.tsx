@@ -1,8 +1,9 @@
-import Link from "next/link";
 import { Container, Section } from "@/components/ui/Container";
-import { Card, CardBody, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
-import { EmptyState, SectionEyebrow, SectionTitle } from "@/components/ui/Section";
+import { EmptyState, SectionEyebrow, SectionTitle, SectionLead } from "@/components/ui/Section";
+import { LinkButton } from "@/components/ui/LinkButton";
 import { getFeaturedMinistries } from "@/services/content";
+import { SectionReveal } from "@/components/motion/SectionReveal";
+import { MinistryCard } from "@/components/ministries/MinistryCard";
 
 export async function MinistriesSection() {
   const ministries = await getFeaturedMinistries(6);
@@ -10,10 +11,16 @@ export async function MinistriesSection() {
   return (
     <Section>
       <Container>
-        <div className="mb-10 text-center">
-          <SectionEyebrow>Get involved</SectionEyebrow>
-          <SectionTitle>Our ministries</SectionTitle>
-        </div>
+        <SectionReveal>
+          <div className="mx-auto mb-10 max-w-2xl text-center">
+            <SectionEyebrow>Get involved</SectionEyebrow>
+            <SectionTitle>Our ministries</SectionTitle>
+            <SectionLead>
+              Find a place to belong, grow, and serve — from children and youth to worship and
+              hospitality.
+            </SectionLead>
+          </div>
+        </SectionReveal>
 
         {ministries.length === 0 ? (
           <EmptyState
@@ -21,36 +28,23 @@ export async function MinistriesSection() {
             description="Add ministries in the admin to populate this section."
           />
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {ministries.map((m) => (
-              <Link key={m.id} href={`/ministries/${m.slug}`} className="group">
-                <Card className="h-full transition-shadow group-hover:shadow-elevated">
-                  <div className="aspect-[4/3] bg-gradient-to-br from-brand-100 to-accent-100" aria-hidden="true" />
-                  <CardHeader>
-                    <CardTitle>{m.name}</CardTitle>
-                    {m.short_description ? (
-                      <CardDescription>{m.short_description}</CardDescription>
-                    ) : null}
-                  </CardHeader>
-                  {m.meeting_info ? (
-                    <CardBody>
-                      <p className="text-xs text-ink-muted">{m.meeting_info}</p>
-                    </CardBody>
-                  ) : null}
-                </Card>
-              </Link>
-            ))}
-          </div>
+          <SectionReveal delay={0.1}>
+            <ul className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {ministries.map((m) => (
+                <MinistryCard key={m.id} ministry={m} />
+              ))}
+            </ul>
+          </SectionReveal>
         )}
 
-        <div className="mt-10 text-center">
-          <Link
-            href="/ministries"
-            className="inline-flex h-11 items-center justify-center rounded-xl border border-brand-200 bg-white px-5 text-sm font-medium text-brand-800 transition-colors hover:bg-brand-50"
-          >
-            All ministries
-          </Link>
-        </div>
+        <SectionReveal delay={0.18}>
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <LinkButton href="/ministries">Explore All Ministries</LinkButton>
+            <LinkButton href="/serve" variant="secondary">
+              Serve at GGCC
+            </LinkButton>
+          </div>
+        </SectionReveal>
       </Container>
     </Section>
   );

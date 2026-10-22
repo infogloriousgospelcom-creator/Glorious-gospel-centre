@@ -1,16 +1,37 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Navbar } from "@/components/layout/Navbar";
+import Link from "next/link";
+import Image from "next/image";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Container, Section } from "@/components/ui/Container";
 import { Card, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState, SectionEyebrow } from "@/components/ui/Section";
-import Link from "next/link";
-import { getAllPublishedEvents, getEventBySlug } from "@/services/content";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { getEventBySlug, getSiteSettings } from "@/services/content";
+import {
+  buildPageMetadata,
+  buildEventSchema,
+  buildBreadcrumbSchema,
+  plainText,
+  siteUrl,
+} from "@/lib/seo";
 import { EventRegistrationForm } from "@/app/events/_components/EventRegistrationForm";
+import { eventHasEnded } from "@/lib/event-registration";
+import { KENYA_TZ } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
+
+const dateTimeFmt = new Intl.DateTimeFormat("en-KE", {
+  timeZone: KENYA_TZ,
+  weekday: "long",
+  month: "long",
+  day: "numeric",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
 
 export async function generateMetadata({
   params,
@@ -18,23 +39,23 @@ export async function generateMetadata({
   params: { slug: string };
 }): Promise<Metadata> {
   const event = await getEventBySlug(params.slug);
-  if (!event) return { title: "Event" };
-  return {
+  if (!event) return buildPageMetadata({ title: "Event", description: "Event", path: `/events/${params.slug}`, noindex: true });
+  return buildPageMetadata({
     title: event.title,
-    description: event.short_description ?? `Details about ${event.title}.`,
-  };
+    description: event.short_description
+      ? plainText(event.short_description, 200)
+      : `${event.title} at Glorious Gospel Centre Church.`,
+    path: `/events/${event.slug}`,
+    image: event.poster_url,
+    imageAlt: `${event.title} event poster`,
+    type: "article",
+    publishedTime: event.published_at ?? undefined,
+    keywords: ["church event", event.title],
+  });
 }
 
 function formatDateTime(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleString(undefined, {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  return dateTimeFmt.format(new Date(iso));
 }
 
 export default async function EventDetailPage({
@@ -44,11 +65,30 @@ export default async function EventDetailPage({
 }) {
   const event = await getEventBySlug(params.slug);
   if (!event) notFound();
-  void getAllPublishedEvents;
+  const settings = await getSiteSettings();
+
+  const eventSchema = buildEventSchema({
+    name: event.title,
+    description: event.short_description ?? event.description ?? event.title,
+    startDate: event.starts_at,
+    endDate: event.ends_at ?? null,
+    url: siteUrl(`/events/${event.slug}`),
+    imageUrl: event.poster_url,
+    location: event.location,
+    performer: event.speaker,
+    organizerName: settings.church_name,
+    organizerUrl: siteUrl("/"),
+  });
+
+  const breadcrumb = buildBreadcrumbSchema([
+    { name: "Home", url: siteUrl("/") },
+    { name: "Events", url: siteUrl("/events") },
+    { name: event.title, url: siteUrl(`/events/${event.slug}`) },
+  ]);
 
   return (
     <>
-      <Navbar />
+      <SiteHeader />
       <main id="main">
         <Section className="bg-gradient-to-br from-brand-50 via-surface to-accent-50">
           <Container>
@@ -77,11 +117,16 @@ export default async function EventDetailPage({
 
         {event.poster_url ? (
           <Container>
-            <img
-              src={event.poster_url}
-              alt=""
-              className="aspect-[21/9] w-full rounded-2xl object-cover shadow-elevated"
-            />
+            <div className="relative aspect-[21/9] w-full rounded-2xl overflow-hidden shadow-elevated">
+              <Image
+                src={event.poster_url}
+                alt={`${event.title} poster`}
+                fill
+                className="object-cover"
+                priority
+                sizes="100vw"
+              />
+            </div>
           </Container>
         ) : null}
 
@@ -113,13 +158,24 @@ export default async function EventDetailPage({
               </div>
 
               <aside>
-                {event.registration_required ? (
+                {event.registration_required && !eventHasEnded(event) ? (
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-base">Register</CardTitle>
                     </CardHeader>
                     <div className="px-6 pb-6">
                       <EventRegistrationForm eventId={event.id} />
+                    </div>
+                  </Card>
+                ) : event.registration_required && eventHasEnded(event) ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Registration closed</CardTitle>
+                    </CardHeader>
+                    <div className="px-6 pb-6">
+                      <p className="text-sm text-ink-muted">
+                        Registration for this event has closed.
+                      </p>
                     </div>
                   </Card>
                 ) : (
@@ -143,6 +199,7 @@ export default async function EventDetailPage({
             </div>
           </Container>
         </Section>
+        <JsonLd data={[eventSchema, breadcrumb]} />
       </main>
       <Footer />
     </>
