@@ -1,6 +1,6 @@
 /**
  * Pure helpers for the Congregant Account Hub (I-B6).
- * No I/O — unit-testable next-step and completeness logic.
+ * No I/O — unit-testable next-step, completeness and dashboard-stat logic.
  */
 
 export type AccountMembershipSnapshot = {
@@ -203,5 +203,119 @@ export function selectAccountNextSteps(input: {
       variant: "primary",
     },
     secondary: soft(),
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* Dashboard stat cards                                                */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Minimal structural snapshots for the dashboard stat cards.
+ *
+ * These shapes are declared here rather than imported from the services on
+ * purpose: `services/member-giving.ts` and `lib/member-notifications.ts`
+ * are `server-only`, and this module must stay importable from anywhere.
+ * The page maps its fetched rows into these shapes at the call site, exactly
+ * as it already does for `AccountMembershipSnapshot`.
+ *
+ * Only fields the member can already see on their own dashboard are included.
+ */
+export type AccountGivingSnapshot = {
+  amount_cents: number;
+  currency: string;
+  status: string;
+};
+
+export type AccountStatsInput = {
+  giving: { ok: boolean; items: AccountGivingSnapshot[] };
+  /**
+   * Connect Group memberships. Note there is no `ok` flag — the service
+   * returns a bare array — so a load failure reads as zero. This matches
+   * what the Connect Groups card on the page already shows.
+   */
+  memberships: { status: string }[];
+  notifications: { ok: boolean; items: { read_at: string | null }[] };
+  serveInterests: { ok: boolean; items: { status: string }[] };
+};
+
+export type AccountStats = {
+  giving: {
+    /** False when the giving history could not be loaded. */
+    ok: boolean;
+    /** Sum of successful gifts, in the display currency. */
+    totalCents: number;
+    currency: string;
+    /** Number of successful gifts counted in `totalCents`. */
+    gifts: number;
+    /** Gifts still pending or processing. */
+    pending: number;
+  };
+  groups: {
+    active: number;
+    pending: number;
+  };
+  updates: {
+    ok: boolean;
+    unread: number;
+    total: number;
+  };
+  serving: {
+    ok: boolean;
+    total: number;
+    accepted: number;
+  };
+};
+
+/**
+ * Derives the dashboard stat cards from data the page has already fetched.
+ *
+ * Never invents a number: when a source reports `ok: false` the caller must
+ * render an unavailable state rather than a zero. Amounts are only summed
+ * within a single currency — gifts in different currencies are never added
+ * together.
+ */
+export function computeAccountStats(input: AccountStatsInput): AccountStats {
+  const givingInput = input.giving ?? { ok: false, items: [] };
+  const givingItems = givingInput.items ?? [];
+  const successful = givingItems.filter((item) => item.status === "SUCCESS");
+  const currency = successful[0]?.currency ?? givingItems[0]?.currency ?? "KES";
+  // Only sum gifts in the display currency — never add across currencies.
+  const sameCurrency = successful.filter((item) => item.currency === currency);
+  const totalCents = sameCurrency.reduce(
+    (sum, item) => sum + (Number.isFinite(item.amount_cents) ? item.amount_cents : 0),
+    0,
+  );
+
+  const memberships = input.memberships ?? [];
+  const notificationInput = input.notifications ?? { ok: false, items: [] };
+  const notificationItems = notificationInput.items ?? [];
+  const serveInput = input.serveInterests ?? { ok: false, items: [] };
+  const serveItems = serveInput.items ?? [];
+
+  return {
+    giving: {
+      ok: Boolean(givingInput.ok),
+      totalCents,
+      currency,
+      gifts: sameCurrency.length,
+      pending: givingItems.filter(
+        (item) => item.status === "PENDING" || item.status === "PROCESSING",
+      ).length,
+    },
+    groups: {
+      active: memberships.filter((m) => m.status === "ACTIVE").length,
+      pending: memberships.filter((m) => m.status === "PENDING").length,
+    },
+    updates: {
+      ok: Boolean(notificationInput.ok),
+      unread: notificationItems.filter((n) => !n.read_at).length,
+      total: notificationItems.length,
+    },
+    serving: {
+      ok: Boolean(serveInput.ok),
+      total: serveItems.length,
+      accepted: serveItems.filter((s) => s.status === "ACCEPTED").length,
+    },
   };
 }

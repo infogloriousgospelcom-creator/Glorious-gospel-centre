@@ -13,6 +13,7 @@ import { listOwnGivingHistory } from "@/services/member-giving";
 import { listOwnNotifications } from "@/services/member-notifications";
 import { getActiveAnnouncements } from "@/services/content";
 import {
+  computeAccountStats,
   computeProfileCompleteness,
   selectAccountNextSteps,
 } from "@/lib/account-hub";
@@ -25,6 +26,7 @@ import { AccountGivingSection } from "./_components/AccountGivingSection";
 import { AccountNotificationsSection } from "./_components/AccountNotificationsSection";
 import { AccountChurchNotices } from "./_components/AccountChurchNotices";
 import { AccountServeInterests } from "./_components/AccountServeInterests";
+import { AccountStatCards } from "./_components/AccountStatCards";
 import { listOwnServeInterests } from "@/services/ministry-serve-interest";
 
 export const dynamic = "force-dynamic";
@@ -63,6 +65,27 @@ export default async function MemberAccountPage({
     })),
     hasActiveAnnouncements: announcements.length > 0,
   });
+  // Dashboard stat cards — derived from the rows already fetched above.
+  // No additional queries are issued for these.
+  const stats = computeAccountStats({
+    giving: {
+      ok: giving.ok,
+      items: giving.items.map((gift) => ({
+        amount_cents: gift.amount_cents,
+        currency: gift.currency,
+        status: gift.status,
+      })),
+    },
+    memberships: memberships.map((m) => ({ status: m.status })),
+    notifications: {
+      ok: notifications.ok,
+      items: notifications.items.map((n) => ({ read_at: n.read_at })),
+    },
+    serveInterests: {
+      ok: serveInterests.ok,
+      items: serveInterests.items.map((s) => ({ status: s.status })),
+    },
+  });
 
   return (
     <>
@@ -99,6 +122,10 @@ export default async function MemberAccountPage({
                 </Alert>
               </div>
             ) : null}
+
+            <div className="mb-8">
+              <AccountStatCards stats={stats} />
+            </div>
 
             <div className="grid gap-8 lg:grid-cols-2">
               <Card className="lg:col-span-2">
