@@ -217,7 +217,9 @@ describe("account stat cards wiring", () => {
 
   it("renders the stat row above the dashboard columns", () => {
     const cardsAt = accountPageSrc.indexOf("<AccountStatCards");
-    const gridAt = accountPageSrc.indexOf('className="grid gap-8 lg:grid-cols-2"');
+    // Match the grid container by prefix so this survives the layout change
+    // from `lg:grid-cols-2` to the two-column `lg:grid-cols-[…]` variant.
+    const gridAt = accountPageSrc.indexOf("grid gap-8 lg:grid-cols");
     const alertAt = accountPageSrc.indexOf('searchParams.password === "updated"');
 
     expect(cardsAt).toBeGreaterThan(-1);
