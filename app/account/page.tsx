@@ -13,6 +13,7 @@ import { listOwnGivingHistory } from "@/services/member-giving";
 import { listOwnNotifications } from "@/services/member-notifications";
 import { getActiveAnnouncements } from "@/services/content";
 import {
+  computeAccountStats,
   computeProfileCompleteness,
   selectAccountNextSteps,
 } from "@/lib/account-hub";
@@ -25,6 +26,7 @@ import { AccountGivingSection } from "./_components/AccountGivingSection";
 import { AccountNotificationsSection } from "./_components/AccountNotificationsSection";
 import { AccountChurchNotices } from "./_components/AccountChurchNotices";
 import { AccountServeInterests } from "./_components/AccountServeInterests";
+import { AccountStatCards } from "./_components/AccountStatCards";
 import { listOwnServeInterests } from "@/services/ministry-serve-interest";
 
 export const dynamic = "force-dynamic";
@@ -63,6 +65,27 @@ export default async function MemberAccountPage({
     })),
     hasActiveAnnouncements: announcements.length > 0,
   });
+  // Dashboard stat cards — derived from the rows already fetched above.
+  // No additional queries are issued for these.
+  const stats = computeAccountStats({
+    giving: {
+      ok: giving.ok,
+      items: giving.items.map((gift) => ({
+        amount_cents: gift.amount_cents,
+        currency: gift.currency,
+        status: gift.status,
+      })),
+    },
+    memberships: memberships.map((m) => ({ status: m.status })),
+    notifications: {
+      ok: notifications.ok,
+      items: notifications.items.map((n) => ({ read_at: n.read_at })),
+    },
+    serveInterests: {
+      ok: serveInterests.ok,
+      items: serveInterests.items.map((s) => ({ status: s.status })),
+    },
+  });
 
   return (
     <>
@@ -100,115 +123,125 @@ export default async function MemberAccountPage({
               </div>
             ) : null}
 
-            <div className="grid gap-8 lg:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Profile</CardTitle>
-                  <CardDescription>
-                    Update the name and phone number on your account.
-                  </CardDescription>
-                </CardHeader>
-                <div className="space-y-6 px-6 pb-6">
-                  <ProfileCompletenessIndicator completeness={completeness} />
-                  <p className="text-sm text-ink-muted">
-                    Signed in as <span className="font-medium text-ink">{session.email}</span>
-                  </p>
-                  <MemberProfileForm
-                    fullName={session.fullName ?? ""}
-                    phone={session.phone ?? ""}
-                  />
-                </div>
-              </Card>
+            <div className="mb-8">
+              <AccountStatCards stats={stats} />
+            </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Account security</CardTitle>
-                  <CardDescription>
-                    Email verification and password for your church account.
-                  </CardDescription>
-                </CardHeader>
-                <CardBody>
-                  <AccountSecuritySection
-                    email={session.email}
-                    emailConfirmed={session.emailConfirmed}
-                  />
-                </CardBody>
-              </Card>
+            <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+              {/* Main column — the member's content, in priority order. */}
+              <div className="space-y-8">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>My Giving</CardTitle>
+                    <CardDescription>
+                      Your recent gifts while signed in (visible only to you).
+                    </CardDescription>
+                  </CardHeader>
+                  <CardBody>
+                    <AccountGivingSection items={giving.items} loadOk={giving.ok} />
+                  </CardBody>
+                </Card>
 
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>Connect Groups</CardTitle>
-                  <CardDescription>
-                    Your membership requests and active groups (your records only).
-                  </CardDescription>
-                </CardHeader>
-                <CardBody>
-                  <AccountMembershipSections memberships={memberships} />
-                </CardBody>
-              </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Your next steps</CardTitle>
+                    <CardDescription>
+                      Simple suggestions based on your current account and membership status.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardBody>
+                    <AccountNextStepsPanel steps={nextSteps} />
+                  </CardBody>
+                </Card>
 
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>My Giving</CardTitle>
-                  <CardDescription>
-                    Your recent gifts while signed in (visible only to you).
-                  </CardDescription>
-                </CardHeader>
-                <CardBody>
-                  <AccountGivingSection items={giving.items} loadOk={giving.ok} />
-                </CardBody>
-              </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Connect Groups</CardTitle>
+                    <CardDescription>
+                      Your membership requests and active groups (your records only).
+                    </CardDescription>
+                  </CardHeader>
+                  <CardBody>
+                    <AccountMembershipSections memberships={memberships} />
+                  </CardBody>
+                </Card>
 
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>Activity</CardTitle>
-                  <CardDescription>
-                    Updates about your Connect Group requests (visible only to you).
-                  </CardDescription>
-                </CardHeader>
-                <CardBody>
-                  <AccountNotificationsSection
-                    items={notifications.items}
-                    loadOk={notifications.ok}
-                  />
-                </CardBody>
-              </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Activity</CardTitle>
+                    <CardDescription>
+                      Updates about your Connect Group requests (visible only to you).
+                    </CardDescription>
+                  </CardHeader>
+                  <CardBody>
+                    <AccountNotificationsSection
+                      items={notifications.items}
+                      loadOk={notifications.ok}
+                    />
+                  </CardBody>
+                </Card>
 
-              <Card className="lg:col-span-2" id="church-notices">
-                <CardHeader>
-                  <CardTitle>Church Notices</CardTitle>
-                  <CardDescription>
-                    Current published church announcements (same notices shown on the homepage).
-                  </CardDescription>
-                </CardHeader>
-                <CardBody>
-                  <AccountChurchNotices items={announcements} />
-                </CardBody>
-              </Card>
+                <Card id="church-notices">
+                  <CardHeader>
+                    <CardTitle>Church Notices</CardTitle>
+                    <CardDescription>
+                      Current published church announcements (same notices shown on the homepage).
+                    </CardDescription>
+                  </CardHeader>
+                  <CardBody>
+                    <AccountChurchNotices items={announcements} />
+                  </CardBody>
+                </Card>
 
-              <Card className="lg:col-span-2" id="serving-interests">
-                <CardHeader>
-                  <CardTitle>Serving Interests</CardTitle>
-                  <CardDescription>
-                    Ministries you have asked to serve in (visible only to you).
-                  </CardDescription>
-                </CardHeader>
-                <CardBody>
-                  <AccountServeInterests items={serveInterests.items} loadOk={serveInterests.ok} />
-                </CardBody>
-              </Card>
+                <Card id="serving-interests">
+                  <CardHeader>
+                    <CardTitle>Serving Interests</CardTitle>
+                    <CardDescription>
+                      Ministries you have asked to serve in (visible only to you).
+                    </CardDescription>
+                  </CardHeader>
+                  <CardBody>
+                    <AccountServeInterests items={serveInterests.items} loadOk={serveInterests.ok} />
+                  </CardBody>
+                </Card>
+              </div>
 
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>Your next steps</CardTitle>
-                  <CardDescription>
-                    Simple suggestions based on your current account and membership status.
-                  </CardDescription>
-                </CardHeader>
-                <CardBody>
-                  <AccountNextStepsPanel steps={nextSteps} />
-                </CardBody>
-              </Card>
+              {/* Side column — settings. Sits below the main column on mobile. */}
+              <div className="space-y-8">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Profile</CardTitle>
+                    <CardDescription>
+                      Update the name and phone number on your account.
+                    </CardDescription>
+                  </CardHeader>
+                  <div className="space-y-6 px-6 pb-6">
+                    <ProfileCompletenessIndicator completeness={completeness} />
+                    <p className="text-sm text-ink-muted">
+                      Signed in as <span className="font-medium text-ink">{session.email}</span>
+                    </p>
+                    <MemberProfileForm
+                      fullName={session.fullName ?? ""}
+                      phone={session.phone ?? ""}
+                    />
+                  </div>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Account security</CardTitle>
+                    <CardDescription>
+                      Email verification and password for your church account.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardBody>
+                    <AccountSecuritySection
+                      email={session.email}
+                      emailConfirmed={session.emailConfirmed}
+                    />
+                  </CardBody>
+                </Card>
+              </div>
             </div>
           </Container>
         </Section>

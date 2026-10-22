@@ -174,13 +174,15 @@ describe("I-B9 Account Church Notices (static)", () => {
     expect(accountPageSrc).not.toMatch(/member_notifications.*announcement/i);
   });
 
-  it("places Church Notices after Activity and before next steps", () => {
+  it("places Church Notices after Activity, next steps and My Giving", () => {
+    const givingIdx = accountPageSrc.indexOf("My Giving");
+    const nextIdx = accountPageSrc.indexOf("Your next steps");
     const activityIdx = accountPageSrc.indexOf(">Activity<");
     const noticesIdx = accountPageSrc.indexOf(">Church Notices<");
-    const nextIdx = accountPageSrc.indexOf("Your next steps");
-    expect(activityIdx).toBeGreaterThan(-1);
+    expect(givingIdx).toBeGreaterThan(-1);
+    expect(nextIdx).toBeGreaterThan(givingIdx);
+    expect(activityIdx).toBeGreaterThan(nextIdx);
     expect(noticesIdx).toBeGreaterThan(activityIdx);
-    expect(nextIdx).toBeGreaterThan(noticesIdx);
   });
 
   it("empty state is read-only and does not mark read or write notifications", () => {
